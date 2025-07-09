@@ -1,0 +1,1441 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام إدارة مخططات الجلوس الامتحانية الذكي</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <!-- مكتبات QR Code المضافة -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
+
+    <style>
+        body { font-family: 'Cairo', sans-serif; }
+        .step-section { display: none; }
+        .step-section.active { display: block; }
+        .seat { transition: all 0.2s ease-in-out; }
+        .seat.disabled { background-color: #4b5563 !important; border-color: #1f2937 !important; cursor: not-allowed; }
+        .seat.disabled::after { content: '✕'; color: white; font-size: 1.5rem; display: flex; justify-content: center; align-items: center; height: 100%; }
+        .seat.occupied { background-color: #e0f2fe; border-color: #0284c7; }
+        .seat.conflict { border: 3px solid #ef4444 !important; animation: shake 0.5s; }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+        .student-card { cursor: grab; }
+        .student-card:active { cursor: grabbing; }
+        .droppable-hover { background-color: #d1fae5 !important; }
+        #hall-modal-backdrop, #preview-modal-backdrop { background-color: rgba(0,0,0,0.5); }
+        .pdf-page-container {
+            background: white;
+            width: 210mm;
+            min-height: 297mm;
+            padding: 1cm;
+            position: absolute;
+            left: -9999px;
+            top: 0;
+            font-family: 'Cairo', sans-serif;
+            display: flex;
+            flex-direction: column;
+        }
+        .pdf-header {
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            padding: 20px;
+            border: 2px solid black;
+            border-radius: 10px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .pdf-body {
+            flex-grow: 1;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            padding-top: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+        .pdf-bg-image {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: 0;
+        }
+        .pdf-content {
+            position: relative;
+            z-index: 1;
+        }
+        /* QR Scanner Styles */
+        #reader {
+            width: 100%;
+            max-width: 500px;
+            margin: 20px auto;
+            border: 2px solid #d1d5db;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        #scan-feedback .success {
+            color: #16a34a;
+        }
+        #scan-feedback .fail {
+            color: #dc2626;
+        }
+
+    </style>
+</head>
+<body class="bg-stone-50 text-slate-800">
+
+    <div class="container mx-auto p-4 md:p-8">
+        
+        <header class="text-center mb-8 border-b pb-4">
+            <h1 class="text-3xl md:text-4xl font-bold text-sky-700">نظام إدارة مخططات الجلوس الامتحانية</h1>
+            <p class="text-slate-500 mt-2">أداة ذكية لتوزيع الطلاب في القاعات الامتحانية بسهولة وكفاءة</p>
+  <p class="text-3xl md:text-3xl font-bold text-orange-600">اعداد الاستاذ : حسين جهاد رضا </p>
+<p class="text-2xl md:text-2xl font-bold text-green-500">بأشراف الاستاذ تحسين هارون مهدي </p>
+        </header>
+
+        <div id="stepper" class="flex justify-center items-center mb-10 space-x-4 md:space-x-8 rtl:space-x-reverse">
+        </div>
+
+        <main class="bg-white rounded-xl shadow-lg p-6 md:p-8 min-h-[500px]">
+            
+            <section id="step-1" class="step-section active">
+                <div class="text-center mb-8">
+                    <h2 class="text-2xl font-bold">الخطوة 1: إدارة القاعات الامتحانية</h2>
+                    <p class="text-slate-500 mt-1">قم بإنشاء قاعة جديدة أو حدد قاعة أو أكثر من القائمة للعمل عليها.</p>
+                </div>
+                <div class="mb-6 text-center">
+                    <button id="show-hall-modal-btn" class="bg-sky-600 text-white font-bold py-2 px-6 rounded-md hover:bg-sky-700 transition">
+                        + إنشاء قاعة جديدة
+                    </button>
+                </div>
+                <div id="halls-list-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                </div>
+            </section>
+
+            <section id="step-2" class="step-section">
+                <div class="text-center mb-8">
+                    <h2 class="text-2xl font-bold">الخطوة 2: إدارة بيانات الطلاب</h2>
+                    <p class="text-slate-500 mt-1">قم باستيراد بيانات الطلاب من ملف Excel أو قم بلصقها كنص.</p>
+                </div>
+                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div>
+                        <div class="flex border-b mb-4">
+                            <button data-tab="paste-tab" class="tab-btn flex-1 py-2 font-semibold border-b-4 border-sky-600 text-sky-600">لصق نص</button>
+                            <button data-tab="upload-tab" class="tab-btn flex-1 py-2 font-semibold text-gray-500">رفع ملف Excel</button>
+                        </div>
+
+                        <div id="paste-tab" class="tab-content">
+                            <h3 class="font-bold mb-2">لصق قائمة الطلاب:</h3>
+                            <p class="text-sm text-slate-500 mb-2">الصق البيانات هنا. يجب أن يكون كل طالب في سطر جديد بالتنسيق: <br><code class="bg-gray-200 p-1 rounded">الاسم، الرقم الامتحاني، الصف، الشعبة</code></p>
+                            <textarea id="students-text" rows="8" class="w-full p-2 border rounded-md" placeholder="مثال:&#10;أحمد علي، 1201، العاشر، أ&#10;فاطمة محمد، 1202، العاشر، ب"></textarea>
+                            <button id="import-text-btn" class="mt-2 w-full bg-sky-600 text-white font-bold py-2 px-4 rounded-md hover:bg-sky-700 transition">استيراد من النص</button>
+                        </div>
+
+                        <div id="upload-tab" class="tab-content hidden">
+                             <h3 class="font-bold mb-2">رفع ملف Excel (.xlsx):</h3>
+                             <p class="text-sm text-slate-500 mb-2">يجب أن يحتوي الملف على أعمدة بالترتيب: <br><code class="bg-gray-200 p-1 rounded">الاسم، الرقم الامتحاني، الصف، الشعبة</code></p>
+                             <input type="file" id="excel-file" accept=".xlsx, .xls" class="w-full p-2 border rounded-md file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-sky-50 file:text-sky-700 hover:file:bg-sky-100"/>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gray-50 p-4 rounded-lg border">
+                        <h3 class="font-bold text-lg mb-4">قائمة الطلاب (<span id="student-count">0</span>)</h3>
+                        <div id="student-list" class="h-64 overflow-y-auto space-y-2 pr-2">
+                           <p class="text-slate-400 text-center mt-8">لم يتم إضافة أي طلاب بعد.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="step-3" class="step-section">
+                <div id="distribution-header" class="text-center mb-8">
+                     <h2 class="text-2xl font-bold">الخطوة 3: التوزيع والمراجعة</h2>
+                    <p class="text-slate-500 mt-1">انقر على المقاعد الفارغة لتعطيلها. ثم قم بالتوزيع التلقائي أو اليدوي.</p>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                    <div class="lg:col-span-1 bg-gray-50 p-4 rounded-lg border">
+                        <h3 class="font-bold text-lg mb-4">الطلاب غير الموزعين</h3>
+                        <div id="unassigned-students" class="h-96 overflow-y-auto space-y-2 p-1"></div>
+                        <button id="auto-distribute-btn" class="mt-4 w-full bg-emerald-600 text-white font-bold py-2 px-4 rounded-md hover:bg-emerald-700 transition">توزيع تلقائي</button>
+                        <button id="reset-distribution-btn" class="mt-2 w-full bg-red-600 text-white font-bold py-2 px-4 rounded-md hover:bg-red-700 transition">إعادة تعيين التوزيع</button>
+                    </div>
+
+                    <div id="multi-hall-distribution-container" class="lg:col-span-3 space-y-8">
+                    </div>
+                </div>
+            </section>
+
+            <section id="step-4" class="step-section">
+                <div id="export-header" class="text-center mb-8">
+                    <h2 class="text-2xl font-bold">الخطوة 4: التصدير والطباعة</h2>
+                    <p class="text-slate-500 mt-1">اختر إعدادات التصدير ثم قم بمعاينة أو تصدير الملفات.</p>
+                </div>
+                <div class="max-w-4xl mx-auto">
+                    <div class="bg-gray-50 p-6 rounded-lg border mb-6 space-y-4">
+                        <label class="flex items-center justify-center cursor-pointer">
+                            <span class="font-semibold ml-4">استخدام خلفيات مخصصة:</span>
+                            <div class="relative">
+                                <input type="checkbox" id="use-backgrounds-toggle" class="sr-only peer">
+                                <div class="block bg-gray-300 w-14 h-8 rounded-full peer-checked:bg-sky-600"></div>
+                                <div class="dot absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition-transform transform peer-checked:translate-x-full"></div>
+                            </div>
+                        </label>
+                        <div id="background-inputs" class="hidden grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t">
+                            <div class="flex-1">
+                                <label for="header-bg-input" class="block font-semibold mb-1">خلفية العنوان:</label>
+                                <input type="file" id="header-bg-input" accept="image/*" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-sky-50 file:text-sky-700 hover:file:bg-sky-100"/>
+                            </div>
+                            <div class="flex-1">
+                                <label for="body-bg-input" class="block font-semibold mb-1">خلفية الجدول:</label>
+                                <input type="file" id="body-bg-input" accept="image/*" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-sky-50 file:text-sky-700 hover:file:bg-sky-100"/>
+                            </div>
+                             <div class="md:col-span-2 space-y-2">
+                                <div>
+                                    <label for="header-opacity-slider" class="block font-semibold mb-1">شفافية خلفية العنوان: <span id="header-opacity-value">100</span>%</label>
+                                    <input type="range" id="header-opacity-slider" min="0" max="1" step="0.05" value="1" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                                </div>
+                                <div>
+                                    <label for="body-opacity-slider" class="block font-semibold mb-1">شفافية خلفية الجدول: <span id="body-opacity-value">100</span>%</label>
+                                    <input type="range" id="body-opacity-slider" min="0" max="1" step="0.05" value="1" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex flex-col md:flex-row justify-center gap-4">
+                        <button id="preview-pdf-btn" class="bg-indigo-600 text-white font-bold py-3 px-6 rounded-md hover:bg-indigo-700 transition flex items-center justify-center gap-2">
+                            <span>👁️</span> معاينة المخطط
+                        </button>
+                        <button id="export-chart-pdf-btn" class="bg-sky-600 text-white font-bold py-3 px-6 rounded-md hover:bg-sky-700 transition flex items-center justify-center gap-2">
+                            <span>📄</span> تصدير مخطط القاعات (PDF)
+                        </button>
+                         <button id="export-list-pdf-btn" class="bg-green-600 text-white font-bold py-3 px-6 rounded-md hover:bg-green-700 transition flex items-center justify-center gap-2">
+                            <span>📋</span> تصدير قائمة الحضور (PDF)
+                        </button>
+                    </div>
+                     <div id="pdf-export-status" class="mt-6 text-center text-blue-600 font-semibold hidden">
+                        جاري تحضير الملف...
+                    </div>
+                </div>
+            </section>
+
+            <!-- Step 5: QR Absentee Scanning -->
+            <section id="step-5" class="step-section">
+                <div class="text-center mb-8">
+                    <h2 class="text-2xl font-bold">الخطوة 5: تسجيل الغياب عبر QR</h2>
+                    <p class="text-slate-500 mt-1">امسح رموز QR للطلاب الغائبين لتسجيلهم في القائمة.</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div>
+                        <h3 class="font-bold text-lg mb-4 text-center">لوحة التحكم بالماسح</h3>
+                        <div class="flex justify-center gap-4 mb-4">
+                            <button id="start-scan-btn" class="bg-green-600 text-white font-bold py-2 px-6 rounded-md hover:bg-green-700 transition">بدء المسح</button>
+                            <button id="stop-scan-btn" class="bg-red-600 text-white font-bold py-2 px-6 rounded-md hover:bg-red-700 transition hidden">إيقاف المسح</button>
+                        </div>
+                        <div id="reader"></div>
+                        <div id="scan-feedback" class="text-center font-semibold mt-2 h-6"></div>
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded-lg border">
+                        <h3 class="font-bold text-lg mb-4">قائمة الطلاب الغائبين (<span id="absent-count">0</span>)</h3>
+                        <div id="absent-list" class="h-64 overflow-y-auto space-y-2 pr-2">
+                           <p class="text-slate-400 text-center mt-8">لم يتم تسجيل أي غياب بعد.</p>
+                        </div>
+                        <button id="export-absent-pdf-btn" class="mt-4 w-full bg-orange-500 text-white font-bold py-2 px-4 rounded-md hover:bg-orange-600 transition" disabled>تصدير قائمة الغياب (PDF)</button>
+                    </div>
+                </div>
+            </section>
+
+            <div id="navigation-btns" class="mt-10 flex justify-between border-t pt-6">
+                <button id="prev-btn" class="bg-gray-200 text-gray-800 font-bold py-2 px-6 rounded-md hover:bg-gray-300 transition" disabled>السابق</button>
+                <button id="next-btn" class="bg-sky-600 text-white font-bold py-2 px-6 rounded-md hover:bg-sky-700 transition">التالي</button>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modals -->
+    <div id="hall-modal-backdrop" class="fixed inset-0 z-40 hidden">
+        <div id="hall-modal" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 bg-white p-8 rounded-xl shadow-2xl w-full max-w-lg">
+            <h2 id="hall-modal-title" class="text-2xl font-bold mb-6">إنشاء قاعة جديدة</h2>
+            <form id="hall-form" class="space-y-4">
+                <input type="hidden" id="hall-id-input">
+                <div>
+                    <label for="hall-name" class="block font-semibold mb-1">اسم القاعة:</label>
+                    <input type="text" id="hall-name" placeholder="مثال: قاعة 101" class="w-full p-2 border rounded-md focus:ring-2 focus:ring-sky-500" required>
+                </div>
+                <div>
+                    <label for="hall-location" class="block font-semibold mb-1">موقع القاعة:</label>
+                    <input type="text" id="hall-location" placeholder="مثال: المبنى الرئيسي - الطابق الثاني" class="w-full p-2 border rounded-md focus:ring-2 focus:ring-sky-500">
+                </div>
+                <div>
+                    <label for="hall-rows" class="block font-semibold mb-1">عدد الصفوف:</label>
+                    <input type="number" id="hall-rows" min="1" max="30" value="5" class="w-full p-2 border rounded-md focus:ring-2 focus:ring-sky-500" required>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label for="hall-sector1-cols" class="block font-semibold mb-1">أعمدة قطاع 1:</label>
+                        <input type="number" id="hall-sector1-cols" min="1" max="15" value="3" class="w-full p-2 border rounded-md focus:ring-2 focus:ring-sky-500" required>
+                    </div>
+                    <div>
+                        <label for="hall-sector2-cols" class="block font-semibold mb-1">أعمدة قطاع 2:</label>
+                        <input type="number" id="hall-sector2-cols" min="1" max="15" value="3" class="w-full p-2 border rounded-md focus:ring-2 focus:ring-sky-500" required>
+                    </div>
+                </div>
+                <div class="flex justify-end gap-4 pt-4 border-t">
+                    <button type="button" id="cancel-hall-modal-btn" class="bg-gray-200 text-gray-800 font-bold py-2 px-6 rounded-md hover:bg-gray-300 transition">إلغاء</button>
+                    <button type="submit" class="bg-sky-600 text-white font-bold py-2 px-6 rounded-md hover:bg-sky-700 transition">حفظ القاعة</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="preview-modal-backdrop" class="fixed inset-0 z-40 hidden items-center justify-center">
+        <div id="preview-modal" class="bg-white p-4 rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center border-b pb-2 mb-4">
+                <h2 class="text-xl font-bold">معاينة الملف</h2>
+                <button id="close-preview-modal-btn" class="text-2xl font-bold">&times;</button>
+            </div>
+            <div id="preview-content" class="flex justify-center"></div>
+        </div>
+    </div>
+    
+    <div id="custom-alert" class="hidden fixed top-5 right-5 bg-red-500 text-white py-3 px-5 rounded-lg shadow-xl z-50 animate-bounce">
+        <p id="alert-message"></p>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // --- State Management ---
+            let state = {
+                currentStep: 1,
+                halls: [],
+                selectedHallIds: new Set(),
+                students: [],
+                seatingChart: new Map(), // key: 'hallId:r-c', value: studentId
+                columnClassAssignments: new Map(), // key: 'hallId:colIndex', value: 'className'
+                backgrounds: {
+                    header: null,
+                    body: null,
+                    use: false,
+                    headerOpacity: 1,
+                    bodyOpacity: 1
+                },
+                absentStudents: [], // NEW: For absentees
+            };
+            
+            let html5QrCode; // NEW: QR Code scanner instance
+
+            // --- DOM Elements ---
+            const stepperContainer = document.getElementById('stepper');
+            const sections = document.querySelectorAll('.step-section');
+            const nextBtn = document.getElementById('next-btn');
+            const prevBtn = document.getElementById('prev-btn');
+            const hallsListContainer = document.getElementById('halls-list-container');
+            const showHallModalBtn = document.getElementById('show-hall-modal-btn');
+            const hallModalBackdrop = document.getElementById('hall-modal-backdrop');
+            const hallModal = document.getElementById('hall-modal');
+            const hallModalTitle = document.getElementById('hall-modal-title');
+            const cancelHallModalBtn = document.getElementById('cancel-hall-modal-btn');
+            const hallForm = document.getElementById('hall-form');
+            const hallIdInput = document.getElementById('hall-id-input');
+            const hallNameInput = document.getElementById('hall-name');
+            const hallLocationInput = document.getElementById('hall-location');
+            const hallRowsInput = document.getElementById('hall-rows');
+            const hallSector1ColsInput = document.getElementById('hall-sector1-cols');
+            const hallSector2ColsInput = document.getElementById('hall-sector2-cols');
+            const studentsTextInput = document.getElementById('students-text');
+            const importTextBtn = document.getElementById('import-text-btn');
+            const studentListContainer = document.getElementById('student-list');
+            const studentCountSpan = document.getElementById('student-count');
+            const excelFileInput = document.getElementById('excel-file');
+            const tabBtns = document.querySelectorAll('.tab-btn');
+            const tabContents = document.querySelectorAll('.tab-content');
+            const multiHallDistributionContainer = document.getElementById('multi-hall-distribution-container');
+            const autoDistributeBtn = document.getElementById('auto-distribute-btn');
+            const resetDistributionBtn = document.getElementById('reset-distribution-btn');
+            const unassignedStudentsContainer = document.getElementById('unassigned-students');
+            const exportHeader = document.getElementById('export-header');
+            const exportChartPdfBtn = document.getElementById('export-chart-pdf-btn');
+            const exportListPdfBtn = document.getElementById('export-list-pdf-btn');
+            const pdfExportStatus = document.getElementById('pdf-export-status');
+            const useBackgroundsToggle = document.getElementById('use-backgrounds-toggle');
+            const backgroundInputs = document.getElementById('background-inputs');
+            const headerBgInput = document.getElementById('header-bg-input');
+            const bodyBgInput = document.getElementById('body-bg-input');
+            const headerOpacitySlider = document.getElementById('header-opacity-slider');
+            const bodyOpacitySlider = document.getElementById('body-opacity-slider');
+            const headerOpacityValue = document.getElementById('header-opacity-value');
+            const bodyOpacityValue = document.getElementById('body-opacity-value');
+            const previewPdfBtn = document.getElementById('preview-pdf-btn');
+            const previewModalBackdrop = document.getElementById('preview-modal-backdrop');
+            const previewContent = document.getElementById('preview-content');
+            const closePreviewModalBtn = document.getElementById('close-preview-modal-btn');
+
+            // NEW: Step 5 DOM Elements
+            const startScanBtn = document.getElementById('start-scan-btn');
+            const stopScanBtn = document.getElementById('stop-scan-btn');
+            const readerDiv = document.getElementById('reader');
+            const scanFeedbackDiv = document.getElementById('scan-feedback');
+            const absentListContainer = document.getElementById('absent-list');
+            const absentCountSpan = document.getElementById('absent-count');
+            const exportAbsentPdfBtn = document.getElementById('export-absent-pdf-btn');
+
+
+            const steps = [
+                { id: 1, name: 'إدارة القاعات' },
+                { id: 2, name: 'بيانات الطلاب' },
+                { id: 3, name: 'التوزيع' },
+                { id: 4, name: 'التصدير' },
+                { id: 5, name: 'تسجيل الغياب' } // NEW Step
+            ];
+
+            // --- Core Logic ---
+            const updateUI = () => {
+                renderStepper();
+                sections.forEach(s => s.classList.remove('active'));
+                document.getElementById(`step-${state.currentStep}`).classList.add('active');
+
+                prevBtn.disabled = state.currentStep === 1;
+                nextBtn.disabled = (state.currentStep === 1 && state.selectedHallIds.size === 0) || (state.currentStep === steps.length);
+                nextBtn.textContent = 'التالي'; // Always "Next"
+                nextBtn.classList.toggle('hidden', state.currentStep === steps.length);
+
+
+                if (state.currentStep === 1) renderHallsList();
+                if (state.currentStep === 2) renderStudentList();
+                if (state.currentStep === 3) renderDistributionView();
+                if (state.currentStep === 4) renderExportView();
+                if (state.currentStep === 5) renderAbsenceView(); // NEW
+            };
+
+            const renderStepper = () => {
+                stepperContainer.innerHTML = steps.map(step => {
+                    const isActive = state.currentStep === step.id;
+                    const isDone = state.currentStep > step.id;
+                    const baseClasses = 'flex items-center gap-2 transition-all';
+                    const activeClasses = 'text-sky-600 font-bold';
+                    const doneClasses = 'text-green-600';
+                    let html = `<div class="${baseClasses} ${isActive ? activeClasses : (isDone ? doneClasses : 'text-gray-400')}">
+                        <div class="w-8 h-8 rounded-full flex items-center justify-center border-2 ${isActive ? 'border-sky-600 bg-sky-100' : (isDone ? 'border-green-600 bg-green-100' : 'border-gray-300')}">
+                            ${isDone ? '✓' : step.id}
+                        </div>
+                        <span class="hidden md:block">${step.name}</span>
+                    </div>`;
+                    if (step.id < steps.length) {
+                        html += `<div class="flex-1 h-0.5 ${(isDone || (isActive && state.selectedHallIds.size > 0)) ? 'bg-green-600' : 'bg-gray-300'}"></div>`;
+                    }
+                    return html;
+                }).join('');
+            };
+            
+            // --- Step 1: Hall Management ---
+            const renderHallsList = () => {
+                if(state.halls.length === 0) {
+                    hallsListContainer.innerHTML = `<p class="text-slate-400 text-center col-span-full mt-8">لم يتم إنشاء أي قاعات بعد. انقر على "إنشاء قاعة جديدة" للبدء.</p>`;
+                } else {
+                    hallsListContainer.innerHTML = state.halls.map(hall => {
+                        const isSelected = state.selectedHallIds.has(hall.id);
+                        return `
+                        <div class="border rounded-lg p-4 shadow transition ${isSelected ? 'border-sky-500 ring-2 ring-sky-200' : 'bg-white'}">
+                            <h3 class="font-bold text-lg">${hall.name}</h3>
+                            <p class="text-sm text-slate-600">${hall.location || 'لم يحدد الموقع'}</p>
+                            <p class="text-sm text-slate-500">الصفوف: ${hall.rows} | القطاعات: ${hall.sector1Name}, ${hall.sector2Name}</p>
+                            <p class="text-sm text-slate-500">إجمالي المقاعد: ${hall.rows * (hall.sector1Cols + hall.sector2Cols)}</p>
+                            <div class="flex gap-2 mt-4 pt-4 border-t">
+                                <button onclick="window.toggleHallSelection(${hall.id})" class="flex-1 text-sm ${isSelected ? 'bg-red-500' : 'bg-green-500'} text-white font-semibold py-1 px-2 rounded hover:bg-green-600">
+                                    ${isSelected ? 'إلغاء التحديد' : 'تحديد'}
+                                </button>
+                                <button onclick="window.editHall(${hall.id})" class="text-sm bg-yellow-400 text-white font-semibold py-1 px-2 rounded hover:bg-yellow-500">تعديل</button>
+                                <button onclick="window.copyHall(${hall.id})" class="text-sm bg-blue-400 text-white font-semibold py-1 px-2 rounded hover:bg-blue-500">نسخ</button>
+                                <button onclick="window.deleteHall(${hall.id})" class="text-sm bg-red-500 text-white font-semibold py-1 px-2 rounded hover:bg-red-600">حذف</button>
+                            </div>
+                        </div>
+                    `}).join('');
+                }
+                nextBtn.disabled = state.selectedHallIds.size === 0;
+            };
+
+            const toggleHallModal = (show, hall = null) => {
+                hallModalBackdrop.classList.toggle('hidden', !show);
+                if (show) {
+                    hallForm.reset();
+                    if (hall) {
+                        hallModalTitle.textContent = 'تعديل القاعة';
+                        hallIdInput.value = hall.id;
+                        hallNameInput.value = hall.name;
+                        hallLocationInput.value = hall.location || '';
+                        hallRowsInput.value = hall.rows;
+                        hallSector1ColsInput.value = hall.sector1Cols;
+                        hallSector2ColsInput.value = hall.sector2Cols;
+                    } else {
+                        hallModalTitle.textContent = 'إنشاء قاعة جديدة';
+                        hallIdInput.value = '';
+                    }
+                }
+            };
+            
+            showHallModalBtn.addEventListener('click', () => toggleHallModal(true));
+            cancelHallModalBtn.addEventListener('click', () => toggleHallModal(false));
+
+            hallForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const hallId = hallIdInput.value ? parseInt(hallIdInput.value) : Date.now();
+                const isEditing = !!hallIdInput.value;
+
+                const hallData = {
+                    id: hallId,
+                    name: hallNameInput.value,
+                    location: hallLocationInput.value,
+                    rows: parseInt(hallRowsInput.value),
+                    sector1Cols: parseInt(hallSector1ColsInput.value),
+                    sector2Cols: parseInt(hallSector2ColsInput.value),
+                    disabledSeats: new Set()
+                };
+
+                const existingIndex = state.halls.findIndex(h => h.id === hallData.id);
+
+                if (isEditing) {
+                    const oldHall = state.halls[existingIndex];
+                    hallData.sector1Name = oldHall.sector1Name;
+                    hallData.sector2Name = oldHall.sector2Name;
+                    hallData.disabledSeats = oldHall.disabledSeats;
+                    state.halls[existingIndex] = hallData;
+                } else {
+                    let maxSectorNum = 0;
+                    state.halls.forEach(h => {
+                        [h.sector1Name, h.sector2Name].forEach(sectorName => {
+                            if (sectorName) {
+                                const sectorMatch = sectorName.match(/(\d+)/);
+                                if (sectorMatch) {
+                                    const num = parseInt(sectorMatch[1], 10);
+                                    if (num > maxSectorNum) maxSectorNum = num;
+                                }
+                            }
+                        });
+                    });
+                    hallData.sector1Name = `قطاع (${maxSectorNum + 1})`;
+                    hallData.sector2Name = `قطاع (${maxSectorNum + 2})`;
+                    state.halls.push(hallData);
+                }
+                
+                toggleHallModal(false);
+                updateUI();
+            });
+
+            window.toggleHallSelection = (id) => {
+                if (state.selectedHallIds.has(id)) {
+                    state.selectedHallIds.delete(id);
+                } else {
+                    state.selectedHallIds.add(id);
+                }
+                state.seatingChart.clear();
+                updateUI();
+            };
+            window.editHall = (id) => { const hall = state.halls.find(h => h.id === id); if(hall) toggleHallModal(true, hall); };
+            window.copyHall = (id) => {
+                const hallToCopy = state.halls.find(h => h.id === id);
+                if (!hallToCopy) return;
+
+                let newHallName = `${hallToCopy.name} (نسخة)`;
+                const nameMatch = hallToCopy.name.match(/^(.*?)[\s(]*(\d+)\)?$/);
+                let baseName = hallToCopy.name;
+                if (nameMatch) {
+                    baseName = nameMatch[1].trim();
+                }
+                let maxNum = 0;
+                const regex = new RegExp(`^${baseName.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')}[\\s(]*(\\d+)\\)?$`);
+                state.halls.forEach(h => {
+                    const match = h.name.match(regex);
+                    if (match) {
+                        const num = parseInt(match[1], 10);
+                        if (num > maxNum) {
+                            maxNum = num;
+                        }
+                    }
+                });
+                newHallName = `${baseName} (${maxNum + 1})`;
+
+                let maxSectorNum = 0;
+                state.halls.forEach(h => {
+                    [h.sector1Name, h.sector2Name].forEach(sectorName => {
+                        if (sectorName) {
+                            const sectorMatch = sectorName.match(/(\d+)/);
+                            if (sectorMatch) {
+                                const num = parseInt(sectorMatch[1], 10);
+                                if (num > maxSectorNum) maxSectorNum = num;
+                            }
+                        }
+                    });
+                });
+
+                const newHall = {
+                    ...hallToCopy,
+                    id: Date.now(),
+                    name: newHallName,
+                    sector1Name: `قطاع (${maxSectorNum + 1})`,
+                    sector2Name: `قطاع (${maxSectorNum + 2})`,
+                    disabledSeats: new Set(hallToCopy.disabledSeats), 
+                };
+
+                state.halls.push(newHall);
+                updateUI();
+            };
+            window.deleteHall = (id) => {
+                if (confirm('هل أنت متأكد من حذف هذه القاعة؟')) {
+                    state.halls = state.halls.filter(h => h.id !== id);
+                    state.selectedHallIds.delete(id);
+                    updateUI();
+                }
+            };
+
+            // --- Step 2: Student Management ---
+            const renderStudentList = () => {
+                studentCountSpan.textContent = state.students.length;
+                if (state.students.length === 0) {
+                    studentListContainer.innerHTML = `<p class="text-slate-400 text-center mt-8">لم يتم إضافة أي طلاب بعد.</p>`;
+                    return;
+                }
+                studentListContainer.innerHTML = state.students.map(s => `
+                    <div class="p-2 border rounded-md bg-white flex justify-between items-center text-sm">
+                        <div><p class="font-bold">${s.name} (${s.id})</p><p class="text-slate-500">${s.class} - ${s.section}</p></div>
+                        <button class="text-red-500 hover:text-red-700 font-bold p-1" onclick="window.removeStudent(${s.uid})">✕</button>
+                    </div>`).join('');
+            };
+            window.removeStudent = (uid) => { state.students = state.students.filter(s => s.uid !== uid); renderStudentList(); };
+            importTextBtn.addEventListener('click', () => {
+                const lines = studentsTextInput.value.trim().split('\n');
+                const newStudents = lines.map((line, index) => {
+                    const parts = line.split(',').map(p => p.trim());
+                    if (parts.length < 4) return null;
+                    return { uid: Date.now() + index, name: parts[0], id: parts[1], class: parts[2], section: parts[3] };
+                }).filter(Boolean);
+                state.students = [...state.students, ...newStudents];
+                studentsTextInput.value = '';
+                renderStudentList();
+            });
+            excelFileInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const data = new Uint8Array(event.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const sheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[sheetName];
+                    const json = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                    const newStudents = json.slice(1).map((row, index) => {
+                        if(row.length < 4) return null;
+                        return { uid: Date.now() + index, name: row[0], id: row[1], class: row[2], section: row[3] };
+                    }).filter(Boolean);
+                    state.students = [...state.students, ...newStudents];
+                    renderStudentList();
+                };
+                reader.readAsArrayBuffer(file);
+            });
+            tabBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    tabBtns.forEach(b => { b.classList.remove('border-sky-600', 'text-sky-600'); b.classList.add('text-gray-500'); });
+                    btn.classList.add('border-sky-600', 'text-sky-600');
+                    btn.classList.remove('text-gray-500');
+                    const tabId = btn.getAttribute('data-tab');
+                    tabContents.forEach(content => content.classList.toggle('hidden', content.id !== tabId));
+                });
+            });
+
+            // --- Step 3: Distribution ---
+            const renderDistributionView = () => {
+                const assignedStudentUids = new Set([...state.seatingChart.values()]);
+                const unassignedStudents = state.students.filter(s => !assignedStudentUids.has(s.uid));
+                unassignedStudentsContainer.innerHTML = unassignedStudents.map(s => `
+                    <div id="student-card-${s.uid}" class="student-card p-2 border rounded-md bg-white flex justify-between items-center text-sm" draggable="true" data-uid="${s.uid}">
+                         <div><p class="font-bold">${s.name}</p><p class="text-slate-500">${s.id} - ${s.class} / ${s.section}</p></div>
+                    </div>`).join('') || `<p class="text-slate-400 text-center mt-8">تم توزيع جميع الطلاب.</p>`;
+
+                multiHallDistributionContainer.innerHTML = '';
+                state.selectedHallIds.forEach(hallId => {
+                    const hall = state.halls.find(h => h.id === hallId);
+                    if (hall) {
+                        const hallContainer = document.createElement('div');
+                        hallContainer.className = 'p-4 border rounded-lg bg-gray-50 overflow-x-auto';
+                        hallContainer.innerHTML = `
+                            <h3 class="font-bold text-xl mb-4 text-center">${hall.name}</h3>
+                            <div class="flex gap-8 justify-center">
+                                <div class="text-center">
+                                    <h4 class="font-bold text-lg mb-2">${hall.sector1Name}</h4>
+                                    <div id="selector-container-${hall.id}-1" class="flex gap-2 justify-center mb-2"></div>
+                                    <div id="dist-grid-${hall.id}-1" class="grid gap-2"></div>
+                                </div>
+                                <div class="text-center">
+                                    <h4 class="font-bold text-lg mb-2">${hall.sector2Name}</h4>
+                                    <div id="selector-container-${hall.id}-2" class="flex gap-2 justify-center mb-2"></div>
+                                    <div id="dist-grid-${hall.id}-2" class="grid gap-2"></div>
+                                </div>
+                            </div>`;
+                        multiHallDistributionContainer.appendChild(hallContainer);
+                        renderSectorGrid(document.getElementById(`dist-grid-${hall.id}-1`), hall, 1);
+                        renderSectorGrid(document.getElementById(`dist-grid-${hall.id}-2`), hall, 2);
+                        renderColumnSelectors(document.getElementById(`selector-container-${hall.id}-1`), hall, 1);
+                        renderColumnSelectors(document.getElementById(`selector-container-${hall.id}-2`), hall, 2);
+
+                    }
+                });
+                addDragAndDropListeners();
+            };
+
+            const renderColumnSelectors = (container, hall, sector) => {
+                const uniqueClasses = [...new Set(state.students.map(s => s.class))];
+                const cols = sector === 1 ? hall.sector1Cols : hall.sector2Cols;
+                const colOffset = sector === 1 ? 0 : hall.sector1Cols;
+                container.style.gridTemplateColumns = `repeat(${cols}, minmax(0, 1fr))`;
+
+                for (let c = 0; c < cols; c++) {
+                    const actualCol = c + colOffset;
+                    const columnId = `${hall.id}:${actualCol}`;
+                    const select = document.createElement('select');
+                    select.className = 'text-xs border rounded-md p-1';
+                    select.dataset.columnId = columnId;
+                    select.innerHTML = `<option value="">أي صف</option>` + uniqueClasses.map(cls => `<option value="${cls}" ${state.columnClassAssignments.get(columnId) === cls ? 'selected' : ''}>${cls}</option>`).join('');
+                    select.addEventListener('change', (e) => {
+                        const selectedClass = e.target.value;
+                        if (selectedClass) {
+                            state.columnClassAssignments.set(columnId, selectedClass);
+                        } else {
+                            state.columnClassAssignments.delete(columnId);
+                        }
+                    });
+                    container.appendChild(select);
+                }
+            };
+
+            const renderSectorGrid = (gridContainer, hall, sector) => {
+                gridContainer.innerHTML = '';
+                const cols = sector === 1 ? hall.sector1Cols : hall.sector2Cols;
+                const colOffset = sector === 1 ? 0 : hall.sector1Cols;
+                gridContainer.style.gridTemplateColumns = `repeat(${cols}, minmax(0, 1fr))`;
+
+                for (let r = 0; r < hall.rows; r++) {
+                    for (let c = 0; c < cols; c++) {
+                        const actualCol = c + colOffset;
+                        const seatId = `${hall.id}:${r}-${actualCol}`;
+                        const seat = document.createElement('div');
+                        seat.className = 'seat droppable-seat aspect-square border-2 border-dashed border-gray-300 rounded-md p-1 bg-gray-100 overflow-hidden min-w-[80px] cursor-pointer';
+                        seat.dataset.seatId = seatId;
+
+                        const studentUid = getStudentUidBySeatId(seatId);
+
+                        if (hall.disabledSeats.has(seatId)) {
+                            seat.classList.add('disabled');
+                        } else if (studentUid) {
+                            const student = state.students.find(s => s.uid === studentUid);
+                            seat.classList.add('occupied');
+                            seat.innerHTML = `<div class="student-card w-full h-full flex flex-col justify-center items-center text-center" draggable="true" data-uid="${student.uid}" data-from-seat-id="${seatId}">
+                                    <p class="font-bold text-xs leading-tight">${student.name}</p>
+                                    <p class="text-slate-600 text-[10px]">${student.id}</p>
+                                    <p class="text-sky-700 font-semibold text-[10px] mt-1">${student.class} / ${student.section}</p>
+                                    <div class="flex justify-center mt-1" id="qrcode-${seatId}"></div>
+                                </div>`;
+                            if(hasConflict(seatId)) seat.classList.add('conflict');
+                        }
+                        
+                        seat.addEventListener('click', () => {
+                            if (!getStudentUidBySeatId(seatId)) { 
+                                toggleSeatDisabled(seatId);
+                            }
+                        });
+
+                        gridContainer.appendChild(seat);
+
+                        // NEW: Generate QR Code after appending
+                        if (studentUid) {
+                            const student = state.students.find(s => s.uid === studentUid);
+                            new QRCode(document.getElementById(`qrcode-${seatId}`), {
+                                text: student.id.toString(), // Using exam number for QR
+                                width: 40,
+                                height: 40,
+                                colorDark : "#000000",
+                                colorLight : "#ffffff",
+                                correctLevel : QRCode.CorrectLevel.H
+                            });
+                        }
+                    }
+                }
+            };
+            
+            const toggleSeatDisabled = (seatId) => {
+                const [hallIdStr] = seatId.split(':');
+                const hallId = parseInt(hallIdStr);
+                const hall = state.halls.find(h => h.id === hallId);
+                if (!hall) return;
+
+                if (hall.disabledSeats.has(seatId)) {
+                    hall.disabledSeats.delete(seatId);
+                } else {
+                    hall.disabledSeats.add(seatId);
+                }
+                renderDistributionView();
+            };
+
+            const addDragAndDropListeners = () => {
+                document.querySelectorAll('.student-card').forEach(card => {
+                    card.addEventListener('dragstart', e => {
+                        e.dataTransfer.setData('text/plain', e.target.closest('.student-card').dataset.uid);
+                        e.dataTransfer.setData('fromSeatId', e.target.closest('.student-card').dataset.fromSeatId || '');
+                        setTimeout(() => e.target.classList.add('opacity-50'), 0);
+                    });
+                    card.addEventListener('dragend', e => e.target.classList.remove('opacity-50'));
+                });
+                document.querySelectorAll('.droppable-seat').forEach(seat => {
+                    seat.addEventListener('dragover', e => {
+                        e.preventDefault();
+                        if(!seat.classList.contains('disabled') && !seat.querySelector('.student-card')) seat.classList.add('droppable-hover');
+                    });
+                    seat.addEventListener('dragleave', e => e.target.closest('.droppable-seat').classList.remove('droppable-hover'));
+                    seat.addEventListener('drop', e => {
+                        e.preventDefault();
+                        const seatEl = e.target.closest('.droppable-seat');
+                        seatEl.classList.remove('droppable-hover');
+                        
+                        const studentUid = parseInt(e.dataTransfer.getData('text/plain'), 10);
+                        const fromSeatId = e.dataTransfer.getData('fromSeatId');
+                        const toSeatId = seatEl.dataset.seatId;
+                        
+                        const [hallIdStr] = toSeatId.split(':');
+                        const hall = state.halls.find(h => h.id === parseInt(hallIdStr));
+
+                        if (hall.disabledSeats.has(toSeatId) && !getStudentUidBySeatId(toSeatId)) {
+                            hall.disabledSeats.delete(toSeatId);
+                        }
+
+                        if (fromSeatId) state.seatingChart.delete(fromSeatId);
+                        state.seatingChart.set(toSeatId, studentUid);
+                        renderDistributionView();
+                    });
+                });
+            };
+
+            const getStudentUidBySeatId = (seatId) => state.seatingChart.get(seatId);
+
+            const hasConflict = (seatId) => {
+                const studentUid = getStudentUidBySeatId(seatId);
+                if (!studentUid) return false;
+                const student = state.students.find(s => s.uid === studentUid);
+                if (!student) return false;
+
+                const [hallId, coords] = seatId.split(':');
+                const [r, c] = coords.split('-').map(Number);
+                const neighbors = [
+                    [r, c - 1], [r, c + 1] 
+                ];
+
+                for (const [nr, nc] of neighbors) {
+                    const neighborSeatId = `${hallId}:${nr}-${nc}`;
+                    const neighborUid = getStudentUidBySeatId(neighborSeatId);
+                    if (neighborUid) {
+                        const neighbor = state.students.find(s => s.uid === neighborUid);
+                        if (neighbor && neighbor.class === student.class) return true;
+                    }
+                }
+                return false;
+            };
+            
+            resetDistributionBtn.addEventListener('click', () => { 
+                state.seatingChart.clear();
+                state.columnClassAssignments.clear();
+                renderDistributionView(); 
+            });
+
+            autoDistributeBtn.addEventListener('click', () => {
+                state.seatingChart.clear();
+                const allColumns = [];
+                const sortedHallIds = Array.from(state.selectedHallIds).sort((a, b) => a - b);
+
+                sortedHallIds.forEach(hallId => {
+                    const hall = state.halls.find(h => h.id === hallId);
+                    if (hall) {
+                        for (let c = 0; c < (hall.sector1Cols + hall.sector2Cols); c++) {
+                            const column = [];
+                            for (let r = 0; r < hall.rows; r++) {
+                                const seatId = `${hall.id}:${r}-${c}`;
+                                if (!hall.disabledSeats.has(seatId)) {
+                                    column.push(seatId);
+                                }
+                            }
+                            if (column.length > 0) allColumns.push({ id: `${hall.id}:${c}`, seats: column });
+                        }
+                    }
+                });
+
+                const studentsByClass = state.students.reduce((acc, student) => {
+                    if (!acc[student.class]) acc[student.class] = [];
+                    acc[student.class].push(student);
+                    return acc;
+                }, {});
+                const sortedClasses = Object.keys(studentsByClass).sort((a, b) => a.localeCompare(b, undefined, {numeric: true}));
+                sortedClasses.forEach(className => {
+                    studentsByClass[className].sort((a, b) => parseInt(a.id, 10) - parseInt(b.id, 10));
+                });
+                
+                const placementCounters = sortedClasses.reduce((acc, val) => ({...acc, [val]: 0}), {});
+
+                allColumns.forEach(column => {
+                    const assignedClass = state.columnClassAssignments.get(column.id);
+                    if (assignedClass && studentsByClass[assignedClass]) {
+                        for (const seatId of column.seats) {
+                            const studentIndex = placementCounters[assignedClass];
+                            if (studentIndex < studentsByClass[assignedClass].length) {
+                                const student = studentsByClass[assignedClass][studentIndex];
+                                state.seatingChart.set(seatId, student.uid);
+                                placementCounters[assignedClass]++;
+                            } else {
+                                break;
+                            }
+                        }
+                    }
+                });
+
+                const unassignedColumns = allColumns.filter(c => !state.columnClassAssignments.has(c.id));
+                const remainingStudents = state.students.filter(s => !Array.from(state.seatingChart.values()).includes(s.uid));
+                
+                const remainingStudentsByClass = remainingStudents.reduce((acc, student) => {
+                    if (!acc[student.class]) acc[student.class] = [];
+                    acc[student.class].push(student);
+                    return acc;
+                }, {});
+                
+                const remainingSortedClasses = Object.keys(remainingStudentsByClass).sort((a, b) => a.localeCompare(b, undefined, {numeric: true}));
+                remainingSortedClasses.forEach(className => {
+                    remainingStudentsByClass[className].sort((a, b) => parseInt(a.id, 10) - parseInt(b.id, 10));
+                });
+
+                let colIndex = 0;
+                let classIndex = 0;
+                const remainingPlacementCounters = remainingSortedClasses.reduce((acc, val) => ({...acc, [val]: 0}), {});
+                
+                while(colIndex < unassignedColumns.length) {
+                    const currentColumn = unassignedColumns[colIndex];
+                    const currentClassName = remainingSortedClasses[classIndex];
+                    
+                    if (currentClassName && remainingStudentsByClass[currentClassName]) {
+                        const studentsInClass = remainingStudentsByClass[currentClassName];
+                        if (remainingPlacementCounters[currentClassName] < studentsInClass.length) {
+                            for (const seatId of currentColumn.seats) {
+                                const studentIndex = remainingPlacementCounters[currentClassName];
+                                if (studentIndex < studentsInClass.length) {
+                                    const student = studentsInClass[studentIndex];
+                                    if (!state.seatingChart.has(seatId)) {
+                                         state.seatingChart.set(seatId, student.uid);
+                                         remainingPlacementCounters[currentClassName]++;
+                                    }
+                                } else {
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    
+                    colIndex++;
+                    classIndex = (classIndex + 1) % remainingSortedClasses.length;
+
+                    if (state.seatingChart.size >= state.students.length) {
+                        break;
+                    }
+                }
+
+                renderDistributionView();
+            });
+
+
+            // --- Step 4: Export & Preview ---
+            const renderExportView = () => {
+                exportHeader.querySelector('h2').textContent = `الخطوة 4: تصدير (${state.selectedHallIds.size} قاعات محددة)`;
+            };
+
+            const createPageForPdf = (hall, sector) => {
+                const pageContainer = document.createElement('div');
+                pageContainer.className = 'pdf-page-container';
+                pageContainer.style.fontFamily = "'Cairo', sans-serif";
+
+                const colOffset = sector === 1 ? 0 : hall.sector1Cols;
+                const cols = sector === 1 ? hall.sector1Cols : hall.sector2Cols;
+                
+                const sectorStudents = [];
+                state.seatingChart.forEach((uid, seatId) => {
+                    const [sidHall, sidCoords] = seatId.split(':');
+                    if (parseInt(sidHall) === hall.id) {
+                        const [r, c] = sidCoords.split('-').map(Number);
+                        if (c >= colOffset && c < colOffset + cols) {
+                            const student = state.students.find(s => s.uid === uid);
+                            if(student) sectorStudents.push(student);
+                        }
+                    }
+                });
+
+                const classCounts = sectorStudents.reduce((acc, student) => {
+                    acc[student.class] = (acc[student.class] || 0) + 1;
+                    return acc;
+                }, {});
+                
+                const headerDiv = document.createElement('div');
+                headerDiv.className = 'pdf-header';
+                
+                const bodyDiv = document.createElement('div');
+                bodyDiv.className = 'pdf-body';
+                
+                if(state.backgrounds.use) {
+                    if(state.backgrounds.header) {
+                        const headerImg = document.createElement('img');
+                        headerImg.src = state.backgrounds.header;
+                        headerImg.className = 'pdf-bg-image';
+                        headerImg.style.opacity = state.backgrounds.headerOpacity;
+                        headerDiv.appendChild(headerImg);
+                    }
+                    if(state.backgrounds.body) {
+                        const bodyImg = document.createElement('img');
+                        bodyImg.src = state.backgrounds.body;
+                        bodyImg.className = 'pdf-bg-image';
+                        bodyImg.style.opacity = state.backgrounds.bodyOpacity;
+                        bodyDiv.appendChild(bodyImg);
+                    }
+                }
+                
+                const headerContent = document.createElement('div');
+                headerContent.className = 'pdf-content flex justify-between items-start mb-6';
+                
+                const leftDiv = document.createElement('div');
+                leftDiv.className = 'w-1/4';
+                
+                const centerDiv = document.createElement('div');
+                centerDiv.className = 'w-1/2 text-center';
+                centerDiv.innerHTML = `
+                    <h1 class="text-2xl font-bold">قاعة (${hall.name}) - ${hall.location || ''}</h1>
+                    <h2 class="text-xl font-bold mt-2">${sector === 1 ? hall.sector1Name : hall.sector2Name}</h2>
+                `;
+
+                const rightDiv = document.createElement('div');
+                rightDiv.className = 'w-1/4 text-right space-y-1';
+                Object.entries(classCounts).forEach(([className, count]) => {
+                    const p = document.createElement('p');
+                    p.className = 'text-lg font-bold';
+                    const toArabicNumerals = (num) => String(num).replace(/[0-9]/g, d => '٠١٢٣٤٥٦٧٨٩'[d]);
+                    p.textContent = `${className}: ( ${toArabicNumerals(count)} )`;
+                    rightDiv.appendChild(p);
+                });
+
+                headerContent.appendChild(leftDiv);
+                headerContent.appendChild(centerDiv);
+                headerContent.appendChild(rightDiv);
+
+                headerDiv.appendChild(headerContent);
+                pageContainer.appendChild(headerDiv);
+
+                const sectorGrid = document.createElement('div');
+                sectorGrid.className = 'grid gap-2 pdf-content';
+                sectorGrid.style.gridTemplateColumns = `repeat(${cols}, minmax(0, 1fr))`;
+                
+                for (let r = 0; r < hall.rows; r++) {
+                    for (let c = 0; c < cols; c++) {
+                        const actualCol = c + colOffset;
+                        const seatId = `${hall.id}:${r}-${actualCol}`;
+                        const seat = document.createElement('div');
+                        seat.className = 'aspect-square border-2 border-black rounded-md p-1 bg-transparent overflow-hidden flex flex-col justify-center items-center text-center';
+                        
+                        if (hall.disabledSeats.has(seatId)) {
+                            seat.innerHTML = `<div class="w-full h-full flex justify-center items-center text-3xl text-gray-400">✕</div>`;
+                            seat.style.backgroundColor = '#f3f4f6';
+                        } else {
+                            const studentUid = getStudentUidBySeatId(seatId);
+                            if (studentUid) {
+                                const student = state.students.find(s => s.uid === studentUid);
+                                const safeSeatId = seatId.replace(/:/g, '-');
+                                seat.innerHTML = `<p class="font-black text-lg leading-tight">${student.name}</p>
+                                                <p class="font-bold text-slate-800 text-sm">${student.id}</p>
+                                                <p class="font-bold text-slate-800 text-xs mt-1">${student.class} (${student.section})</p>
+                                                <div class="flex justify-center items-center mt-1" id="pdf-qrcode-${safeSeatId}"></div>`;
+                            }
+                        }
+                        sectorGrid.appendChild(seat);
+                    }
+                }
+                bodyDiv.appendChild(sectorGrid);
+                pageContainer.appendChild(bodyDiv);
+
+                // Generate QR codes inside the created pageContainer
+                for (let r = 0; r < hall.rows; r++) {
+                    for (let c = 0; c < cols; c++) {
+                        const actualCol = c + colOffset;
+                        const seatId = `${hall.id}:${r}-${actualCol}`;
+                        const studentUid = getStudentUidBySeatId(seatId);
+                        if (studentUid) {
+                            const student = state.students.find(s => s.uid === studentUid);
+                            const safeSeatId = seatId.replace(/:/g, '-');
+                            const qrElement = pageContainer.querySelector(`#pdf-qrcode-${safeSeatId}`);
+                            if(qrElement && student) {
+                                 new QRCode(qrElement, {
+                                    text: student.id.toString(),
+                                    width: 48, // Adjusted size for PDF
+                                    height: 48,
+                                    colorDark : "#000000",
+                                    colorLight : "#ffffff",
+                                    correctLevel : QRCode.CorrectLevel.M
+                                });
+                            }
+                        }
+                    }
+                }
+
+                return pageContainer;
+            };
+
+            const handleBgUpload = (e, type) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    state.backgrounds[type] = event.target.result;
+                };
+                reader.readAsDataURL(file);
+            };
+
+            useBackgroundsToggle.addEventListener('change', (e) => {
+                state.backgrounds.use = e.target.checked;
+                backgroundInputs.classList.toggle('hidden', !e.target.checked);
+            });
+            headerBgInput.addEventListener('change', (e) => handleBgUpload(e, 'header'));
+            bodyBgInput.addEventListener('change', (e) => handleBgUpload(e, 'body'));
+            headerOpacitySlider.addEventListener('input', (e) => {
+                state.backgrounds.headerOpacity = e.target.value;
+                headerOpacityValue.textContent = Math.round(e.target.value * 100);
+            });
+            bodyOpacitySlider.addEventListener('input', (e) => {
+                state.backgrounds.bodyOpacity = e.target.value;
+                bodyOpacityValue.textContent = Math.round(e.target.value * 100);
+            });
+
+            previewPdfBtn.addEventListener('click', async () => {
+                if (state.selectedHallIds.size === 0) {
+                    showAlert('الرجاء تحديد قاعة واحدة على الأقل للمعاينة.');
+                    return;
+                }
+                const firstHallId = Array.from(state.selectedHallIds)[0];
+                const hall = state.halls.find(h => h.id === firstHallId);
+                
+                previewContent.innerHTML = '';
+                const pageContent = createPageForPdf(hall, 1);
+                document.body.appendChild(pageContent);
+
+                const canvas = await html2canvas(pageContent, { scale: 1, useCORS: true });
+                canvas.style.width = '100%';
+                canvas.style.height = 'auto';
+                previewContent.appendChild(canvas);
+                
+                document.body.removeChild(pageContent);
+                previewModalBackdrop.classList.remove('hidden');
+                previewModalBackdrop.classList.add('flex');
+            });
+
+            closePreviewModalBtn.addEventListener('click', () => {
+                previewModalBackdrop.classList.add('hidden');
+                previewModalBackdrop.classList.remove('flex');
+            });
+
+            exportChartPdfBtn.addEventListener('click', async () => {
+                if (state.selectedHallIds.size === 0) {
+                    showAlert('الرجاء تحديد قاعة واحدة على الأقل.');
+                    return;
+                }
+                pdfExportStatus.classList.remove('hidden');
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF({ orientation: 'p', unit: 'pt', format: 'a4' });
+                let isFirstPage = true;
+
+                const sortedHallIds = Array.from(state.selectedHallIds).sort((a,b) => a - b);
+
+                for (const hallId of sortedHallIds) {
+                    const hall = state.halls.find(h => h.id === hallId);
+                    if (!hall) continue;
+
+                    for (const sector of [1, 2]) {
+                        if (!isFirstPage) {
+                            pdf.addPage();
+                        }
+                        
+                        const pageContent = createPageForPdf(hall, sector);
+                        document.body.appendChild(pageContent);
+
+                        const canvas = await html2canvas(pageContent, { scale: 2, useCORS: true });
+                        const imgData = canvas.toDataURL('image/png');
+                        
+                        const pdfWidth = pdf.internal.pageSize.getWidth();
+                        const pdfHeight = pdf.internal.pageSize.getHeight();
+                        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+
+                        document.body.removeChild(pageContent);
+                        isFirstPage = false;
+                    }
+                }
+
+                pdf.save(`مخططات الجلوس المجمعة.pdf`);
+                pdfExportStatus.classList.add('hidden');
+            });
+
+            exportListPdfBtn.addEventListener('click', async () => {
+                pdfExportStatus.classList.remove('hidden');
+                const tableContainer = document.createElement('div');
+                tableContainer.className = 'p-10 bg-white';
+                tableContainer.style.fontFamily = "'Cairo', sans-serif";
+                tableContainer.style.width = '210mm';
+                tableContainer.style.position = 'absolute';
+                tableContainer.style.left = '-9999px';
+                tableContainer.style.paddingBottom = '50px'; 
+
+                let tableHtml = `<h1 class="text-2xl font-bold text-center mb-4">قائمة الحضور المجمعة</h1>
+                                <table class="w-full text-sm text-right" style="border-collapse: collapse;">
+                                    <thead class="text-xs text-gray-700 uppercase bg-gray-200">
+                                        <tr>
+                                            <th scope="col" class="px-4 py-3 border border-gray-300">القاعة والمقعد</th>
+                                            <th scope="col" class="px-4 py-3 border border-gray-300">اسم الطالب</th>
+                                            <th scope="col" class="px-4 py-3 border border-gray-300">الرقم الامتحاني</th>
+                                            <th scope="col" class="px-4 py-3 border border-gray-300">الصف</th>
+                                            <th scope="col" class="px-4 py-3 border border-gray-300">الشعبة</th>
+                                            <th scope="col" class="px-4 py-3 border border-gray-300" style="width: 15%;">التوقيع</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>`;
+                
+                const tableData = [];
+                state.seatingChart.forEach((studentUid, seatId) => {
+                    const student = state.students.find(s => s.uid === studentUid);
+                    if(student) {
+                        const [hallId, coords] = seatId.split(':');
+                        const hall = state.halls.find(h => h.id === parseInt(hallId));
+                        const [r, c] = coords.split('-').map(Number);
+                        tableData.push({
+                            seat: `${hall.name} | R${r+1}-C${c+1}`,
+                            name: student.name,
+                            id: student.id,
+                            class: student.class,
+                            section: student.section
+                        });
+                    }
+                });
+                tableData.sort((a,b) => parseInt(a.id) - parseInt(b.id)); 
+                
+                tableData.forEach(row => {
+                    tableHtml += `<tr class="bg-white border-b">
+                                    <td class="px-4 py-2 font-medium text-gray-900 border border-gray-300">${row.seat}</td>
+                                    <td class="px-4 py-2 border border-gray-300">${row.name}</td>
+                                    <td class="px-4 py-2 border border-gray-300">${row.id}</td>
+                                    <td class="px-4 py-2 border border-gray-300">${row.class}</td>
+                                    <td class="px-4 py-2 border border-gray-300">${row.section}</td>
+                                    <td class="px-4 py-2 border border-gray-300"></td>
+                                  </tr>`;
+                });
+
+                tableHtml += `</tbody></table>`;
+                tableContainer.innerHTML = tableHtml;
+                document.body.appendChild(tableContainer);
+
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF({ orientation: 'p', unit: 'pt', format: 'a4' });
+                const canvas = await html2canvas(tableContainer, {scale: 2});
+                const imgData = canvas.toDataURL('image/png');
+                
+                const pdfWidth = pdf.internal.pageSize.getWidth();
+                const imgProps= pdf.getImageProperties(imgData);
+                const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+                
+                let heightLeft = pdfHeight;
+                let position = 0;
+                
+                pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, pdfHeight);
+                heightLeft -= pdf.internal.pageSize.getHeight();
+
+                while (heightLeft > 0) {
+                  position = heightLeft - pdfHeight;
+                  pdf.addPage();
+                  pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, pdfHeight);
+                  heightLeft -= pdf.internal.pageSize.getHeight();
+                }
+
+                document.body.removeChild(tableContainer);
+                pdf.save(`قائمة الحضور المجمعة.pdf`);
+                pdfExportStatus.classList.add('hidden');
+            });
+
+            // --- Step 5: Absentee Scanning (NEW) ---
+            const renderAbsenceView = () => {
+                absentCountSpan.textContent = state.absentStudents.length;
+                exportAbsentPdfBtn.disabled = state.absentStudents.length === 0;
+
+                if (state.absentStudents.length === 0) {
+                    absentListContainer.innerHTML = `<p class="text-slate-400 text-center mt-8">لم يتم تسجيل أي غياب بعد.</p>`;
+                    return;
+                }
+                absentListContainer.innerHTML = state.absentStudents.map(s => {
+                    const studentSeat = [...state.seatingChart.entries()].find(([key, val]) => val === s.uid);
+                    let seatInfo = 'غير موزّع';
+                    if(studentSeat) {
+                        const [hallId, coords] = studentSeat[0].split(':');
+                        const hall = state.halls.find(h => h.id === parseInt(hallId));
+                        seatInfo = `${hall.name} (${coords})`;
+                    }
+
+                    return `
+                    <div class="p-2 border rounded-md bg-white flex justify-between items-center text-sm">
+                        <div><p class="font-bold">${s.name} (${s.id})</p><p class="text-slate-500">${s.class} - ${seatInfo}</p></div>
+                        <button class="text-red-500 hover:text-red-700 font-bold p-1" onclick="window.removeAbsentStudent(${s.uid})">✕</button>
+                    </div>`
+                }).join('');
+            };
+            
+            window.removeAbsentStudent = (uid) => {
+                state.absentStudents = state.absentStudents.filter(s => s.uid !== uid);
+                renderAbsenceView();
+            };
+
+            const onScanSuccess = (decodedText, decodedResult) => {
+                const examNumber = decodedText;
+                
+                if (state.absentStudents.some(s => s.id === examNumber)) {
+                    showScanFeedback(`الطالب بالرقم ${examNumber} مسجل كغائب بالفعل.`, 'fail');
+                    return;
+                }
+
+                const student = state.students.find(s => s.id === examNumber);
+
+                if (student) {
+                    state.absentStudents.push(student);
+                    renderAbsenceView();
+                    showScanFeedback(`تم تسجيل غياب: ${student.name} (${student.id})`, 'success');
+                } else {
+                    showScanFeedback(`الرقم الامتحاني ${examNumber} غير موجود في قوائم الطلاب.`, 'fail');
+                }
+            };
+
+            const onScanFailure = (error) => { /* Ignore */ };
+
+            const showScanFeedback = (message, type) => {
+                scanFeedbackDiv.innerHTML = `<span class="${type}">${message}</span>`;
+                setTimeout(() => { scanFeedbackDiv.innerHTML = ''; }, 3000);
+            };
+
+            startScanBtn.addEventListener('click', () => {
+                html5QrCode = new Html5Qrcode("reader");
+                startScanBtn.classList.add('hidden');
+                stopScanBtn.classList.remove('hidden');
+                scanFeedbackDiv.innerHTML = '';
+                
+                const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+                html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess, onScanFailure)
+                .catch(err => {
+                    showAlert(`خطأ في تشغيل الكاميرا: ${err}`);
+                    stopScanBtn.click();
+                });
+            });
+
+            stopScanBtn.addEventListener('click', () => {
+                if (html5QrCode && html5QrCode.isScanning) {
+                    html5QrCode.stop().then(() => {
+                        startScanBtn.classList.remove('hidden');
+                        stopScanBtn.classList.add('hidden');
+                    }).catch(err => console.error("Failed to stop QR scanner.", err));
+                }
+            });
+
+            exportAbsentPdfBtn.addEventListener('click', () => {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                
+                doc.setR2L(true);
+                doc.setFont('helvetica', 'bold');
+                doc.text("تقرير غياب الطلبة", 105, 15, { align: 'center' });
+                
+                const tableColumn = ["القطاع", "القاعة", "الصف", "الرقم الامتحاني", "اسم الطالب"];
+                const tableRows = [];
+
+                state.absentStudents.forEach(student => {
+                    const studentSeat = [...state.seatingChart.entries()].find(([key, val]) => val === student.uid);
+                    let hallName = 'N/A';
+                    let sectorName = 'N/A';
+                    if(studentSeat) {
+                        const [hallId, coords] = studentSeat[0].split(':');
+                        const [r, c] = coords.split('-').map(Number);
+                        const hall = state.halls.find(h => h.id === parseInt(hallId));
+                        if(hall) {
+                            hallName = hall.name;
+                            sectorName = c < hall.sector1Cols ? hall.sector1Name : hall.sector2Name;
+                        }
+                    }
+
+                    const studentData = [
+                        sectorName,
+                        hallName,
+                        student.class,
+                        student.id,
+                        student.name,
+                    ];
+                    tableRows.push(studentData);
+                });
+
+                doc.autoTable({
+                    head: [tableColumn],
+                    body: tableRows,
+                    startY: 25,
+                    styles: { halign: 'center', font: 'helvetica' },
+                    headStyles: { fillColor: [44, 62, 80], textColor: 255, fontStyle: 'bold' },
+                    alternateRowStyles: { fillColor: [236, 240, 241] },
+                    didParseCell: function (data) {
+                        if (data.cell.section === 'body' || data.cell.section === 'head') {
+                           data.cell.styles.halign = 'right';
+                        }
+                    }
+                });
+
+                doc.save('تقرير_الغياب.pdf');
+            });
+
+
+            // --- Navigation ---
+            const navigate = (direction) => {
+                if (direction === 'next' && state.currentStep === 1 && state.selectedHallIds.size === 0) {
+                    showAlert('الرجاء تحديد قاعة واحدة على الأقل للمتابعة.');
+                    return;
+                }
+                const newStep = state.currentStep + (direction === 'next' ? 1 : -1);
+                if (newStep > 0 && newStep <= steps.length) {
+                    // If moving away from step 5, stop the scanner
+                    if(state.currentStep === 5 && html5QrCode && html5QrCode.isScanning) {
+                        stopScanBtn.click();
+                    }
+                    state.currentStep = newStep;
+                    updateUI();
+                }
+            };
+            
+            const showAlert = (message) => {
+                const alertBox = document.getElementById('custom-alert');
+                const alertMessage = document.getElementById('alert-message');
+                alertMessage.textContent = message;
+                alertBox.classList.remove('hidden');
+                setTimeout(() => alertBox.classList.add('hidden'), 3000);
+            };
+
+            nextBtn.addEventListener('click', () => navigate('next'));
+            prevBtn.addEventListener('click', () => navigate('prev'));
+
+            // Initial Load
+            updateUI();
+        });
+    </script>
+</body>
+</html>
