@@ -98,11 +98,10 @@
 
     <div class="container mx-auto p-4 md:p-8">
         
-        <header class="text-center mb-8 border-b pb-4">
+        <header class="text-center mb-8 border-b pb-4 relative">
             <h1 class="text-3xl md:text-4xl font-bold text-sky-700">نظام إدارة مخططات الجلوس الامتحانية</h1>
             <p class="text-slate-500 mt-2">أداة ذكية لتوزيع الطلاب في القاعات الامتحانية بسهولة وكفاءة</p>
-  <p class="text-3xl md:text-3xl font-bold text-orange-600">اعداد الاستاذ : حسين جهاد رضا </p>
-<p class="text-2xl md:text-2xl font-bold text-green-500">بأشراف الاستاذ تحسين هارون مهدي </p>
+            <button id="clear-data-btn" class="absolute top-0 left-0 bg-red-100 text-red-700 text-xs font-bold py-1 px-3 rounded-md hover:bg-red-200 transition">مسح كل البيانات المحفوظة</button>
         </header>
 
         <div id="stepper" class="flex justify-center items-center mb-10 space-x-4 md:space-x-8 rtl:space-x-reverse">
@@ -331,10 +330,10 @@
                     headerOpacity: 1,
                     bodyOpacity: 1
                 },
-                absentStudents: [], // NEW: For absentees
+                absentStudents: [],
             };
             
-            let html5QrCode; // NEW: QR Code scanner instance
+            let html5QrCode;
 
             // --- DOM Elements ---
             const stepperContainer = document.getElementById('stepper');
@@ -381,8 +380,9 @@
             const previewModalBackdrop = document.getElementById('preview-modal-backdrop');
             const previewContent = document.getElementById('preview-content');
             const closePreviewModalBtn = document.getElementById('close-preview-modal-btn');
+            const clearDataBtn = document.getElementById('clear-data-btn');
 
-            // NEW: Step 5 DOM Elements
+            // Step 5 DOM Elements
             const startScanBtn = document.getElementById('start-scan-btn');
             const stopScanBtn = document.getElementById('stop-scan-btn');
             const readerDiv = document.getElementById('reader');
@@ -397,8 +397,54 @@
                 { id: 2, name: 'بيانات الطلاب' },
                 { id: 3, name: 'التوزيع' },
                 { id: 4, name: 'التصدير' },
-                { id: 5, name: 'تسجيل الغياب' } // NEW Step
+                { id: 5, name: 'تسجيل الغياب' }
             ];
+
+            // --- Persistence Logic ---
+            const saveStateToLocalStorage = () => {
+                try {
+                    const stateToSave = {
+                        ...state,
+                        selectedHallIds: [...state.selectedHallIds],
+                        seatingChart: [...state.seatingChart],
+                        columnClassAssignments: [...state.columnClassAssignments],
+                        halls: state.halls.map(h => ({ ...h, disabledSeats: [...h.disabledSeats] })),
+                        backgrounds: { ...state.backgrounds, header: null, body: null } // Don't save image data
+                    };
+                    localStorage.setItem('seatingChartState', JSON.stringify(stateToSave));
+                } catch (e) {
+                    console.error("Failed to save state:", e);
+                    showAlert("خطأ: لم يتم حفظ البيانات. قد تكون سعة التخزين ممتلئة.");
+                }
+            };
+
+            const loadStateFromLocalStorage = () => {
+                const savedStateJSON = localStorage.getItem('seatingChartState');
+                if (savedStateJSON) {
+                    try {
+                        const savedState = JSON.parse(savedStateJSON);
+                        state = {
+                            ...state, // Keep default non-serializable parts like functions
+                            ...savedState,
+                            selectedHallIds: new Set(savedState.selectedHallIds || []),
+                            seatingChart: new Map(savedState.seatingChart || []),
+                            columnClassAssignments: new Map(savedState.columnClassAssignments || []),
+                            halls: savedState.halls.map(h => ({ ...h, disabledSeats: new Set(h.disabledSeats || []) })),
+                        };
+                    } catch (e) {
+                        console.error("Failed to load state:", e);
+                        localStorage.removeItem('seatingChartState'); // Clear corrupted data
+                    }
+                }
+            };
+
+            clearDataBtn.addEventListener('click', () => {
+                if (confirm("هل أنت متأكد من رغبتك في مسح جميع القاعات والطلاب والمخططات المحفوظة؟ لا يمكن التراجع عن هذا الإجراء.")) {
+                    localStorage.removeItem('seatingChartState');
+                    window.location.reload();
+                }
+            });
+
 
             // --- Core Logic ---
             const updateUI = () => {
@@ -408,7 +454,7 @@
 
                 prevBtn.disabled = state.currentStep === 1;
                 nextBtn.disabled = (state.currentStep === 1 && state.selectedHallIds.size === 0) || (state.currentStep === steps.length);
-                nextBtn.textContent = 'التالي'; // Always "Next"
+                nextBtn.textContent = 'التالي';
                 nextBtn.classList.toggle('hidden', state.currentStep === steps.length);
 
 
@@ -416,7 +462,7 @@
                 if (state.currentStep === 2) renderStudentList();
                 if (state.currentStep === 3) renderDistributionView();
                 if (state.currentStep === 4) renderExportView();
-                if (state.currentStep === 5) renderAbsenceView(); // NEW
+                if (state.currentStep === 5) renderAbsenceView();
             };
 
             const renderStepper = () => {
@@ -440,18 +486,30 @@
             };
             
             // --- Step 1: Hall Management ---
+            const checkIfSeatingChartExists = (hallId) => {
+                for (const key of state.seatingChart.keys()) {
+                    if (key.startsWith(hallId + ':')) {
+                        return true;
+                    }
+                }
+                return false;
+            };
+
             const renderHallsList = () => {
                 if(state.halls.length === 0) {
                     hallsListContainer.innerHTML = `<p class="text-slate-400 text-center col-span-full mt-8">لم يتم إنشاء أي قاعات بعد. انقر على "إنشاء قاعة جديدة" للبدء.</p>`;
                 } else {
                     hallsListContainer.innerHTML = state.halls.map(hall => {
                         const isSelected = state.selectedHallIds.has(hall.id);
+                        const hasChart = checkIfSeatingChartExists(hall.id);
                         return `
-                        <div class="border rounded-lg p-4 shadow transition ${isSelected ? 'border-sky-500 ring-2 ring-sky-200' : 'bg-white'}">
-                            <h3 class="font-bold text-lg">${hall.name}</h3>
-                            <p class="text-sm text-slate-600">${hall.location || 'لم يحدد الموقع'}</p>
-                            <p class="text-sm text-slate-500">الصفوف: ${hall.rows} | القطاعات: ${hall.sector1Name}, ${hall.sector2Name}</p>
-                            <p class="text-sm text-slate-500">إجمالي المقاعد: ${hall.rows * (hall.sector1Cols + hall.sector2Cols)}</p>
+                        <div class="border rounded-lg p-4 shadow transition flex flex-col ${isSelected ? 'border-sky-500 ring-2 ring-sky-200' : 'bg-white'}">
+                            <div class="flex-grow">
+                                <h3 class="font-bold text-lg">${hall.name}</h3>
+                                <p class="text-sm text-slate-600">${hall.location || 'لم يحدد الموقع'}</p>
+                                <p class="text-sm text-slate-500">الصفوف: ${hall.rows} | القطاعات: ${hall.sector1Name}, ${hall.sector2Name}</p>
+                                <p class="text-sm text-slate-500">إجمالي المقاعد: ${hall.rows * (hall.sector1Cols + hall.sector2Cols)}</p>
+                            </div>
                             <div class="flex gap-2 mt-4 pt-4 border-t">
                                 <button onclick="window.toggleHallSelection(${hall.id})" class="flex-1 text-sm ${isSelected ? 'bg-red-500' : 'bg-green-500'} text-white font-semibold py-1 px-2 rounded hover:bg-green-600">
                                     ${isSelected ? 'إلغاء التحديد' : 'تحديد'}
@@ -460,6 +518,13 @@
                                 <button onclick="window.copyHall(${hall.id})" class="text-sm bg-blue-400 text-white font-semibold py-1 px-2 rounded hover:bg-blue-500">نسخ</button>
                                 <button onclick="window.deleteHall(${hall.id})" class="text-sm bg-red-500 text-white font-semibold py-1 px-2 rounded hover:bg-red-600">حذف</button>
                             </div>
+                            ${hasChart ? `
+                            <div class="mt-2 pt-2 border-t border-dashed">
+                                <button onclick="window.goToAbsenceScanning(${hall.id})" class="w-full text-sm bg-teal-500 text-white font-bold py-2 px-2 rounded hover:bg-teal-600 transition">
+                                    تسجيل الغياب
+                                </button>
+                            </div>
+                            ` : ''}
                         </div>
                     `}).join('');
                 }
@@ -530,6 +595,7 @@
                 }
                 
                 toggleHallModal(false);
+                saveStateToLocalStorage();
                 updateUI();
             });
 
@@ -539,7 +605,7 @@
                 } else {
                     state.selectedHallIds.add(id);
                 }
-                state.seatingChart.clear();
+                // Don't clear seating chart on selection change
                 updateUI();
             };
             window.editHall = (id) => { const hall = state.halls.find(h => h.id === id); if(hall) toggleHallModal(true, hall); };
@@ -589,14 +655,30 @@
                 };
 
                 state.halls.push(newHall);
+                saveStateToLocalStorage();
                 updateUI();
             };
             window.deleteHall = (id) => {
-                if (confirm('هل أنت متأكد من حذف هذه القاعة؟')) {
+                if (confirm('هل أنت متأكد من حذف هذه القاعة؟ سيتم حذف مخطط الجلوس المرتبط بها أيضًا.')) {
                     state.halls = state.halls.filter(h => h.id !== id);
                     state.selectedHallIds.delete(id);
+                    // Also remove associated seats from seating chart
+                    const newSeatingChart = new Map();
+                    state.seatingChart.forEach((value, key) => {
+                        if (!key.startsWith(id + ':')) {
+                            newSeatingChart.set(key, value);
+                        }
+                    });
+                    state.seatingChart = newSeatingChart;
+                    saveStateToLocalStorage();
                     updateUI();
                 }
+            };
+            window.goToAbsenceScanning = (hallId) => {
+                state.selectedHallIds.clear();
+                state.selectedHallIds.add(hallId);
+                state.currentStep = 5;
+                updateUI();
             };
 
             // --- Step 2: Student Management ---
@@ -612,7 +694,26 @@
                         <button class="text-red-500 hover:text-red-700 font-bold p-1" onclick="window.removeStudent(${s.uid})">✕</button>
                     </div>`).join('');
             };
-            window.removeStudent = (uid) => { state.students = state.students.filter(s => s.uid !== uid); renderStudentList(); };
+            window.removeStudent = (uid) => { 
+                state.students = state.students.filter(s => s.uid !== uid); 
+                // Also remove student from seating chart
+                const newSeatingChart = new Map();
+                state.seatingChart.forEach((value, key) => {
+                    if (value !== uid) {
+                        newSeatingChart.set(key, value);
+                    }
+                });
+                state.seatingChart = newSeatingChart;
+                saveStateToLocalStorage();
+                renderStudentList(); 
+            };
+            const processNewStudents = (newStudents) => {
+                const uniqueNewStudents = newStudents.filter(ns => !state.students.some(s => s.id === ns.id));
+                state.students = [...state.students, ...uniqueNewStudents];
+                state.students.sort((a,b) => a.name.localeCompare(b.name));
+                saveStateToLocalStorage();
+                renderStudentList();
+            };
             importTextBtn.addEventListener('click', () => {
                 const lines = studentsTextInput.value.trim().split('\n');
                 const newStudents = lines.map((line, index) => {
@@ -620,9 +721,8 @@
                     if (parts.length < 4) return null;
                     return { uid: Date.now() + index, name: parts[0], id: parts[1], class: parts[2], section: parts[3] };
                 }).filter(Boolean);
-                state.students = [...state.students, ...newStudents];
+                processNewStudents(newStudents);
                 studentsTextInput.value = '';
-                renderStudentList();
             });
             excelFileInput.addEventListener('change', (e) => {
                 const file = e.target.files[0];
@@ -635,10 +735,9 @@
                     const json = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
                     const newStudents = json.slice(1).map((row, index) => {
                         if(row.length < 4) return null;
-                        return { uid: Date.now() + index, name: row[0], id: row[1], class: row[2], section: row[3] };
+                        return { uid: Date.now() + index, name: String(row[0]), id: String(row[1]), class: String(row[2]), section: String(row[3]) };
                     }).filter(Boolean);
-                    state.students = [...state.students, ...newStudents];
-                    renderStudentList();
+                    processNewStudents(newStudents);
                 };
                 reader.readAsArrayBuffer(file);
             });
@@ -712,6 +811,7 @@
                         } else {
                             state.columnClassAssignments.delete(columnId);
                         }
+                        saveStateToLocalStorage();
                     });
                     container.appendChild(select);
                 }
@@ -742,7 +842,7 @@
                                     <p class="font-bold text-xs leading-tight">${student.name}</p>
                                     <p class="text-slate-600 text-[10px]">${student.id}</p>
                                     <p class="text-sky-700 font-semibold text-[10px] mt-1">${student.class} / ${student.section}</p>
-                                    <div class="flex justify-center mt-1" id="qrcode-${seatId}"></div>
+                                    <div class="flex justify-center mt-1" id="qrcode-${seatId.replace(/:/g, '-')}"></div>
                                 </div>`;
                             if(hasConflict(seatId)) seat.classList.add('conflict');
                         }
@@ -755,11 +855,10 @@
 
                         gridContainer.appendChild(seat);
 
-                        // NEW: Generate QR Code after appending
                         if (studentUid) {
                             const student = state.students.find(s => s.uid === studentUid);
-                            new QRCode(document.getElementById(`qrcode-${seatId}`), {
-                                text: student.id.toString(), // Using exam number for QR
+                            new QRCode(document.getElementById(`qrcode-${seatId.replace(/:/g, '-')}`), {
+                                text: student.id.toString(),
                                 width: 40,
                                 height: 40,
                                 colorDark : "#000000",
@@ -782,6 +881,7 @@
                 } else {
                     hall.disabledSeats.add(seatId);
                 }
+                saveStateToLocalStorage();
                 renderDistributionView();
             };
 
@@ -818,6 +918,7 @@
 
                         if (fromSeatId) state.seatingChart.delete(fromSeatId);
                         state.seatingChart.set(toSeatId, studentUid);
+                        saveStateToLocalStorage();
                         renderDistributionView();
                     });
                 });
@@ -851,6 +952,7 @@
             resetDistributionBtn.addEventListener('click', () => { 
                 state.seatingChart.clear();
                 state.columnClassAssignments.clear();
+                saveStateToLocalStorage();
                 renderDistributionView(); 
             });
 
@@ -950,7 +1052,7 @@
                         break;
                     }
                 }
-
+                saveStateToLocalStorage();
                 renderDistributionView();
             });
 
@@ -1069,7 +1171,6 @@
                 bodyDiv.appendChild(sectorGrid);
                 pageContainer.appendChild(bodyDiv);
 
-                // Generate QR codes inside the created pageContainer
                 for (let r = 0; r < hall.rows; r++) {
                     for (let c = 0; c < cols; c++) {
                         const actualCol = c + colOffset;
@@ -1082,7 +1183,7 @@
                             if(qrElement && student) {
                                  new QRCode(qrElement, {
                                     text: student.id.toString(),
-                                    width: 48, // Adjusted size for PDF
+                                    width: 48,
                                     height: 48,
                                     colorDark : "#000000",
                                     colorLight : "#ffffff",
@@ -1148,6 +1249,27 @@
                 previewModalBackdrop.classList.remove('flex');
             });
 
+            const triggerPdfDownload = (pdf, filename) => {
+                try {
+                    const blob = pdf.output('blob');
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = filename;
+                    document.body.appendChild(link);
+                    link.click();
+                    
+                    setTimeout(() => {
+                        document.body.removeChild(link);
+                        window.URL.revokeObjectURL(url);
+                    }, 100);
+
+                } catch (e) {
+                    console.error("Error triggering PDF download:", e);
+                    showAlert("حدث خطأ أثناء محاولة تصدير الملف.");
+                }
+            };
+
             exportChartPdfBtn.addEventListener('click', async () => {
                 if (state.selectedHallIds.size === 0) {
                     showAlert('الرجاء تحديد قاعة واحدة على الأقل.');
@@ -1184,7 +1306,7 @@
                     }
                 }
 
-                pdf.save(`مخططات الجلوس المجمعة.pdf`);
+                triggerPdfDownload(pdf, `مخططات الجلوس المجمعة.pdf`);
                 pdfExportStatus.classList.add('hidden');
             });
 
@@ -1268,7 +1390,7 @@
                 }
 
                 document.body.removeChild(tableContainer);
-                pdf.save(`قائمة الحضور المجمعة.pdf`);
+                triggerPdfDownload(pdf, `قائمة الحضور المجمعة.pdf`);
                 pdfExportStatus.classList.add('hidden');
             });
 
@@ -1401,7 +1523,7 @@
                     }
                 });
 
-                doc.save('تقرير_الغياب.pdf');
+                triggerPdfDownload(doc, 'تقرير_الغياب.pdf');
             });
 
 
@@ -1413,7 +1535,6 @@
                 }
                 const newStep = state.currentStep + (direction === 'next' ? 1 : -1);
                 if (newStep > 0 && newStep <= steps.length) {
-                    // If moving away from step 5, stop the scanner
                     if(state.currentStep === 5 && html5QrCode && html5QrCode.isScanning) {
                         stopScanBtn.click();
                     }
@@ -1434,6 +1555,7 @@
             prevBtn.addEventListener('click', () => navigate('prev'));
 
             // Initial Load
+            loadStateFromLocalStorage();
             updateUI();
         });
     </script>
