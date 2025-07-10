@@ -12,11 +12,10 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
-    <!-- مكتبات QR Code المضافة -->
+    <!-- مكتبات QR Code -->
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-
-
+    
     <style>
         body { font-family: 'Cairo', sans-serif; }
         .step-section { display: none; }
@@ -96,171 +95,189 @@
 </head>
 <body class="bg-stone-50 text-slate-800">
 
-    <div class="container mx-auto p-4 md:p-8">
-        
-        <header class="text-center mb-8 border-b pb-4 relative">
-            <h1 class="text-3xl md:text-4xl font-bold text-sky-700">نظام إدارة مخططات الجلوس الامتحانية</h1>
-            <p class="text-slate-500 mt-2">أداة ذكية لتوزيع الطلاب في القاعات الامتحانية بسهولة وكفاءة</p>
-            <button id="clear-data-btn" class="absolute top-0 left-0 bg-red-100 text-red-700 text-xs font-bold py-1 px-3 rounded-md hover:bg-red-200 transition">مسح كل البيانات المحفوظة</button>
-        </header>
-
-        <div id="stepper" class="flex justify-center items-center mb-10 space-x-4 md:space-x-8 rtl:space-x-reverse">
+    <!-- Login Screen -->
+    <div id="login-screen" class="fixed inset-0 bg-stone-100 z-50 flex flex-col items-center justify-center">
+        <div class="text-center p-8 bg-white rounded-xl shadow-lg">
+            <h1 class="text-3xl font-bold text-sky-700 mb-2">نظام إدارة مخططات الجلوس</h1>
+            <p class="text-slate-500 mb-6">الرجاء تسجيل الدخول للمتابعة</p>
+            <button id="login-btn" class="bg-sky-600 text-white font-bold py-3 px-8 rounded-md hover:bg-sky-700 transition flex items-center gap-3">
+                <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"></path><path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"></path><path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"></path><path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.574l6.19,5.238C42.022,35.244,44,30.036,44,24C44,22.659,43.862,21.35,43.611,20.083z"></path></svg>
+                <span>تسجيل الدخول باستخدام Google</span>
+            </button>
         </div>
+    </div>
 
-        <main class="bg-white rounded-xl shadow-lg p-6 md:p-8 min-h-[500px]">
+    <!-- Main App Container -->
+    <div id="app-container" class="hidden">
+        <div class="container mx-auto p-4 md:p-8">
             
-            <section id="step-1" class="step-section active">
-                <div class="text-center mb-8">
-                    <h2 class="text-2xl font-bold">الخطوة 1: إدارة القاعات الامتحانية</h2>
-                    <p class="text-slate-500 mt-1">قم بإنشاء قاعة جديدة أو حدد قاعة أو أكثر من القائمة للعمل عليها.</p>
+            <header class="text-center mb-8 border-b pb-4 relative">
+                <h1 class="text-3xl md:text-4xl font-bold text-sky-700">نظام إدارة مخططات الجلوس الامتحانية</h1>
+                <p class="text-slate-500 mt-2">أداة ذكية لتوزيع الطلاب في القاعات الامتحانية بسهولة وكفاءة</p>
+                <div id="auth-info" class="absolute top-0 left-0 text-left">
+                    <div id="welcome-message" class="text-sm text-slate-600"></div>
+                    <button id="clear-data-btn" class="text-red-700 text-xs font-bold hover:underline">مسح بياناتي</button>
                 </div>
-                <div class="mb-6 text-center">
-                    <button id="show-hall-modal-btn" class="bg-sky-600 text-white font-bold py-2 px-6 rounded-md hover:bg-sky-700 transition">
-                        + إنشاء قاعة جديدة
-                    </button>
-                </div>
-                <div id="halls-list-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                </div>
-            </section>
+            </header>
 
-            <section id="step-2" class="step-section">
-                <div class="text-center mb-8">
-                    <h2 class="text-2xl font-bold">الخطوة 2: إدارة بيانات الطلاب</h2>
-                    <p class="text-slate-500 mt-1">قم باستيراد بيانات الطلاب من ملف Excel أو قم بلصقها كنص.</p>
-                </div>
-                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <div>
-                        <div class="flex border-b mb-4">
-                            <button data-tab="paste-tab" class="tab-btn flex-1 py-2 font-semibold border-b-4 border-sky-600 text-sky-600">لصق نص</button>
-                            <button data-tab="upload-tab" class="tab-btn flex-1 py-2 font-semibold text-gray-500">رفع ملف Excel</button>
-                        </div>
-
-                        <div id="paste-tab" class="tab-content">
-                            <h3 class="font-bold mb-2">لصق قائمة الطلاب:</h3>
-                            <p class="text-sm text-slate-500 mb-2">الصق البيانات هنا. يجب أن يكون كل طالب في سطر جديد بالتنسيق: <br><code class="bg-gray-200 p-1 rounded">الاسم، الرقم الامتحاني، الصف، الشعبة</code></p>
-                            <textarea id="students-text" rows="8" class="w-full p-2 border rounded-md" placeholder="مثال:&#10;أحمد علي، 1201، العاشر، أ&#10;فاطمة محمد، 1202، العاشر، ب"></textarea>
-                            <button id="import-text-btn" class="mt-2 w-full bg-sky-600 text-white font-bold py-2 px-4 rounded-md hover:bg-sky-700 transition">استيراد من النص</button>
-                        </div>
-
-                        <div id="upload-tab" class="tab-content hidden">
-                             <h3 class="font-bold mb-2">رفع ملف Excel (.xlsx):</h3>
-                             <p class="text-sm text-slate-500 mb-2">يجب أن يحتوي الملف على أعمدة بالترتيب: <br><code class="bg-gray-200 p-1 rounded">الاسم، الرقم الامتحاني، الصف، الشعبة</code></p>
-                             <input type="file" id="excel-file" accept=".xlsx, .xls" class="w-full p-2 border rounded-md file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-sky-50 file:text-sky-700 hover:file:bg-sky-100"/>
-                        </div>
-                    </div>
-                    
-                    <div class="bg-gray-50 p-4 rounded-lg border">
-                        <h3 class="font-bold text-lg mb-4">قائمة الطلاب (<span id="student-count">0</span>)</h3>
-                        <div id="student-list" class="h-64 overflow-y-auto space-y-2 pr-2">
-                           <p class="text-slate-400 text-center mt-8">لم يتم إضافة أي طلاب بعد.</p>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <section id="step-3" class="step-section">
-                <div id="distribution-header" class="text-center mb-8">
-                     <h2 class="text-2xl font-bold">الخطوة 3: التوزيع والمراجعة</h2>
-                    <p class="text-slate-500 mt-1">انقر على المقاعد الفارغة لتعطيلها. ثم قم بالتوزيع التلقائي أو اليدوي.</p>
-                </div>
-                <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                    <div class="lg:col-span-1 bg-gray-50 p-4 rounded-lg border">
-                        <h3 class="font-bold text-lg mb-4">الطلاب غير الموزعين</h3>
-                        <div id="unassigned-students" class="h-96 overflow-y-auto space-y-2 p-1"></div>
-                        <button id="auto-distribute-btn" class="mt-4 w-full bg-emerald-600 text-white font-bold py-2 px-4 rounded-md hover:bg-emerald-700 transition">توزيع تلقائي</button>
-                        <button id="reset-distribution-btn" class="mt-2 w-full bg-red-600 text-white font-bold py-2 px-4 rounded-md hover:bg-red-700 transition">إعادة تعيين التوزيع</button>
-                    </div>
-
-                    <div id="multi-hall-distribution-container" class="lg:col-span-3 space-y-8">
-                    </div>
-                </div>
-            </section>
-
-            <section id="step-4" class="step-section">
-                <div id="export-header" class="text-center mb-8">
-                    <h2 class="text-2xl font-bold">الخطوة 4: التصدير والطباعة</h2>
-                    <p class="text-slate-500 mt-1">اختر إعدادات التصدير ثم قم بمعاينة أو تصدير الملفات.</p>
-                </div>
-                <div class="max-w-4xl mx-auto">
-                    <div class="bg-gray-50 p-6 rounded-lg border mb-6 space-y-4">
-                        <label class="flex items-center justify-center cursor-pointer">
-                            <span class="font-semibold ml-4">استخدام خلفيات مخصصة:</span>
-                            <div class="relative">
-                                <input type="checkbox" id="use-backgrounds-toggle" class="sr-only peer">
-                                <div class="block bg-gray-300 w-14 h-8 rounded-full peer-checked:bg-sky-600"></div>
-                                <div class="dot absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition-transform transform peer-checked:translate-x-full"></div>
-                            </div>
-                        </label>
-                        <div id="background-inputs" class="hidden grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t">
-                            <div class="flex-1">
-                                <label for="header-bg-input" class="block font-semibold mb-1">خلفية العنوان:</label>
-                                <input type="file" id="header-bg-input" accept="image/*" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-sky-50 file:text-sky-700 hover:file:bg-sky-100"/>
-                            </div>
-                            <div class="flex-1">
-                                <label for="body-bg-input" class="block font-semibold mb-1">خلفية الجدول:</label>
-                                <input type="file" id="body-bg-input" accept="image/*" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-sky-50 file:text-sky-700 hover:file:bg-sky-100"/>
-                            </div>
-                             <div class="md:col-span-2 space-y-2">
-                                <div>
-                                    <label for="header-opacity-slider" class="block font-semibold mb-1">شفافية خلفية العنوان: <span id="header-opacity-value">100</span>%</label>
-                                    <input type="range" id="header-opacity-slider" min="0" max="1" step="0.05" value="1" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
-                                </div>
-                                <div>
-                                    <label for="body-opacity-slider" class="block font-semibold mb-1">شفافية خلفية الجدول: <span id="body-opacity-value">100</span>%</label>
-                                    <input type="range" id="body-opacity-slider" min="0" max="1" step="0.05" value="1" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="flex flex-col md:flex-row justify-center gap-4">
-                        <button id="preview-pdf-btn" class="bg-indigo-600 text-white font-bold py-3 px-6 rounded-md hover:bg-indigo-700 transition flex items-center justify-center gap-2">
-                            <span>👁️</span> معاينة المخطط
-                        </button>
-                        <button id="export-chart-pdf-btn" class="bg-sky-600 text-white font-bold py-3 px-6 rounded-md hover:bg-sky-700 transition flex items-center justify-center gap-2">
-                            <span>📄</span> تصدير مخطط القاعات (PDF)
-                        </button>
-                         <button id="export-list-pdf-btn" class="bg-green-600 text-white font-bold py-3 px-6 rounded-md hover:bg-green-700 transition flex items-center justify-center gap-2">
-                            <span>📋</span> تصدير قائمة الحضور (PDF)
-                        </button>
-                    </div>
-                     <div id="pdf-export-status" class="mt-6 text-center text-blue-600 font-semibold hidden">
-                        جاري تحضير الملف...
-                    </div>
-                </div>
-            </section>
-
-            <!-- Step 5: QR Absentee Scanning -->
-            <section id="step-5" class="step-section">
-                <div class="text-center mb-8">
-                    <h2 class="text-2xl font-bold">الخطوة 5: تسجيل الغياب عبر QR</h2>
-                    <p class="text-slate-500 mt-1">امسح رموز QR للطلاب الغائبين لتسجيلهم في القائمة.</p>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <div>
-                        <h3 class="font-bold text-lg mb-4 text-center">لوحة التحكم بالماسح</h3>
-                        <div class="flex justify-center gap-4 mb-4">
-                            <button id="start-scan-btn" class="bg-green-600 text-white font-bold py-2 px-6 rounded-md hover:bg-green-700 transition">بدء المسح</button>
-                            <button id="stop-scan-btn" class="bg-red-600 text-white font-bold py-2 px-6 rounded-md hover:bg-red-700 transition hidden">إيقاف المسح</button>
-                        </div>
-                        <div id="reader"></div>
-                        <div id="scan-feedback" class="text-center font-semibold mt-2 h-6"></div>
-                    </div>
-                    <div class="bg-gray-50 p-4 rounded-lg border">
-                        <h3 class="font-bold text-lg mb-4">قائمة الطلاب الغائبين (<span id="absent-count">0</span>)</h3>
-                        <div id="absent-list" class="h-64 overflow-y-auto space-y-2 pr-2">
-                           <p class="text-slate-400 text-center mt-8">لم يتم تسجيل أي غياب بعد.</p>
-                        </div>
-                        <button id="export-absent-pdf-btn" class="mt-4 w-full bg-orange-500 text-white font-bold py-2 px-4 rounded-md hover:bg-orange-600 transition" disabled>تصدير قائمة الغياب (PDF)</button>
-                    </div>
-                </div>
-            </section>
-
-            <div id="navigation-btns" class="mt-10 flex justify-between border-t pt-6">
-                <button id="prev-btn" class="bg-gray-200 text-gray-800 font-bold py-2 px-6 rounded-md hover:bg-gray-300 transition" disabled>السابق</button>
-                <button id="next-btn" class="bg-sky-600 text-white font-bold py-2 px-6 rounded-md hover:bg-sky-700 transition">التالي</button>
+            <div id="stepper" class="flex justify-center items-center mb-10 space-x-4 md:space-x-8 rtl:space-x-reverse">
             </div>
-        </main>
+
+            <main class="bg-white rounded-xl shadow-lg p-6 md:p-8 min-h-[500px]">
+                
+                <section id="step-1" class="step-section active">
+                    <div class="text-center mb-8">
+                        <h2 class="text-2xl font-bold">الخطوة 1: إدارة القاعات الامتحانية</h2>
+                        <p class="text-slate-500 mt-1">قم بإنشاء قاعة جديدة أو حدد قاعة أو أكثر من القائمة للعمل عليها.</p>
+                    </div>
+                    <div class="mb-6 text-center">
+                        <button id="show-hall-modal-btn" class="bg-sky-600 text-white font-bold py-2 px-6 rounded-md hover:bg-sky-700 transition">
+                            + إنشاء قاعة جديدة
+                        </button>
+                    </div>
+                    <div id="halls-list-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    </div>
+                </section>
+
+                <section id="step-2" class="step-section">
+                    <div class="text-center mb-8">
+                        <h2 class="text-2xl font-bold">الخطوة 2: إدارة بيانات الطلاب</h2>
+                        <p class="text-slate-500 mt-1">قم باستيراد بيانات الطلاب من ملف Excel أو قم بلصقها كنص.</p>
+                    </div>
+                     <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div>
+                            <div class="flex border-b mb-4">
+                                <button data-tab="paste-tab" class="tab-btn flex-1 py-2 font-semibold border-b-4 border-sky-600 text-sky-600">لصق نص</button>
+                                <button data-tab="upload-tab" class="tab-btn flex-1 py-2 font-semibold text-gray-500">رفع ملف Excel</button>
+                            </div>
+
+                            <div id="paste-tab" class="tab-content">
+                                <h3 class="font-bold mb-2">لصق قائمة الطلاب:</h3>
+                                <p class="text-sm text-slate-500 mb-2">الصق البيانات هنا. يجب أن يكون كل طالب في سطر جديد بالتنسيق: <br><code class="bg-gray-200 p-1 rounded">الاسم، الرقم الامتحاني، الصف، الشعبة</code></p>
+                                <textarea id="students-text" rows="8" class="w-full p-2 border rounded-md" placeholder="مثال:&#10;أحمد علي، 1201، العاشر، أ&#10;فاطمة محمد، 1202، العاشر، ب"></textarea>
+                                <button id="import-text-btn" class="mt-2 w-full bg-sky-600 text-white font-bold py-2 px-4 rounded-md hover:bg-sky-700 transition">استيراد من النص</button>
+                            </div>
+
+                            <div id="upload-tab" class="tab-content hidden">
+                                 <h3 class="font-bold mb-2">رفع ملف Excel (.xlsx):</h3>
+                                 <p class="text-sm text-slate-500 mb-2">يجب أن يحتوي الملف على أعمدة بالترتيب: <br><code class="bg-gray-200 p-1 rounded">الاسم، الرقم الامتحاني، الصف، الشعبة</code></p>
+                                 <input type="file" id="excel-file" accept=".xlsx, .xls" class="w-full p-2 border rounded-md file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-sky-50 file:text-sky-700 hover:file:bg-sky-100"/>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-gray-50 p-4 rounded-lg border">
+                            <h3 class="font-bold text-lg mb-4">قائمة الطلاب (<span id="student-count">0</span>)</h3>
+                            <div id="student-list" class="h-64 overflow-y-auto space-y-2 pr-2">
+                               <p class="text-slate-400 text-center mt-8">لم يتم إضافة أي طلاب بعد.</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="step-3" class="step-section">
+                    <div id="distribution-header" class="text-center mb-8">
+                         <h2 class="text-2xl font-bold">الخطوة 3: التوزيع والمراجعة</h2>
+                        <p class="text-slate-500 mt-1">انقر على المقاعد الفارغة لتعطيلها. ثم قم بالتوزيع التلقائي أو اليدوي.</p>
+                    </div>
+                    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                        <div class="lg:col-span-1 bg-gray-50 p-4 rounded-lg border">
+                            <h3 class="font-bold text-lg mb-4">الطلاب غير الموزعين</h3>
+                            <div id="unassigned-students" class="h-96 overflow-y-auto space-y-2 p-1"></div>
+                            <button id="auto-distribute-btn" class="mt-4 w-full bg-emerald-600 text-white font-bold py-2 px-4 rounded-md hover:bg-emerald-700 transition">توزيع تلقائي</button>
+                            <button id="reset-distribution-btn" class="mt-2 w-full bg-red-600 text-white font-bold py-2 px-4 rounded-md hover:bg-red-700 transition">إعادة تعيين التوزيع</button>
+                        </div>
+
+                        <div id="multi-hall-distribution-container" class="lg:col-span-3 space-y-8">
+                        </div>
+                    </div>
+                </section>
+
+                <section id="step-4" class="step-section">
+                    <div id="export-header" class="text-center mb-8">
+                        <h2 class="text-2xl font-bold">الخطوة 4: التصدير والطباعة</h2>
+                        <p class="text-slate-500 mt-1">اختر إعدادات التصدير ثم قم بمعاينة أو تصدير الملفات.</p>
+                    </div>
+                    <div class="max-w-4xl mx-auto">
+                        <div class="bg-gray-50 p-6 rounded-lg border mb-6 space-y-4">
+                            <label class="flex items-center justify-center cursor-pointer">
+                                <span class="font-semibold ml-4">استخدام خلفيات مخصصة:</span>
+                                <div class="relative">
+                                    <input type="checkbox" id="use-backgrounds-toggle" class="sr-only peer">
+                                    <div class="block bg-gray-300 w-14 h-8 rounded-full peer-checked:bg-sky-600"></div>
+                                    <div class="dot absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition-transform transform peer-checked:translate-x-full"></div>
+                                </div>
+                            </label>
+                            <div id="background-inputs" class="hidden grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t">
+                                <div class="flex-1">
+                                    <label for="header-bg-input" class="block font-semibold mb-1">خلفية العنوان:</label>
+                                    <input type="file" id="header-bg-input" accept="image/*" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-sky-50 file:text-sky-700 hover:file:bg-sky-100"/>
+                                </div>
+                                <div class="flex-1">
+                                    <label for="body-bg-input" class="block font-semibold mb-1">خلفية الجدول:</label>
+                                    <input type="file" id="body-bg-input" accept="image/*" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-sky-50 file:text-sky-700 hover:file:bg-sky-100"/>
+                                </div>
+                                 <div class="md:col-span-2 space-y-2">
+                                    <div>
+                                        <label for="header-opacity-slider" class="block font-semibold mb-1">شفافية خلفية العنوان: <span id="header-opacity-value">100</span>%</label>
+                                        <input type="range" id="header-opacity-slider" min="0" max="1" step="0.05" value="1" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                                    </div>
+                                    <div>
+                                        <label for="body-opacity-slider" class="block font-semibold mb-1">شفافية خلفية الجدول: <span id="body-opacity-value">100</span>%</label>
+                                        <input type="range" id="body-opacity-slider" min="0" max="1" step="0.05" value="1" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex flex-col md:flex-row justify-center gap-4">
+                            <button id="preview-pdf-btn" class="bg-indigo-600 text-white font-bold py-3 px-6 rounded-md hover:bg-indigo-700 transition flex items-center justify-center gap-2">
+                                <span>👁️</span> معاينة المخطط
+                            </button>
+                            <button id="export-chart-pdf-btn" class="bg-sky-600 text-white font-bold py-3 px-6 rounded-md hover:bg-sky-700 transition flex items-center justify-center gap-2">
+                                <span>📄</span> تصدير مخطط القاعات (PDF)
+                            </button>
+                             <button id="export-list-pdf-btn" class="bg-green-600 text-white font-bold py-3 px-6 rounded-md hover:bg-green-700 transition flex items-center justify-center gap-2">
+                                <span>📋</span> تصدير قائمة الحضور (PDF)
+                            </button>
+                        </div>
+                         <div id="pdf-export-status" class="mt-6 text-center text-blue-600 font-semibold hidden">
+                            جاري تحضير الملف...
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Step 5: QR Absentee Scanning -->
+                <section id="step-5" class="step-section">
+                    <div class="text-center mb-8">
+                        <h2 class="text-2xl font-bold">الخطوة 5: تسجيل الغياب عبر QR</h2>
+                        <p class="text-slate-500 mt-1">امسح رموز QR للطلاب الغائبين لتسجيلهم في القائمة.</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div>
+                            <h3 class="font-bold text-lg mb-4 text-center">لوحة التحكم بالماسح</h3>
+                            <div class="flex justify-center gap-4 mb-4">
+                                <button id="start-scan-btn" class="bg-green-600 text-white font-bold py-2 px-6 rounded-md hover:bg-green-700 transition">بدء المسح</button>
+                                <button id="stop-scan-btn" class="bg-red-600 text-white font-bold py-2 px-6 rounded-md hover:bg-red-700 transition hidden">إيقاف المسح</button>
+                            </div>
+                            <div id="reader"></div>
+                            <div id="scan-feedback" class="text-center font-semibold mt-2 h-6"></div>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-lg border">
+                            <h3 class="font-bold text-lg mb-4">قائمة الطلاب الغائبين (<span id="absent-count">0</span>)</h3>
+                            <div id="absent-list" class="h-64 overflow-y-auto space-y-2 pr-2">
+                               <p class="text-slate-400 text-center mt-8">لم يتم تسجيل أي غياب بعد.</p>
+                            </div>
+                            <button id="export-absent-pdf-btn" class="mt-4 w-full bg-orange-500 text-white font-bold py-2 px-4 rounded-md hover:bg-orange-600 transition" disabled>تصدير قائمة الغياب (PDF)</button>
+                        </div>
+                    </div>
+                </section>
+
+                <div id="navigation-btns" class="mt-10 flex justify-between border-t pt-6">
+                    <button id="prev-btn" class="bg-gray-200 text-gray-800 font-bold py-2 px-6 rounded-md hover:bg-gray-300 transition" disabled>السابق</button>
+                    <button id="next-btn" class="bg-sky-600 text-white font-bold py-2 px-6 rounded-md hover:bg-sky-700 transition">التالي</button>
+                </div>
+            </main>
+        </div>
     </div>
 
     <!-- Modals -->
@@ -313,23 +330,71 @@
         <p id="alert-message"></p>
     </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.10.0/firebase-app.js";
+        import { getAuth, GoogleAuthProvider, signInWithRedirect, onAuthStateChanged, signOut, getRedirectResult } from "https://www.gstatic.com/firebasejs/9.10.0/firebase-auth.js";
+        
+        // --- Firebase Authentication ---
+        const loginScreen = document.getElementById('login-screen');
+        const appContainer = document.getElementById('app-container');
+        const loginBtn = document.getElementById('login-btn');
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDqGTfHTuj1cu2a6eTPYR29l7H65Q-x810",
+            authDomain: "murasil-al-moalem.firebaseapp.com",
+            projectId: "murasil-al-moalem",
+            storageBucket: "murasil-al-moalem.appspot.com",
+            messagingSenderId: "314929620446",
+            appId: "1:314929620446:web:fb7abd1cee260d85dca94f"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const provider = new GoogleAuthProvider();
+
+        loginBtn.addEventListener('click', () => {
+            signInWithRedirect(auth, provider);
+        });
+        
+        let appInitialized = false;
+
+        onAuthStateChanged(auth, user => {
+            if (user) {
+                if (!appInitialized) {
+                    appInitialized = true;
+                    loginScreen.classList.add('hidden');
+                    appContainer.classList.remove('hidden');
+                    
+                    const welcomeMsg = document.getElementById('welcome-message');
+                    welcomeMsg.innerHTML = `مرحباً، ${user.displayName} | <button id="logout-btn" class="text-red-500 font-bold hover:underline">تسجيل الخروج</button>`;
+                    
+                    document.getElementById('logout-btn').addEventListener('click', () => {
+                        signOut(auth);
+                    });
+
+                    initializeAppLogic(user);
+                }
+            } else {
+                appInitialized = false;
+                loginScreen.classList.remove('hidden');
+                appContainer.classList.add('hidden');
+                getRedirectResult(auth).catch(error => {
+                    // Handle redirect errors here, such as account-exists-with-different-credential
+                    console.error("Firebase redirect result error:", error);
+                });
+            }
+        });
+
+        function initializeAppLogic(user) {
             // --- State Management ---
             let state = {
                 currentStep: 1,
                 halls: [],
                 selectedHallIds: new Set(),
                 students: [],
-                seatingChart: new Map(), // key: 'hallId:r-c', value: studentId
-                columnClassAssignments: new Map(), // key: 'hallId:colIndex', value: 'className'
-                backgrounds: {
-                    header: null,
-                    body: null,
-                    use: false,
-                    headerOpacity: 1,
-                    bodyOpacity: 1
-                },
+                seatingChart: new Map(),
+                columnClassAssignments: new Map(),
+                backgrounds: { header: null, body: null, use: false, headerOpacity: 1, bodyOpacity: 1 },
                 absentStudents: [],
             };
             
@@ -382,7 +447,6 @@
             const closePreviewModalBtn = document.getElementById('close-preview-modal-btn');
             const clearDataBtn = document.getElementById('clear-data-btn');
 
-            // Step 5 DOM Elements
             const startScanBtn = document.getElementById('start-scan-btn');
             const stopScanBtn = document.getElementById('stop-scan-btn');
             const readerDiv = document.getElementById('reader');
@@ -391,13 +455,9 @@
             const absentCountSpan = document.getElementById('absent-count');
             const exportAbsentPdfBtn = document.getElementById('export-absent-pdf-btn');
 
-
             const steps = [
-                { id: 1, name: 'إدارة القاعات' },
-                { id: 2, name: 'بيانات الطلاب' },
-                { id: 3, name: 'التوزيع' },
-                { id: 4, name: 'التصدير' },
-                { id: 5, name: 'تسجيل الغياب' }
+                { id: 1, name: 'إدارة القاعات' }, { id: 2, name: 'بيانات الطلاب' }, { id: 3, name: 'التوزيع' },
+                { id: 4, name: 'التصدير' }, { id: 5, name: 'تسجيل الغياب' }
             ];
 
             // --- Persistence Logic ---
@@ -409,9 +469,9 @@
                         seatingChart: [...state.seatingChart],
                         columnClassAssignments: [...state.columnClassAssignments],
                         halls: state.halls.map(h => ({ ...h, disabledSeats: [...h.disabledSeats] })),
-                        backgrounds: { ...state.backgrounds, header: null, body: null } // Don't save image data
+                        backgrounds: { ...state.backgrounds, header: null, body: null }
                     };
-                    localStorage.setItem('seatingChartState', JSON.stringify(stateToSave));
+                    localStorage.setItem(`seatingChartState_${user.uid}`, JSON.stringify(stateToSave));
                 } catch (e) {
                     console.error("Failed to save state:", e);
                     showAlert("خطأ: لم يتم حفظ البيانات. قد تكون سعة التخزين ممتلئة.");
@@ -419,12 +479,12 @@
             };
 
             const loadStateFromLocalStorage = () => {
-                const savedStateJSON = localStorage.getItem('seatingChartState');
+                const savedStateJSON = localStorage.getItem(`seatingChartState_${user.uid}`);
                 if (savedStateJSON) {
                     try {
                         const savedState = JSON.parse(savedStateJSON);
                         state = {
-                            ...state, // Keep default non-serializable parts like functions
+                            ...state,
                             ...savedState,
                             selectedHallIds: new Set(savedState.selectedHallIds || []),
                             seatingChart: new Map(savedState.seatingChart || []),
@@ -433,30 +493,26 @@
                         };
                     } catch (e) {
                         console.error("Failed to load state:", e);
-                        localStorage.removeItem('seatingChartState'); // Clear corrupted data
+                        localStorage.removeItem(`seatingChartState_${user.uid}`);
                     }
                 }
             };
 
             clearDataBtn.addEventListener('click', () => {
-                if (confirm("هل أنت متأكد من رغبتك في مسح جميع القاعات والطلاب والمخططات المحفوظة؟ لا يمكن التراجع عن هذا الإجراء.")) {
-                    localStorage.removeItem('seatingChartState');
-                    window.location.reload();
+                if (confirm("هل أنت متأكد من رغبتك في مسح جميع القاعات والطلاب والمخططات المحفوظة؟ سيتم تسجيل خروجك أيضًا.")) {
+                    localStorage.removeItem(`seatingChartState_${user.uid}`);
+                    signOut(auth);
                 }
             });
 
-
-            // --- Core Logic ---
             const updateUI = () => {
                 renderStepper();
                 sections.forEach(s => s.classList.remove('active'));
                 document.getElementById(`step-${state.currentStep}`).classList.add('active');
-
                 prevBtn.disabled = state.currentStep === 1;
                 nextBtn.disabled = (state.currentStep === 1 && state.selectedHallIds.size === 0) || (state.currentStep === steps.length);
                 nextBtn.textContent = 'التالي';
                 nextBtn.classList.toggle('hidden', state.currentStep === steps.length);
-
 
                 if (state.currentStep === 1) renderHallsList();
                 if (state.currentStep === 2) renderStudentList();
@@ -484,13 +540,10 @@
                     return html;
                 }).join('');
             };
-            
-            // --- Step 1: Hall Management ---
+
             const checkIfSeatingChartExists = (hallId) => {
                 for (const key of state.seatingChart.keys()) {
-                    if (key.startsWith(hallId + ':')) {
-                        return true;
-                    }
+                    if (key.startsWith(hallId + ':')) { return true; }
                 }
                 return false;
             };
@@ -525,8 +578,8 @@
                                 </button>
                             </div>
                             ` : ''}
-                        </div>
-                    `}).join('');
+                        </div>`;
+                    }).join('');
                 }
                 nextBtn.disabled = state.selectedHallIds.size === 0;
             };
@@ -557,19 +610,12 @@
                 e.preventDefault();
                 const hallId = hallIdInput.value ? parseInt(hallIdInput.value) : Date.now();
                 const isEditing = !!hallIdInput.value;
-
                 const hallData = {
-                    id: hallId,
-                    name: hallNameInput.value,
-                    location: hallLocationInput.value,
-                    rows: parseInt(hallRowsInput.value),
-                    sector1Cols: parseInt(hallSector1ColsInput.value),
-                    sector2Cols: parseInt(hallSector2ColsInput.value),
-                    disabledSeats: new Set()
+                    id: hallId, name: hallNameInput.value, location: hallLocationInput.value,
+                    rows: parseInt(hallRowsInput.value), sector1Cols: parseInt(hallSector1ColsInput.value),
+                    sector2Cols: parseInt(hallSector2ColsInput.value), disabledSeats: new Set()
                 };
-
                 const existingIndex = state.halls.findIndex(h => h.id === hallData.id);
-
                 if (isEditing) {
                     const oldHall = state.halls[existingIndex];
                     hallData.sector1Name = oldHall.sector1Name;
@@ -593,45 +639,33 @@
                     hallData.sector2Name = `قطاع (${maxSectorNum + 2})`;
                     state.halls.push(hallData);
                 }
-                
                 toggleHallModal(false);
                 saveStateToLocalStorage();
                 updateUI();
             });
 
             window.toggleHallSelection = (id) => {
-                if (state.selectedHallIds.has(id)) {
-                    state.selectedHallIds.delete(id);
-                } else {
-                    state.selectedHallIds.add(id);
-                }
-                // Don't clear seating chart on selection change
+                if (state.selectedHallIds.has(id)) { state.selectedHallIds.delete(id); } else { state.selectedHallIds.add(id); }
                 updateUI();
             };
             window.editHall = (id) => { const hall = state.halls.find(h => h.id === id); if(hall) toggleHallModal(true, hall); };
             window.copyHall = (id) => {
                 const hallToCopy = state.halls.find(h => h.id === id);
                 if (!hallToCopy) return;
-
                 let newHallName = `${hallToCopy.name} (نسخة)`;
                 const nameMatch = hallToCopy.name.match(/^(.*?)[\s(]*(\d+)\)?$/);
                 let baseName = hallToCopy.name;
-                if (nameMatch) {
-                    baseName = nameMatch[1].trim();
-                }
+                if (nameMatch) { baseName = nameMatch[1].trim(); }
                 let maxNum = 0;
                 const regex = new RegExp(`^${baseName.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')}[\\s(]*(\\d+)\\)?$`);
                 state.halls.forEach(h => {
                     const match = h.name.match(regex);
                     if (match) {
                         const num = parseInt(match[1], 10);
-                        if (num > maxNum) {
-                            maxNum = num;
-                        }
+                        if (num > maxNum) { maxNum = num; }
                     }
                 });
                 newHallName = `${baseName} (${maxNum + 1})`;
-
                 let maxSectorNum = 0;
                 state.halls.forEach(h => {
                     [h.sector1Name, h.sector2Name].forEach(sectorName => {
@@ -644,16 +678,11 @@
                         }
                     });
                 });
-
                 const newHall = {
-                    ...hallToCopy,
-                    id: Date.now(),
-                    name: newHallName,
-                    sector1Name: `قطاع (${maxSectorNum + 1})`,
-                    sector2Name: `قطاع (${maxSectorNum + 2})`,
+                    ...hallToCopy, id: Date.now(), name: newHallName,
+                    sector1Name: `قطاع (${maxSectorNum + 1})`, sector2Name: `قطاع (${maxSectorNum + 2})`,
                     disabledSeats: new Set(hallToCopy.disabledSeats), 
                 };
-
                 state.halls.push(newHall);
                 saveStateToLocalStorage();
                 updateUI();
@@ -662,12 +691,9 @@
                 if (confirm('هل أنت متأكد من حذف هذه القاعة؟ سيتم حذف مخطط الجلوس المرتبط بها أيضًا.')) {
                     state.halls = state.halls.filter(h => h.id !== id);
                     state.selectedHallIds.delete(id);
-                    // Also remove associated seats from seating chart
                     const newSeatingChart = new Map();
                     state.seatingChart.forEach((value, key) => {
-                        if (!key.startsWith(id + ':')) {
-                            newSeatingChart.set(key, value);
-                        }
+                        if (!key.startsWith(id + ':')) { newSeatingChart.set(key, value); }
                     });
                     state.seatingChart = newSeatingChart;
                     saveStateToLocalStorage();
@@ -681,7 +707,6 @@
                 updateUI();
             };
 
-            // --- Step 2: Student Management ---
             const renderStudentList = () => {
                 studentCountSpan.textContent = state.students.length;
                 if (state.students.length === 0) {
@@ -696,12 +721,9 @@
             };
             window.removeStudent = (uid) => { 
                 state.students = state.students.filter(s => s.uid !== uid); 
-                // Also remove student from seating chart
                 const newSeatingChart = new Map();
                 state.seatingChart.forEach((value, key) => {
-                    if (value !== uid) {
-                        newSeatingChart.set(key, value);
-                    }
+                    if (value !== uid) { newSeatingChart.set(key, value); }
                 });
                 state.seatingChart = newSeatingChart;
                 saveStateToLocalStorage();
@@ -751,7 +773,6 @@
                 });
             });
 
-            // --- Step 3: Distribution ---
             const renderDistributionView = () => {
                 const assignedStudentUids = new Set([...state.seatingChart.values()]);
                 const unassignedStudents = state.students.filter(s => !assignedStudentUids.has(s.uid));
@@ -759,7 +780,6 @@
                     <div id="student-card-${s.uid}" class="student-card p-2 border rounded-md bg-white flex justify-between items-center text-sm" draggable="true" data-uid="${s.uid}">
                          <div><p class="font-bold">${s.name}</p><p class="text-slate-500">${s.id} - ${s.class} / ${s.section}</p></div>
                     </div>`).join('') || `<p class="text-slate-400 text-center mt-8">تم توزيع جميع الطلاب.</p>`;
-
                 multiHallDistributionContainer.innerHTML = '';
                 state.selectedHallIds.forEach(hallId => {
                     const hall = state.halls.find(h => h.id === hallId);
@@ -785,7 +805,6 @@
                         renderSectorGrid(document.getElementById(`dist-grid-${hall.id}-2`), hall, 2);
                         renderColumnSelectors(document.getElementById(`selector-container-${hall.id}-1`), hall, 1);
                         renderColumnSelectors(document.getElementById(`selector-container-${hall.id}-2`), hall, 2);
-
                     }
                 });
                 addDragAndDropListeners();
@@ -796,7 +815,6 @@
                 const cols = sector === 1 ? hall.sector1Cols : hall.sector2Cols;
                 const colOffset = sector === 1 ? 0 : hall.sector1Cols;
                 container.style.gridTemplateColumns = `repeat(${cols}, minmax(0, 1fr))`;
-
                 for (let c = 0; c < cols; c++) {
                     const actualCol = c + colOffset;
                     const columnId = `${hall.id}:${actualCol}`;
@@ -806,11 +824,7 @@
                     select.innerHTML = `<option value="">أي صف</option>` + uniqueClasses.map(cls => `<option value="${cls}" ${state.columnClassAssignments.get(columnId) === cls ? 'selected' : ''}>${cls}</option>`).join('');
                     select.addEventListener('change', (e) => {
                         const selectedClass = e.target.value;
-                        if (selectedClass) {
-                            state.columnClassAssignments.set(columnId, selectedClass);
-                        } else {
-                            state.columnClassAssignments.delete(columnId);
-                        }
+                        if (selectedClass) { state.columnClassAssignments.set(columnId, selectedClass); } else { state.columnClassAssignments.delete(columnId); }
                         saveStateToLocalStorage();
                     });
                     container.appendChild(select);
@@ -822,7 +836,6 @@
                 const cols = sector === 1 ? hall.sector1Cols : hall.sector2Cols;
                 const colOffset = sector === 1 ? 0 : hall.sector1Cols;
                 gridContainer.style.gridTemplateColumns = `repeat(${cols}, minmax(0, 1fr))`;
-
                 for (let r = 0; r < hall.rows; r++) {
                     for (let c = 0; c < cols; c++) {
                         const actualCol = c + colOffset;
@@ -830,9 +843,7 @@
                         const seat = document.createElement('div');
                         seat.className = 'seat droppable-seat aspect-square border-2 border-dashed border-gray-300 rounded-md p-1 bg-gray-100 overflow-hidden min-w-[80px] cursor-pointer';
                         seat.dataset.seatId = seatId;
-
                         const studentUid = getStudentUidBySeatId(seatId);
-
                         if (hall.disabledSeats.has(seatId)) {
                             seat.classList.add('disabled');
                         } else if (studentUid) {
@@ -846,24 +857,13 @@
                                 </div>`;
                             if(hasConflict(seatId)) seat.classList.add('conflict');
                         }
-                        
-                        seat.addEventListener('click', () => {
-                            if (!getStudentUidBySeatId(seatId)) { 
-                                toggleSeatDisabled(seatId);
-                            }
-                        });
-
+                        seat.addEventListener('click', () => { if (!getStudentUidBySeatId(seatId)) { toggleSeatDisabled(seatId); } });
                         gridContainer.appendChild(seat);
-
                         if (studentUid) {
                             const student = state.students.find(s => s.uid === studentUid);
                             new QRCode(document.getElementById(`qrcode-${seatId.replace(/:/g, '-')}`), {
-                                text: student.id.toString(),
-                                width: 40,
-                                height: 40,
-                                colorDark : "#000000",
-                                colorLight : "#ffffff",
-                                correctLevel : QRCode.CorrectLevel.H
+                                text: student.id.toString(), width: 40, height: 40,
+                                colorDark : "#000000", colorLight : "#ffffff", correctLevel : QRCode.CorrectLevel.H
                             });
                         }
                     }
@@ -875,12 +875,7 @@
                 const hallId = parseInt(hallIdStr);
                 const hall = state.halls.find(h => h.id === hallId);
                 if (!hall) return;
-
-                if (hall.disabledSeats.has(seatId)) {
-                    hall.disabledSeats.delete(seatId);
-                } else {
-                    hall.disabledSeats.add(seatId);
-                }
+                if (hall.disabledSeats.has(seatId)) { hall.disabledSeats.delete(seatId); } else { hall.disabledSeats.add(seatId); }
                 saveStateToLocalStorage();
                 renderDistributionView();
             };
@@ -904,18 +899,12 @@
                         e.preventDefault();
                         const seatEl = e.target.closest('.droppable-seat');
                         seatEl.classList.remove('droppable-hover');
-                        
                         const studentUid = parseInt(e.dataTransfer.getData('text/plain'), 10);
                         const fromSeatId = e.dataTransfer.getData('fromSeatId');
                         const toSeatId = seatEl.dataset.seatId;
-                        
                         const [hallIdStr] = toSeatId.split(':');
                         const hall = state.halls.find(h => h.id === parseInt(hallIdStr));
-
-                        if (hall.disabledSeats.has(toSeatId) && !getStudentUidBySeatId(toSeatId)) {
-                            hall.disabledSeats.delete(toSeatId);
-                        }
-
+                        if (hall.disabledSeats.has(toSeatId) && !getStudentUidBySeatId(toSeatId)) { hall.disabledSeats.delete(toSeatId); }
                         if (fromSeatId) state.seatingChart.delete(fromSeatId);
                         state.seatingChart.set(toSeatId, studentUid);
                         saveStateToLocalStorage();
@@ -931,13 +920,9 @@
                 if (!studentUid) return false;
                 const student = state.students.find(s => s.uid === studentUid);
                 if (!student) return false;
-
                 const [hallId, coords] = seatId.split(':');
                 const [r, c] = coords.split('-').map(Number);
-                const neighbors = [
-                    [r, c - 1], [r, c + 1] 
-                ];
-
+                const neighbors = [ [r, c - 1], [r, c + 1] ];
                 for (const [nr, nc] of neighbors) {
                     const neighborSeatId = `${hallId}:${nr}-${nc}`;
                     const neighborUid = getStudentUidBySeatId(neighborSeatId);
@@ -960,7 +945,6 @@
                 state.seatingChart.clear();
                 const allColumns = [];
                 const sortedHallIds = Array.from(state.selectedHallIds).sort((a, b) => a - b);
-
                 sortedHallIds.forEach(hallId => {
                     const hall = state.halls.find(h => h.id === hallId);
                     if (hall) {
@@ -968,15 +952,12 @@
                             const column = [];
                             for (let r = 0; r < hall.rows; r++) {
                                 const seatId = `${hall.id}:${r}-${c}`;
-                                if (!hall.disabledSeats.has(seatId)) {
-                                    column.push(seatId);
-                                }
+                                if (!hall.disabledSeats.has(seatId)) { column.push(seatId); }
                             }
                             if (column.length > 0) allColumns.push({ id: `${hall.id}:${c}`, seats: column });
                         }
                     }
                 });
-
                 const studentsByClass = state.students.reduce((acc, student) => {
                     if (!acc[student.class]) acc[student.class] = [];
                     acc[student.class].push(student);
@@ -986,9 +967,7 @@
                 sortedClasses.forEach(className => {
                     studentsByClass[className].sort((a, b) => parseInt(a.id, 10) - parseInt(b.id, 10));
                 });
-                
                 const placementCounters = sortedClasses.reduce((acc, val) => ({...acc, [val]: 0}), {});
-
                 allColumns.forEach(column => {
                     const assignedClass = state.columnClassAssignments.get(column.id);
                     if (assignedClass && studentsByClass[assignedClass]) {
@@ -998,35 +977,27 @@
                                 const student = studentsByClass[assignedClass][studentIndex];
                                 state.seatingChart.set(seatId, student.uid);
                                 placementCounters[assignedClass]++;
-                            } else {
-                                break;
-                            }
+                            } else { break; }
                         }
                     }
                 });
-
                 const unassignedColumns = allColumns.filter(c => !state.columnClassAssignments.has(c.id));
                 const remainingStudents = state.students.filter(s => !Array.from(state.seatingChart.values()).includes(s.uid));
-                
                 const remainingStudentsByClass = remainingStudents.reduce((acc, student) => {
                     if (!acc[student.class]) acc[student.class] = [];
                     acc[student.class].push(student);
                     return acc;
                 }, {});
-                
                 const remainingSortedClasses = Object.keys(remainingStudentsByClass).sort((a, b) => a.localeCompare(b, undefined, {numeric: true}));
                 remainingSortedClasses.forEach(className => {
                     remainingStudentsByClass[className].sort((a, b) => parseInt(a.id, 10) - parseInt(b.id, 10));
                 });
-
                 let colIndex = 0;
                 let classIndex = 0;
                 const remainingPlacementCounters = remainingSortedClasses.reduce((acc, val) => ({...acc, [val]: 0}), {});
-                
                 while(colIndex < unassignedColumns.length) {
                     const currentColumn = unassignedColumns[colIndex];
                     const currentClassName = remainingSortedClasses[classIndex];
-                    
                     if (currentClassName && remainingStudentsByClass[currentClassName]) {
                         const studentsInClass = remainingStudentsByClass[currentClassName];
                         if (remainingPlacementCounters[currentClassName] < studentsInClass.length) {
@@ -1038,26 +1009,18 @@
                                          state.seatingChart.set(seatId, student.uid);
                                          remainingPlacementCounters[currentClassName]++;
                                     }
-                                } else {
-                                    break;
-                                }
+                                } else { break; }
                             }
                         }
                     }
-                    
                     colIndex++;
                     classIndex = (classIndex + 1) % remainingSortedClasses.length;
-
-                    if (state.seatingChart.size >= state.students.length) {
-                        break;
-                    }
+                    if (state.seatingChart.size >= state.students.length) { break; }
                 }
                 saveStateToLocalStorage();
                 renderDistributionView();
             });
 
-
-            // --- Step 4: Export & Preview ---
             const renderExportView = () => {
                 exportHeader.querySelector('h2').textContent = `الخطوة 4: تصدير (${state.selectedHallIds.size} قاعات محددة)`;
             };
@@ -1066,10 +1029,8 @@
                 const pageContainer = document.createElement('div');
                 pageContainer.className = 'pdf-page-container';
                 pageContainer.style.fontFamily = "'Cairo', sans-serif";
-
                 const colOffset = sector === 1 ? 0 : hall.sector1Cols;
                 const cols = sector === 1 ? hall.sector1Cols : hall.sector2Cols;
-                
                 const sectorStudents = [];
                 state.seatingChart.forEach((uid, seatId) => {
                     const [sidHall, sidCoords] = seatId.split(':');
@@ -1081,18 +1042,14 @@
                         }
                     }
                 });
-
                 const classCounts = sectorStudents.reduce((acc, student) => {
                     acc[student.class] = (acc[student.class] || 0) + 1;
                     return acc;
                 }, {});
-                
                 const headerDiv = document.createElement('div');
                 headerDiv.className = 'pdf-header';
-                
                 const bodyDiv = document.createElement('div');
                 bodyDiv.className = 'pdf-body';
-                
                 if(state.backgrounds.use) {
                     if(state.backgrounds.header) {
                         const headerImg = document.createElement('img');
@@ -1109,20 +1066,13 @@
                         bodyDiv.appendChild(bodyImg);
                     }
                 }
-                
                 const headerContent = document.createElement('div');
                 headerContent.className = 'pdf-content flex justify-between items-start mb-6';
-                
                 const leftDiv = document.createElement('div');
                 leftDiv.className = 'w-1/4';
-                
                 const centerDiv = document.createElement('div');
                 centerDiv.className = 'w-1/2 text-center';
-                centerDiv.innerHTML = `
-                    <h1 class="text-2xl font-bold">قاعة (${hall.name}) - ${hall.location || ''}</h1>
-                    <h2 class="text-xl font-bold mt-2">${sector === 1 ? hall.sector1Name : hall.sector2Name}</h2>
-                `;
-
+                centerDiv.innerHTML = `<h1 class="text-2xl font-bold">قاعة (${hall.name}) - ${hall.location || ''}</h1><h2 class="text-xl font-bold mt-2">${sector === 1 ? hall.sector1Name : hall.sector2Name}</h2>`;
                 const rightDiv = document.createElement('div');
                 rightDiv.className = 'w-1/4 text-right space-y-1';
                 Object.entries(classCounts).forEach(([className, count]) => {
@@ -1132,25 +1082,20 @@
                     p.textContent = `${className}: ( ${toArabicNumerals(count)} )`;
                     rightDiv.appendChild(p);
                 });
-
                 headerContent.appendChild(leftDiv);
                 headerContent.appendChild(centerDiv);
                 headerContent.appendChild(rightDiv);
-
                 headerDiv.appendChild(headerContent);
                 pageContainer.appendChild(headerDiv);
-
                 const sectorGrid = document.createElement('div');
                 sectorGrid.className = 'grid gap-2 pdf-content';
                 sectorGrid.style.gridTemplateColumns = `repeat(${cols}, minmax(0, 1fr))`;
-                
                 for (let r = 0; r < hall.rows; r++) {
                     for (let c = 0; c < cols; c++) {
                         const actualCol = c + colOffset;
                         const seatId = `${hall.id}:${r}-${actualCol}`;
                         const seat = document.createElement('div');
                         seat.className = 'aspect-square border-2 border-black rounded-md p-1 bg-transparent overflow-hidden flex flex-col justify-center items-center text-center';
-                        
                         if (hall.disabledSeats.has(seatId)) {
                             seat.innerHTML = `<div class="w-full h-full flex justify-center items-center text-3xl text-gray-400">✕</div>`;
                             seat.style.backgroundColor = '#f3f4f6';
@@ -1170,7 +1115,6 @@
                 }
                 bodyDiv.appendChild(sectorGrid);
                 pageContainer.appendChild(bodyDiv);
-
                 for (let r = 0; r < hall.rows; r++) {
                     for (let c = 0; c < cols; c++) {
                         const actualCol = c + colOffset;
@@ -1182,18 +1126,13 @@
                             const qrElement = pageContainer.querySelector(`#pdf-qrcode-${safeSeatId}`);
                             if(qrElement && student) {
                                  new QRCode(qrElement, {
-                                    text: student.id.toString(),
-                                    width: 48,
-                                    height: 48,
-                                    colorDark : "#000000",
-                                    colorLight : "#ffffff",
-                                    correctLevel : QRCode.CorrectLevel.M
+                                    text: student.id.toString(), width: 48, height: 48,
+                                    colorDark : "#000000", colorLight : "#ffffff", correctLevel : QRCode.CorrectLevel.M
                                 });
                             }
                         }
                     }
                 }
-
                 return pageContainer;
             };
 
@@ -1201,9 +1140,7 @@
                 const file = e.target.files[0];
                 if (!file) return;
                 const reader = new FileReader();
-                reader.onload = (event) => {
-                    state.backgrounds[type] = event.target.result;
-                };
+                reader.onload = (event) => { state.backgrounds[type] = event.target.result; };
                 reader.readAsDataURL(file);
             };
 
@@ -1223,22 +1160,16 @@
             });
 
             previewPdfBtn.addEventListener('click', async () => {
-                if (state.selectedHallIds.size === 0) {
-                    showAlert('الرجاء تحديد قاعة واحدة على الأقل للمعاينة.');
-                    return;
-                }
+                if (state.selectedHallIds.size === 0) { showAlert('الرجاء تحديد قاعة واحدة على الأقل للمعاينة.'); return; }
                 const firstHallId = Array.from(state.selectedHallIds)[0];
                 const hall = state.halls.find(h => h.id === firstHallId);
-                
                 previewContent.innerHTML = '';
                 const pageContent = createPageForPdf(hall, 1);
                 document.body.appendChild(pageContent);
-
                 const canvas = await html2canvas(pageContent, { scale: 1, useCORS: true });
                 canvas.style.width = '100%';
                 canvas.style.height = 'auto';
                 previewContent.appendChild(canvas);
-                
                 document.body.removeChild(pageContent);
                 previewModalBackdrop.classList.remove('hidden');
                 previewModalBackdrop.classList.add('flex');
@@ -1258,12 +1189,10 @@
                     link.download = filename;
                     document.body.appendChild(link);
                     link.click();
-                    
                     setTimeout(() => {
                         document.body.removeChild(link);
                         window.URL.revokeObjectURL(url);
                     }, 100);
-
                 } catch (e) {
                     console.error("Error triggering PDF download:", e);
                     showAlert("حدث خطأ أثناء محاولة تصدير الملف.");
@@ -1271,41 +1200,28 @@
             };
 
             exportChartPdfBtn.addEventListener('click', async () => {
-                if (state.selectedHallIds.size === 0) {
-                    showAlert('الرجاء تحديد قاعة واحدة على الأقل.');
-                    return;
-                }
+                if (state.selectedHallIds.size === 0) { showAlert('الرجاء تحديد قاعة واحدة على الأقل.'); return; }
                 pdfExportStatus.classList.remove('hidden');
                 const { jsPDF } = window.jspdf;
                 const pdf = new jsPDF({ orientation: 'p', unit: 'pt', format: 'a4' });
                 let isFirstPage = true;
-
                 const sortedHallIds = Array.from(state.selectedHallIds).sort((a,b) => a - b);
-
                 for (const hallId of sortedHallIds) {
                     const hall = state.halls.find(h => h.id === hallId);
                     if (!hall) continue;
-
                     for (const sector of [1, 2]) {
-                        if (!isFirstPage) {
-                            pdf.addPage();
-                        }
-                        
+                        if (!isFirstPage) { pdf.addPage(); }
                         const pageContent = createPageForPdf(hall, sector);
                         document.body.appendChild(pageContent);
-
                         const canvas = await html2canvas(pageContent, { scale: 2, useCORS: true });
                         const imgData = canvas.toDataURL('image/png');
-                        
                         const pdfWidth = pdf.internal.pageSize.getWidth();
                         const pdfHeight = pdf.internal.pageSize.getHeight();
                         pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-
                         document.body.removeChild(pageContent);
                         isFirstPage = false;
                     }
                 }
-
                 triggerPdfDownload(pdf, `مخططات الجلوس المجمعة.pdf`);
                 pdfExportStatus.classList.add('hidden');
             });
@@ -1319,21 +1235,16 @@
                 tableContainer.style.position = 'absolute';
                 tableContainer.style.left = '-9999px';
                 tableContainer.style.paddingBottom = '50px'; 
-
                 let tableHtml = `<h1 class="text-2xl font-bold text-center mb-4">قائمة الحضور المجمعة</h1>
                                 <table class="w-full text-sm text-right" style="border-collapse: collapse;">
-                                    <thead class="text-xs text-gray-700 uppercase bg-gray-200">
-                                        <tr>
-                                            <th scope="col" class="px-4 py-3 border border-gray-300">القاعة والمقعد</th>
-                                            <th scope="col" class="px-4 py-3 border border-gray-300">اسم الطالب</th>
-                                            <th scope="col" class="px-4 py-3 border border-gray-300">الرقم الامتحاني</th>
-                                            <th scope="col" class="px-4 py-3 border border-gray-300">الصف</th>
-                                            <th scope="col" class="px-4 py-3 border border-gray-300">الشعبة</th>
-                                            <th scope="col" class="px-4 py-3 border border-gray-300" style="width: 15%;">التوقيع</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>`;
-                
+                                    <thead class="text-xs text-gray-700 uppercase bg-gray-200"><tr>
+                                        <th scope="col" class="px-4 py-3 border border-gray-300">القاعة والمقعد</th>
+                                        <th scope="col" class="px-4 py-3 border border-gray-300">اسم الطالب</th>
+                                        <th scope="col" class="px-4 py-3 border border-gray-300">الرقم الامتحاني</th>
+                                        <th scope="col" class="px-4 py-3 border border-gray-300">الصف</th>
+                                        <th scope="col" class="px-4 py-3 border border-gray-300">الشعبة</th>
+                                        <th scope="col" class="px-4 py-3 border border-gray-300" style="width: 15%;">التوقيع</th>
+                                    </tr></thead><tbody>`;
                 const tableData = [];
                 state.seatingChart.forEach((studentUid, seatId) => {
                     const student = state.students.find(s => s.uid === studentUid);
@@ -1342,16 +1253,12 @@
                         const hall = state.halls.find(h => h.id === parseInt(hallId));
                         const [r, c] = coords.split('-').map(Number);
                         tableData.push({
-                            seat: `${hall.name} | R${r+1}-C${c+1}`,
-                            name: student.name,
-                            id: student.id,
-                            class: student.class,
-                            section: student.section
+                            seat: `${hall.name} | R${r+1}-C${c+1}`, name: student.name, id: student.id,
+                            class: student.class, section: student.section
                         });
                     }
                 });
                 tableData.sort((a,b) => parseInt(a.id) - parseInt(b.id)); 
-                
                 tableData.forEach(row => {
                     tableHtml += `<tr class="bg-white border-b">
                                     <td class="px-4 py-2 font-medium text-gray-900 border border-gray-300">${row.seat}</td>
@@ -1359,46 +1266,36 @@
                                     <td class="px-4 py-2 border border-gray-300">${row.id}</td>
                                     <td class="px-4 py-2 border border-gray-300">${row.class}</td>
                                     <td class="px-4 py-2 border border-gray-300">${row.section}</td>
-                                    <td class="px-4 py-2 border border-gray-300"></td>
-                                  </tr>`;
+                                    <td class="px-4 py-2 border border-gray-300"></td></tr>`;
                 });
-
                 tableHtml += `</tbody></table>`;
                 tableContainer.innerHTML = tableHtml;
                 document.body.appendChild(tableContainer);
-
                 const { jsPDF } = window.jspdf;
                 const pdf = new jsPDF({ orientation: 'p', unit: 'pt', format: 'a4' });
                 const canvas = await html2canvas(tableContainer, {scale: 2});
                 const imgData = canvas.toDataURL('image/png');
-                
                 const pdfWidth = pdf.internal.pageSize.getWidth();
                 const imgProps= pdf.getImageProperties(imgData);
                 const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-                
                 let heightLeft = pdfHeight;
                 let position = 0;
-                
                 pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, pdfHeight);
                 heightLeft -= pdf.internal.pageSize.getHeight();
-
                 while (heightLeft > 0) {
                   position = heightLeft - pdfHeight;
                   pdf.addPage();
                   pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, pdfHeight);
                   heightLeft -= pdf.internal.pageSize.getHeight();
                 }
-
                 document.body.removeChild(tableContainer);
                 triggerPdfDownload(pdf, `قائمة الحضور المجمعة.pdf`);
                 pdfExportStatus.classList.add('hidden');
             });
 
-            // --- Step 5: Absentee Scanning (NEW) ---
             const renderAbsenceView = () => {
                 absentCountSpan.textContent = state.absentStudents.length;
                 exportAbsentPdfBtn.disabled = state.absentStudents.length === 0;
-
                 if (state.absentStudents.length === 0) {
                     absentListContainer.innerHTML = `<p class="text-slate-400 text-center mt-8">لم يتم تسجيل أي غياب بعد.</p>`;
                     return;
@@ -1411,12 +1308,10 @@
                         const hall = state.halls.find(h => h.id === parseInt(hallId));
                         seatInfo = `${hall.name} (${coords})`;
                     }
-
-                    return `
-                    <div class="p-2 border rounded-md bg-white flex justify-between items-center text-sm">
+                    return `<div class="p-2 border rounded-md bg-white flex justify-between items-center text-sm">
                         <div><p class="font-bold">${s.name} (${s.id})</p><p class="text-slate-500">${s.class} - ${seatInfo}</p></div>
                         <button class="text-red-500 hover:text-red-700 font-bold p-1" onclick="window.removeAbsentStudent(${s.uid})">✕</button>
-                    </div>`
+                    </div>`;
                 }).join('');
             };
             
@@ -1427,14 +1322,11 @@
 
             const onScanSuccess = (decodedText, decodedResult) => {
                 const examNumber = decodedText;
-                
                 if (state.absentStudents.some(s => s.id === examNumber)) {
                     showScanFeedback(`الطالب بالرقم ${examNumber} مسجل كغائب بالفعل.`, 'fail');
                     return;
                 }
-
                 const student = state.students.find(s => s.id === examNumber);
-
                 if (student) {
                     state.absentStudents.push(student);
                     renderAbsenceView();
@@ -1456,7 +1348,6 @@
                 startScanBtn.classList.add('hidden');
                 stopScanBtn.classList.remove('hidden');
                 scanFeedbackDiv.innerHTML = '';
-                
                 const config = { fps: 10, qrbox: { width: 250, height: 250 } };
                 html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess, onScanFailure)
                 .catch(err => {
@@ -1477,18 +1368,14 @@
             exportAbsentPdfBtn.addEventListener('click', () => {
                 const { jsPDF } = window.jspdf;
                 const doc = new jsPDF();
-                
                 doc.setR2L(true);
                 doc.setFont('helvetica', 'bold');
                 doc.text("تقرير غياب الطلبة", 105, 15, { align: 'center' });
-                
                 const tableColumn = ["القطاع", "القاعة", "الصف", "الرقم الامتحاني", "اسم الطالب"];
                 const tableRows = [];
-
                 state.absentStudents.forEach(student => {
                     const studentSeat = [...state.seatingChart.entries()].find(([key, val]) => val === student.uid);
-                    let hallName = 'N/A';
-                    let sectorName = 'N/A';
+                    let hallName = 'N/A', sectorName = 'N/A';
                     if(studentSeat) {
                         const [hallId, coords] = studentSeat[0].split(':');
                         const [r, c] = coords.split('-').map(Number);
@@ -1498,21 +1385,10 @@
                             sectorName = c < hall.sector1Cols ? hall.sector1Name : hall.sector2Name;
                         }
                     }
-
-                    const studentData = [
-                        sectorName,
-                        hallName,
-                        student.class,
-                        student.id,
-                        student.name,
-                    ];
-                    tableRows.push(studentData);
+                    tableRows.push([sectorName, hallName, student.class, student.id, student.name]);
                 });
-
                 doc.autoTable({
-                    head: [tableColumn],
-                    body: tableRows,
-                    startY: 25,
+                    head: [tableColumn], body: tableRows, startY: 25,
                     styles: { halign: 'center', font: 'helvetica' },
                     headStyles: { fillColor: [44, 62, 80], textColor: 255, fontStyle: 'bold' },
                     alternateRowStyles: { fillColor: [236, 240, 241] },
@@ -1522,12 +1398,9 @@
                         }
                     }
                 });
-
                 triggerPdfDownload(doc, 'تقرير_الغياب.pdf');
             });
 
-
-            // --- Navigation ---
             const navigate = (direction) => {
                 if (direction === 'next' && state.currentStep === 1 && state.selectedHallIds.size === 0) {
                     showAlert('الرجاء تحديد قاعة واحدة على الأقل للمتابعة.');
@@ -1554,10 +1427,9 @@
             nextBtn.addEventListener('click', () => navigate('next'));
             prevBtn.addEventListener('click', () => navigate('prev'));
 
-            // Initial Load
             loadStateFromLocalStorage();
             updateUI();
-        });
+        }
     </script>
 </body>
 </html>
