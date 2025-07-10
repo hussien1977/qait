@@ -18,9 +18,8 @@
     <!-- مكتبات Firebase -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-    <!-- مكتبات Google API الجديدة -->
+    <!-- مكتبة Google API -->
     <script src="https://apis.google.com/js/api.js"></script>
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
 
     <style>
         body { font-family: 'Cairo', sans-serif; }
@@ -129,8 +128,8 @@
                 <div id="auth-info" class="absolute top-0 left-0 text-left">
                     <div id="welcome-message" class="text-sm text-slate-600"></div>
                      <div class="flex items-center mt-1">
-                        <button id="sync-to-drive-btn" class="drive-btn">حفظ في Drive</button>
-                        <button id="load-from-drive-btn" class="drive-btn">تحميل من Drive</button>
+                        <button id="sync-to-drive-btn" class="drive-btn" disabled>حفظ في Drive</button>
+                        <button id="load-from-drive-btn" class="drive-btn" disabled>تحميل من Drive</button>
                         <span id="drive-sync-status" class="text-xs text-gray-500 mr-2"></span>
                     </div>
                     <button id="clear-data-btn" class="text-red-700 text-xs font-bold hover:underline mt-1">مسح بياناتي المحلية</button>
@@ -399,7 +398,6 @@
                         });
 
                         initializeAppLogic(user);
-                        // Initialize GAPI and GSI clients after user logs in
                         gapi.load('client', initializeGapiClient);
                     }
                 } else {
@@ -411,23 +409,21 @@
             });
 
             async function initializeGapiClient() {
-                await gapi.client.init({
-                    apiKey: GOOGLE_API_KEY,
-                    discoveryDocs: DRIVE_DISCOVERY_DOCS,
-                });
-                gapiInited = true;
-                
+                try {
+                    await gapi.client.init({
+                        apiKey: GOOGLE_API_KEY,
+                        discoveryDocs: DRIVE_DISCOVERY_DOCS,
+                    });
+                    gapiInited = true;
+                } catch(e) {
+                    console.error("Error initializing GAPI client:", e);
+                    showAlert("فشل تهيئة واجهة Google Drive. تأكد من صحة API Key.");
+                }
+
                 tokenClient = google.accounts.oauth2.initTokenClient({
                     client_id: GOOGLE_CLIENT_ID,
                     scope: DRIVE_SCOPE,
-                    callback: (tokenResponse) => {
-                        if (tokenResponse && tokenResponse.access_token) {
-                            gapi.client.setToken(tokenResponse);
-                        } else {
-                            console.error("Provided token response was invalid", tokenResponse);
-                            showAlert("فشل الحصول على رمز الوصول من Google.");
-                        }
-                    },
+                    callback: '', // Will be set dynamically
                 });
             }
 
@@ -568,6 +564,7 @@
                             showAlert('فشل الحصول على إذن الوصول إلى Google Drive.');
                             throw (resp);
                         }
+                        gapi.client.setToken(resp);
                         await actionCallback();
                     };
 
@@ -606,7 +603,6 @@
                         halls: state.halls.map(h => ({ ...h, disabledSeats: [...h.disabledSeats] })),
                     };
                     const content = JSON.stringify(stateToSave);
-                    const blob = new Blob([content], { type: 'application/json' });
                     
                     if (!fileId) {
                         fileId = await findAppFile();
@@ -616,29 +612,23 @@
                         'name': APP_DATA_FILENAME,
                         'mimeType': 'application/json',
                     };
-                    
-                    const form = new FormData();
-                    
-                    let path = '/upload/drive/v3/files';
-                    let method = 'POST';
+
+                    let path;
+                    let method;
 
                     if (fileId) {
-                        path = `/upload/drive/v3/files/${fileId}`;
+                        path = `/upload/drive/v3/files/${fileId}?uploadType=media`;
                         method = 'PATCH';
                     } else {
-                         metadata.parents = ['appDataFolder'];
+                         path = `/upload/drive/v3/files?uploadType=media`;
+                         method = 'POST';
                     }
-
-                    form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
-                    form.append('file', blob);
 
                     try {
                         const response = await gapi.client.request({
                             path: path,
                             method: method,
-                            params: { uploadType: 'multipart' },
-                            headers: { 'Content-Type': 'multipart/related' },
-                            body: form
+                            body: content
                         });
                         fileId = response.result.id;
                         driveSyncStatus.textContent = 'تم الحفظ بنجاح!';
