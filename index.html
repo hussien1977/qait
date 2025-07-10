@@ -129,8 +129,8 @@
                 <div id="auth-info" class="absolute top-0 left-0 text-left">
                     <div id="welcome-message" class="text-sm text-slate-600"></div>
                      <div class="flex items-center mt-1">
-                        <button id="sync-to-drive-btn" class="drive-btn" disabled>حفظ في Drive</button>
-                        <button id="load-from-drive-btn" class="drive-btn" disabled>تحميل من Drive</button>
+                        <button id="sync-to-drive-btn" class="drive-btn">حفظ في Drive</button>
+                        <button id="load-from-drive-btn" class="drive-btn">تحميل من Drive</button>
                         <span id="drive-sync-status" class="text-xs text-gray-500 mr-2"></span>
                     </div>
                     <button id="clear-data-btn" class="text-red-700 text-xs font-bold hover:underline mt-1">مسح بياناتي المحلية</button>
@@ -372,10 +372,10 @@
             firebase.initializeApp(firebaseConfig);
             const auth = firebase.auth();
             const provider = new firebase.auth.GoogleAuthProvider();
-            // We will request the Drive scope later, so we remove it from here.
             
             let appInitialized = false;
-            let gapiInitialized = false;
+            let gapiInited = false;
+            let gisInited = false;
             let tokenClient;
 
             loginBtn.addEventListener('click', () => {
@@ -400,38 +400,33 @@
                         });
 
                         initializeAppLogic(user);
-                        initializeGapiClient();
+                        // Initialize GAPI and GSI clients after user logs in
+                        gapi.load('client', initializeGapiClient);
+                        tokenClient = google.accounts.oauth2.initTokenClient({
+                            client_id: GOOGLE_CLIENT_ID,
+                            scope: DRIVE_SCOPE,
+                            callback: '', // Callback will be set dynamically
+                        });
                     }
                 } else {
                     appInitialized = false;
-                    gapiInitialized = false;
+                    gapiInited = false;
                     loginScreen.classList.remove('hidden');
                     appContainer.classList.add('hidden');
                 }
             });
 
-            function initializeGapiClient() {
-                gapi.load('client', async () => {
-                     await gapi.client.init({
-                        apiKey: GOOGLE_API_KEY,
-                        discoveryDocs: DRIVE_DISCOVERY_DOCS,
-                    });
+            async function initializeGapiClient() {
+                await gapi.client.init({
+                    apiKey: GOOGLE_API_KEY,
+                    discoveryDocs: DRIVE_DISCOVERY_DOCS,
                 });
-
-                tokenClient = google.accounts.oauth2.initTokenClient({
-                    client_id: GOOGLE_CLIENT_ID,
-                    scope: DRIVE_SCOPE,
-                    callback: (tokenResponse) => {
-                        if (tokenResponse && tokenResponse.access_token) {
-                            gapi.client.setToken(tokenResponse);
-                            gapiInitialized = true;
-                            document.getElementById('sync-to-drive-btn').disabled = false;
-                            document.getElementById('load-from-drive-btn').disabled = false;
-                            showAlert("تم ربط Google Drive بنجاح!");
-                        }
-                    },
-                });
+                gapiInited = true;
+                // Enable buttons after GAPI is initialized
+                document.getElementById('sync-to-drive-btn').disabled = false;
+                document.getElementById('load-from-drive-btn').disabled = false;
             }
+
 
             function initializeAppLogic(user) {
                 // --- State Management ---
@@ -559,22 +554,11 @@
 
                 // --- Google Drive Logic ---
                 function handleDriveAction(actionCallback) {
-                    if (!gapiInitialized || !tokenClient) {
+                    if (!gapiInited || !tokenClient) {
                         showAlert('واجهة Google API لم تُهيأ بعد. الرجاء الانتظار.');
                         return;
                     }
 
-                    if (gapi.client.getToken() === null) {
-                        // Prompt the user to select a Google Account and ask for consent to share their data
-                        // when establishing a new session.
-                        tokenClient.requestAccessToken({prompt: 'consent'});
-                    } else {
-                        // Skip display of account chooser and consent dialog for an existing session.
-                        tokenClient.requestAccessToken({prompt: ''});
-                    }
-                    
-                    // The actual action is now handled by the callback in initializeGapiClient
-                    // We just need to store which action to perform.
                     tokenClient.callback = async (resp) => {
                         if (resp.error !== undefined) {
                             showAlert('فشل الحصول على إذن الوصول إلى Google Drive.');
@@ -582,6 +566,12 @@
                         }
                         await actionCallback();
                     };
+
+                    if (gapi.client.getToken() === null) {
+                        tokenClient.requestAccessToken({prompt: 'consent'});
+                    } else {
+                        tokenClient.requestAccessToken({prompt: ''});
+                    }
                 }
 
                 async function findAppFile() {
