@@ -400,7 +400,7 @@
                         });
 
                         initializeAppLogic(user);
-                        initializeGapiClient();
+                        initializeGapiClient(user);
                     }
                 } else {
                     appInitialized = false;
@@ -410,25 +410,22 @@
                 }
             });
 
-            function initializeGapiClient() {
-                gapi.load('client', async () => {
-                    await gapi.client.init({
-                        apiKey: GOOGLE_API_KEY,
-                        discoveryDocs: DRIVE_DISCOVERY_DOCS,
-                    });
-                    
-                    tokenClient = google.accounts.oauth2.initTokenClient({
-                        client_id: GOOGLE_CLIENT_ID,
-                        scope: DRIVE_SCOPE,
-                        callback: (tokenResponse) => {
-                            if (tokenResponse && tokenResponse.access_token) {
-                                gapi.client.setToken(tokenResponse);
-                                gapiInitialized = true;
-                                document.getElementById('sync-to-drive-btn').disabled = false;
-                                document.getElementById('load-from-drive-btn').disabled = false;
-                            }
-                        },
-                    });
+            function initializeGapiClient(user) {
+                gapi.load('client:auth2', async () => {
+                    try {
+                        await gapi.client.init({
+                            apiKey: GOOGLE_API_KEY,
+                            clientId: GOOGLE_CLIENT_ID,
+                            scope: DRIVE_SCOPE,
+                            discoveryDocs: DRIVE_DISCOVERY_DOCS,
+                        });
+                        gapiInitialized = true;
+                        document.getElementById('sync-to-drive-btn').disabled = false;
+                        document.getElementById('load-from-drive-btn').disabled = false;
+                    } catch (error) {
+                        console.error("Error initializing GAPI client:", error);
+                        showAlert("فشل تهيئة واجهة Google Drive. تأكد من صحة API Key و Client ID.");
+                    }
                 });
             }
 
@@ -557,28 +554,8 @@
                 });
 
                 // --- Google Drive Logic ---
-                function handleDriveAction(actionCallback) {
-                    if (!gapiInitialized || !tokenClient) {
-                        showAlert('واجهة Google API لم تُهيأ بعد. الرجاء الانتظار.');
-                        return;
-                    }
-
-                    tokenClient.callback = async (resp) => {
-                        if (resp.error !== undefined) {
-                            showAlert('فشل الحصول على إذن الوصول إلى Google Drive.');
-                            throw (resp);
-                        }
-                        await actionCallback();
-                    };
-
-                    if (gapi.client.getToken() === null) {
-                        tokenClient.requestAccessToken({prompt: 'consent'});
-                    } else {
-                        tokenClient.requestAccessToken({prompt: ''});
-                    }
-                }
-
                 async function findAppFile() {
+                    if (!gapiInitialized) { showAlert("لم تتم تهيئة Google Drive API بعد."); return null; }
                     try {
                         const response = await gapi.client.drive.files.list({
                             q: `name='${APP_DATA_FILENAME}' and 'appDataFolder' in parents and trashed=false`,
@@ -684,8 +661,8 @@
                     setTimeout(() => driveSyncStatus.textContent = '', 3000);
                 }
 
-                syncToDriveBtn.addEventListener('click', () => handleDriveAction(saveToDrive));
-                loadFromDriveBtn.addEventListener('click', () => handleDriveAction(loadFromDrive));
+                syncToDriveBtn.addEventListener('click', saveToDrive);
+                loadFromDriveBtn.addEventListener('click', loadFromDrive);
 
 
                 const updateUI = () => {
