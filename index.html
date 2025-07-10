@@ -15,7 +15,10 @@
     <!-- مكتبات QR Code -->
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-    
+    <!-- مكتبات Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+
     <style>
         body { font-family: 'Cairo', sans-serif; }
         .step-section { display: none; }
@@ -330,299 +333,345 @@
         <p id="alert-message"></p>
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.10.0/firebase-app.js";
-        import { getAuth, GoogleAuthProvider, signInWithRedirect, onAuthStateChanged, signOut, getRedirectResult } from "https://www.gstatic.com/firebasejs/9.10.0/firebase-auth.js";
-        
-        // --- Firebase Authentication ---
-        const loginScreen = document.getElementById('login-screen');
-        const appContainer = document.getElementById('app-container');
-        const loginBtn = document.getElementById('login-btn');
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- Firebase Authentication ---
+            const loginScreen = document.getElementById('login-screen');
+            const appContainer = document.getElementById('app-container');
+            const loginBtn = document.getElementById('login-btn');
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyDqGTfHTuj1cu2a6eTPYR29l7H65Q-x810",
-            authDomain: "murasil-al-moalem.firebaseapp.com",
-            projectId: "murasil-al-moalem",
-            storageBucket: "murasil-al-moalem.appspot.com",
-            messagingSenderId: "314929620446",
-            appId: "1:314929620446:web:fb7abd1cee260d85dca94f"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const provider = new GoogleAuthProvider();
-
-        loginBtn.addEventListener('click', () => {
-            signInWithRedirect(auth, provider);
-        });
-        
-        let appInitialized = false;
-
-        onAuthStateChanged(auth, user => {
-            if (user) {
-                if (!appInitialized) {
-                    appInitialized = true;
-                    loginScreen.classList.add('hidden');
-                    appContainer.classList.remove('hidden');
-                    
-                    const welcomeMsg = document.getElementById('welcome-message');
-                    welcomeMsg.innerHTML = `مرحباً، ${user.displayName} | <button id="logout-btn" class="text-red-500 font-bold hover:underline">تسجيل الخروج</button>`;
-                    
-                    document.getElementById('logout-btn').addEventListener('click', () => {
-                        signOut(auth);
-                    });
-
-                    initializeAppLogic(user);
-                }
-            } else {
-                appInitialized = false;
-                loginScreen.classList.remove('hidden');
-                appContainer.classList.add('hidden');
-                getRedirectResult(auth).catch(error => {
-                    // Handle redirect errors here, such as account-exists-with-different-credential
-                    console.error("Firebase redirect result error:", error);
-                });
-            }
-        });
-
-        function initializeAppLogic(user) {
-            // --- State Management ---
-            let state = {
-                currentStep: 1,
-                halls: [],
-                selectedHallIds: new Set(),
-                students: [],
-                seatingChart: new Map(),
-                columnClassAssignments: new Map(),
-                backgrounds: { header: null, body: null, use: false, headerOpacity: 1, bodyOpacity: 1 },
-                absentStudents: [],
-            };
-            
-            let html5QrCode;
-
-            // --- DOM Elements ---
-            const stepperContainer = document.getElementById('stepper');
-            const sections = document.querySelectorAll('.step-section');
-            const nextBtn = document.getElementById('next-btn');
-            const prevBtn = document.getElementById('prev-btn');
-            const hallsListContainer = document.getElementById('halls-list-container');
-            const showHallModalBtn = document.getElementById('show-hall-modal-btn');
-            const hallModalBackdrop = document.getElementById('hall-modal-backdrop');
-            const hallModal = document.getElementById('hall-modal');
-            const hallModalTitle = document.getElementById('hall-modal-title');
-            const cancelHallModalBtn = document.getElementById('cancel-hall-modal-btn');
-            const hallForm = document.getElementById('hall-form');
-            const hallIdInput = document.getElementById('hall-id-input');
-            const hallNameInput = document.getElementById('hall-name');
-            const hallLocationInput = document.getElementById('hall-location');
-            const hallRowsInput = document.getElementById('hall-rows');
-            const hallSector1ColsInput = document.getElementById('hall-sector1-cols');
-            const hallSector2ColsInput = document.getElementById('hall-sector2-cols');
-            const studentsTextInput = document.getElementById('students-text');
-            const importTextBtn = document.getElementById('import-text-btn');
-            const studentListContainer = document.getElementById('student-list');
-            const studentCountSpan = document.getElementById('student-count');
-            const excelFileInput = document.getElementById('excel-file');
-            const tabBtns = document.querySelectorAll('.tab-btn');
-            const tabContents = document.querySelectorAll('.tab-content');
-            const multiHallDistributionContainer = document.getElementById('multi-hall-distribution-container');
-            const autoDistributeBtn = document.getElementById('auto-distribute-btn');
-            const resetDistributionBtn = document.getElementById('reset-distribution-btn');
-            const unassignedStudentsContainer = document.getElementById('unassigned-students');
-            const exportHeader = document.getElementById('export-header');
-            const exportChartPdfBtn = document.getElementById('export-chart-pdf-btn');
-            const exportListPdfBtn = document.getElementById('export-list-pdf-btn');
-            const pdfExportStatus = document.getElementById('pdf-export-status');
-            const useBackgroundsToggle = document.getElementById('use-backgrounds-toggle');
-            const backgroundInputs = document.getElementById('background-inputs');
-            const headerBgInput = document.getElementById('header-bg-input');
-            const bodyBgInput = document.getElementById('body-bg-input');
-            const headerOpacitySlider = document.getElementById('header-opacity-slider');
-            const bodyOpacitySlider = document.getElementById('body-opacity-slider');
-            const headerOpacityValue = document.getElementById('header-opacity-value');
-            const bodyOpacityValue = document.getElementById('body-opacity-value');
-            const previewPdfBtn = document.getElementById('preview-pdf-btn');
-            const previewModalBackdrop = document.getElementById('preview-modal-backdrop');
-            const previewContent = document.getElementById('preview-content');
-            const closePreviewModalBtn = document.getElementById('close-preview-modal-btn');
-            const clearDataBtn = document.getElementById('clear-data-btn');
-
-            const startScanBtn = document.getElementById('start-scan-btn');
-            const stopScanBtn = document.getElementById('stop-scan-btn');
-            const readerDiv = document.getElementById('reader');
-            const scanFeedbackDiv = document.getElementById('scan-feedback');
-            const absentListContainer = document.getElementById('absent-list');
-            const absentCountSpan = document.getElementById('absent-count');
-            const exportAbsentPdfBtn = document.getElementById('export-absent-pdf-btn');
-
-            const steps = [
-                { id: 1, name: 'إدارة القاعات' }, { id: 2, name: 'بيانات الطلاب' }, { id: 3, name: 'التوزيع' },
-                { id: 4, name: 'التصدير' }, { id: 5, name: 'تسجيل الغياب' }
-            ];
-
-            // --- Persistence Logic ---
-            const saveStateToLocalStorage = () => {
-                try {
-                    const stateToSave = {
-                        ...state,
-                        selectedHallIds: [...state.selectedHallIds],
-                        seatingChart: [...state.seatingChart],
-                        columnClassAssignments: [...state.columnClassAssignments],
-                        halls: state.halls.map(h => ({ ...h, disabledSeats: [...h.disabledSeats] })),
-                        backgrounds: { ...state.backgrounds, header: null, body: null }
-                    };
-                    localStorage.setItem(`seatingChartState_${user.uid}`, JSON.stringify(stateToSave));
-                } catch (e) {
-                    console.error("Failed to save state:", e);
-                    showAlert("خطأ: لم يتم حفظ البيانات. قد تكون سعة التخزين ممتلئة.");
-                }
+            const firebaseConfig = {
+                apiKey: "AIzaSyDqGTfHTuj1cu2a6eTPYR29l7H65Q-x810",
+                authDomain: "murasil-al-moalem.firebaseapp.com",
+                projectId: "murasil-al-moalem",
+                storageBucket: "murasil-al-moalem.appspot.com",
+                messagingSenderId: "314929620446",
+                appId: "1:314929620446:web:fb7abd1cee260d85dca94f"
             };
 
-            const loadStateFromLocalStorage = () => {
-                const savedStateJSON = localStorage.getItem(`seatingChartState_${user.uid}`);
-                if (savedStateJSON) {
-                    try {
-                        const savedState = JSON.parse(savedStateJSON);
-                        state = {
-                            ...state,
-                            ...savedState,
-                            selectedHallIds: new Set(savedState.selectedHallIds || []),
-                            seatingChart: new Map(savedState.seatingChart || []),
-                            columnClassAssignments: new Map(savedState.columnClassAssignments || []),
-                            halls: savedState.halls.map(h => ({ ...h, disabledSeats: new Set(h.disabledSeats || []) })),
-                        };
-                    } catch (e) {
-                        console.error("Failed to load state:", e);
-                        localStorage.removeItem(`seatingChartState_${user.uid}`);
+            firebase.initializeApp(firebaseConfig);
+            const auth = firebase.auth();
+            const provider = new firebase.auth.GoogleAuthProvider();
+
+            loginBtn.addEventListener('click', () => {
+                auth.signInWithPopup(provider).catch((error) => {
+                    console.error("Authentication failed:", error);
+                    if (error.code === 'auth/unauthorized-domain') {
+                        alert("النطاق غير مصرح به. يرجى إضافة نطاق هذا الموقع إلى قائمة النطاقات المعتمدة في لوحة تحكم Firebase.");
+                    } else if (error.code === 'auth/popup-blocked') {
+                        alert("تم حظر النافذة المنبثقة. يرجى السماح بالنوافذ المنبثقة لهذا الموقع والمحاولة مرة أخرى.");
+                    } else {
+                        alert("فشل تسجيل الدخول. الرجاء المحاولة مرة أخرى.");
                     }
-                }
-            };
+                });
+            });
+            
+            let appInitialized = false;
 
-            clearDataBtn.addEventListener('click', () => {
-                if (confirm("هل أنت متأكد من رغبتك في مسح جميع القاعات والطلاب والمخططات المحفوظة؟ سيتم تسجيل خروجك أيضًا.")) {
-                    localStorage.removeItem(`seatingChartState_${user.uid}`);
-                    signOut(auth);
+            auth.onAuthStateChanged(user => {
+                if (user) {
+                    if (!appInitialized) {
+                        appInitialized = true;
+                        loginScreen.classList.add('hidden');
+                        appContainer.classList.remove('hidden');
+                        
+                        const welcomeMsg = document.getElementById('welcome-message');
+                        welcomeMsg.innerHTML = `مرحباً، ${user.displayName} | <button id="logout-btn" class="text-red-500 font-bold hover:underline">تسجيل الخروج</button>`;
+                        
+                        document.getElementById('logout-btn').addEventListener('click', () => {
+                            auth.signOut();
+                        });
+
+                        initializeAppLogic(user);
+                    }
+                } else {
+                    appInitialized = false;
+                    loginScreen.classList.remove('hidden');
+                    appContainer.classList.add('hidden');
                 }
             });
 
-            const updateUI = () => {
-                renderStepper();
-                sections.forEach(s => s.classList.remove('active'));
-                document.getElementById(`step-${state.currentStep}`).classList.add('active');
-                prevBtn.disabled = state.currentStep === 1;
-                nextBtn.disabled = (state.currentStep === 1 && state.selectedHallIds.size === 0) || (state.currentStep === steps.length);
-                nextBtn.textContent = 'التالي';
-                nextBtn.classList.toggle('hidden', state.currentStep === steps.length);
-
-                if (state.currentStep === 1) renderHallsList();
-                if (state.currentStep === 2) renderStudentList();
-                if (state.currentStep === 3) renderDistributionView();
-                if (state.currentStep === 4) renderExportView();
-                if (state.currentStep === 5) renderAbsenceView();
-            };
-
-            const renderStepper = () => {
-                stepperContainer.innerHTML = steps.map(step => {
-                    const isActive = state.currentStep === step.id;
-                    const isDone = state.currentStep > step.id;
-                    const baseClasses = 'flex items-center gap-2 transition-all';
-                    const activeClasses = 'text-sky-600 font-bold';
-                    const doneClasses = 'text-green-600';
-                    let html = `<div class="${baseClasses} ${isActive ? activeClasses : (isDone ? doneClasses : 'text-gray-400')}">
-                        <div class="w-8 h-8 rounded-full flex items-center justify-center border-2 ${isActive ? 'border-sky-600 bg-sky-100' : (isDone ? 'border-green-600 bg-green-100' : 'border-gray-300')}">
-                            ${isDone ? '✓' : step.id}
-                        </div>
-                        <span class="hidden md:block">${step.name}</span>
-                    </div>`;
-                    if (step.id < steps.length) {
-                        html += `<div class="flex-1 h-0.5 ${(isDone || (isActive && state.selectedHallIds.size > 0)) ? 'bg-green-600' : 'bg-gray-300'}"></div>`;
-                    }
-                    return html;
-                }).join('');
-            };
-
-            const checkIfSeatingChartExists = (hallId) => {
-                for (const key of state.seatingChart.keys()) {
-                    if (key.startsWith(hallId + ':')) { return true; }
-                }
-                return false;
-            };
-
-            const renderHallsList = () => {
-                if(state.halls.length === 0) {
-                    hallsListContainer.innerHTML = `<p class="text-slate-400 text-center col-span-full mt-8">لم يتم إنشاء أي قاعات بعد. انقر على "إنشاء قاعة جديدة" للبدء.</p>`;
-                } else {
-                    hallsListContainer.innerHTML = state.halls.map(hall => {
-                        const isSelected = state.selectedHallIds.has(hall.id);
-                        const hasChart = checkIfSeatingChartExists(hall.id);
-                        return `
-                        <div class="border rounded-lg p-4 shadow transition flex flex-col ${isSelected ? 'border-sky-500 ring-2 ring-sky-200' : 'bg-white'}">
-                            <div class="flex-grow">
-                                <h3 class="font-bold text-lg">${hall.name}</h3>
-                                <p class="text-sm text-slate-600">${hall.location || 'لم يحدد الموقع'}</p>
-                                <p class="text-sm text-slate-500">الصفوف: ${hall.rows} | القطاعات: ${hall.sector1Name}, ${hall.sector2Name}</p>
-                                <p class="text-sm text-slate-500">إجمالي المقاعد: ${hall.rows * (hall.sector1Cols + hall.sector2Cols)}</p>
-                            </div>
-                            <div class="flex gap-2 mt-4 pt-4 border-t">
-                                <button onclick="window.toggleHallSelection(${hall.id})" class="flex-1 text-sm ${isSelected ? 'bg-red-500' : 'bg-green-500'} text-white font-semibold py-1 px-2 rounded hover:bg-green-600">
-                                    ${isSelected ? 'إلغاء التحديد' : 'تحديد'}
-                                </button>
-                                <button onclick="window.editHall(${hall.id})" class="text-sm bg-yellow-400 text-white font-semibold py-1 px-2 rounded hover:bg-yellow-500">تعديل</button>
-                                <button onclick="window.copyHall(${hall.id})" class="text-sm bg-blue-400 text-white font-semibold py-1 px-2 rounded hover:bg-blue-500">نسخ</button>
-                                <button onclick="window.deleteHall(${hall.id})" class="text-sm bg-red-500 text-white font-semibold py-1 px-2 rounded hover:bg-red-600">حذف</button>
-                            </div>
-                            ${hasChart ? `
-                            <div class="mt-2 pt-2 border-t border-dashed">
-                                <button onclick="window.goToAbsenceScanning(${hall.id})" class="w-full text-sm bg-teal-500 text-white font-bold py-2 px-2 rounded hover:bg-teal-600 transition">
-                                    تسجيل الغياب
-                                </button>
-                            </div>
-                            ` : ''}
-                        </div>`;
-                    }).join('');
-                }
-                nextBtn.disabled = state.selectedHallIds.size === 0;
-            };
-
-            const toggleHallModal = (show, hall = null) => {
-                hallModalBackdrop.classList.toggle('hidden', !show);
-                if (show) {
-                    hallForm.reset();
-                    if (hall) {
-                        hallModalTitle.textContent = 'تعديل القاعة';
-                        hallIdInput.value = hall.id;
-                        hallNameInput.value = hall.name;
-                        hallLocationInput.value = hall.location || '';
-                        hallRowsInput.value = hall.rows;
-                        hallSector1ColsInput.value = hall.sector1Cols;
-                        hallSector2ColsInput.value = hall.sector2Cols;
-                    } else {
-                        hallModalTitle.textContent = 'إنشاء قاعة جديدة';
-                        hallIdInput.value = '';
-                    }
-                }
-            };
-            
-            showHallModalBtn.addEventListener('click', () => toggleHallModal(true));
-            cancelHallModalBtn.addEventListener('click', () => toggleHallModal(false));
-
-            hallForm.addEventListener('submit', (e) => {
-                e.preventDefault();
-                const hallId = hallIdInput.value ? parseInt(hallIdInput.value) : Date.now();
-                const isEditing = !!hallIdInput.value;
-                const hallData = {
-                    id: hallId, name: hallNameInput.value, location: hallLocationInput.value,
-                    rows: parseInt(hallRowsInput.value), sector1Cols: parseInt(hallSector1ColsInput.value),
-                    sector2Cols: parseInt(hallSector2ColsInput.value), disabledSeats: new Set()
+            function initializeAppLogic(user) {
+                // --- State Management ---
+                let state = {
+                    currentStep: 1,
+                    halls: [],
+                    selectedHallIds: new Set(),
+                    students: [],
+                    seatingChart: new Map(),
+                    columnClassAssignments: new Map(),
+                    backgrounds: { header: null, body: null, use: false, headerOpacity: 1, bodyOpacity: 1 },
+                    absentStudents: [],
                 };
-                const existingIndex = state.halls.findIndex(h => h.id === hallData.id);
-                if (isEditing) {
-                    const oldHall = state.halls[existingIndex];
-                    hallData.sector1Name = oldHall.sector1Name;
-                    hallData.sector2Name = oldHall.sector2Name;
-                    hallData.disabledSeats = oldHall.disabledSeats;
-                    state.halls[existingIndex] = hallData;
-                } else {
+                
+                let html5QrCode;
+
+                // --- DOM Elements ---
+                const stepperContainer = document.getElementById('stepper');
+                const sections = document.querySelectorAll('.step-section');
+                const nextBtn = document.getElementById('next-btn');
+                const prevBtn = document.getElementById('prev-btn');
+                const hallsListContainer = document.getElementById('halls-list-container');
+                const showHallModalBtn = document.getElementById('show-hall-modal-btn');
+                const hallModalBackdrop = document.getElementById('hall-modal-backdrop');
+                const hallModal = document.getElementById('hall-modal');
+                const hallModalTitle = document.getElementById('hall-modal-title');
+                const cancelHallModalBtn = document.getElementById('cancel-hall-modal-btn');
+                const hallForm = document.getElementById('hall-form');
+                const hallIdInput = document.getElementById('hall-id-input');
+                const hallNameInput = document.getElementById('hall-name');
+                const hallLocationInput = document.getElementById('hall-location');
+                const hallRowsInput = document.getElementById('hall-rows');
+                const hallSector1ColsInput = document.getElementById('hall-sector1-cols');
+                const hallSector2ColsInput = document.getElementById('hall-sector2-cols');
+                const studentsTextInput = document.getElementById('students-text');
+                const importTextBtn = document.getElementById('import-text-btn');
+                const studentListContainer = document.getElementById('student-list');
+                const studentCountSpan = document.getElementById('student-count');
+                const excelFileInput = document.getElementById('excel-file');
+                const tabBtns = document.querySelectorAll('.tab-btn');
+                const tabContents = document.querySelectorAll('.tab-content');
+                const multiHallDistributionContainer = document.getElementById('multi-hall-distribution-container');
+                const autoDistributeBtn = document.getElementById('auto-distribute-btn');
+                const resetDistributionBtn = document.getElementById('reset-distribution-btn');
+                const unassignedStudentsContainer = document.getElementById('unassigned-students');
+                const exportHeader = document.getElementById('export-header');
+                const exportChartPdfBtn = document.getElementById('export-chart-pdf-btn');
+                const exportListPdfBtn = document.getElementById('export-list-pdf-btn');
+                const pdfExportStatus = document.getElementById('pdf-export-status');
+                const useBackgroundsToggle = document.getElementById('use-backgrounds-toggle');
+                const backgroundInputs = document.getElementById('background-inputs');
+                const headerBgInput = document.getElementById('header-bg-input');
+                const bodyBgInput = document.getElementById('body-bg-input');
+                const headerOpacitySlider = document.getElementById('header-opacity-slider');
+                const bodyOpacitySlider = document.getElementById('body-opacity-slider');
+                const headerOpacityValue = document.getElementById('header-opacity-value');
+                const bodyOpacityValue = document.getElementById('body-opacity-value');
+                const previewPdfBtn = document.getElementById('preview-pdf-btn');
+                const previewModalBackdrop = document.getElementById('preview-modal-backdrop');
+                const previewContent = document.getElementById('preview-content');
+                const closePreviewModalBtn = document.getElementById('close-preview-modal-btn');
+                const clearDataBtn = document.getElementById('clear-data-btn');
+
+                const startScanBtn = document.getElementById('start-scan-btn');
+                const stopScanBtn = document.getElementById('stop-scan-btn');
+                const readerDiv = document.getElementById('reader');
+                const scanFeedbackDiv = document.getElementById('scan-feedback');
+                const absentListContainer = document.getElementById('absent-list');
+                const absentCountSpan = document.getElementById('absent-count');
+                const exportAbsentPdfBtn = document.getElementById('export-absent-pdf-btn');
+
+                const steps = [
+                    { id: 1, name: 'إدارة القاعات' }, { id: 2, name: 'بيانات الطلاب' }, { id: 3, name: 'التوزيع' },
+                    { id: 4, name: 'التصدير' }, { id: 5, name: 'تسجيل الغياب' }
+                ];
+
+                // --- Persistence Logic ---
+                const saveStateToLocalStorage = () => {
+                    try {
+                        const stateToSave = {
+                            ...state,
+                            selectedHallIds: [...state.selectedHallIds],
+                            seatingChart: [...state.seatingChart],
+                            columnClassAssignments: [...state.columnClassAssignments],
+                            halls: state.halls.map(h => ({ ...h, disabledSeats: [...h.disabledSeats] })),
+                            backgrounds: { ...state.backgrounds, header: null, body: null }
+                        };
+                        localStorage.setItem(`seatingChartState_${user.uid}`, JSON.stringify(stateToSave));
+                    } catch (e) {
+                        console.error("Failed to save state:", e);
+                        showAlert("خطأ: لم يتم حفظ البيانات. قد تكون سعة التخزين ممتلئة.");
+                    }
+                };
+
+                const loadStateFromLocalStorage = () => {
+                    const savedStateJSON = localStorage.getItem(`seatingChartState_${user.uid}`);
+                    if (savedStateJSON) {
+                        try {
+                            const savedState = JSON.parse(savedStateJSON);
+                            state = {
+                                ...state,
+                                ...savedState,
+                                selectedHallIds: new Set(savedState.selectedHallIds || []),
+                                seatingChart: new Map(savedState.seatingChart || []),
+                                columnClassAssignments: new Map(savedState.columnClassAssignments || []),
+                                halls: savedState.halls.map(h => ({ ...h, disabledSeats: new Set(h.disabledSeats || []) })),
+                            };
+                        } catch (e) {
+                            console.error("Failed to load state:", e);
+                            localStorage.removeItem(`seatingChartState_${user.uid}`);
+                        }
+                    }
+                };
+
+                clearDataBtn.addEventListener('click', () => {
+                    if (confirm("هل أنت متأكد من رغبتك في مسح جميع القاعات والطلاب والمخططات المحفوظة؟ سيتم تسجيل خروجك أيضًا.")) {
+                        localStorage.removeItem(`seatingChartState_${user.uid}`);
+                        auth.signOut();
+                    }
+                });
+
+                const updateUI = () => {
+                    renderStepper();
+                    sections.forEach(s => s.classList.remove('active'));
+                    document.getElementById(`step-${state.currentStep}`).classList.add('active');
+                    prevBtn.disabled = state.currentStep === 1;
+                    nextBtn.disabled = (state.currentStep === 1 && state.selectedHallIds.size === 0) || (state.currentStep === steps.length);
+                    nextBtn.textContent = 'التالي';
+                    nextBtn.classList.toggle('hidden', state.currentStep === steps.length);
+
+                    if (state.currentStep === 1) renderHallsList();
+                    if (state.currentStep === 2) renderStudentList();
+                    if (state.currentStep === 3) renderDistributionView();
+                    if (state.currentStep === 4) renderExportView();
+                    if (state.currentStep === 5) renderAbsenceView();
+                };
+
+                const renderStepper = () => {
+                    stepperContainer.innerHTML = steps.map(step => {
+                        const isActive = state.currentStep === step.id;
+                        const isDone = state.currentStep > step.id;
+                        const baseClasses = 'flex items-center gap-2 transition-all';
+                        const activeClasses = 'text-sky-600 font-bold';
+                        const doneClasses = 'text-green-600';
+                        let html = `<div class="${baseClasses} ${isActive ? activeClasses : (isDone ? doneClasses : 'text-gray-400')}">
+                            <div class="w-8 h-8 rounded-full flex items-center justify-center border-2 ${isActive ? 'border-sky-600 bg-sky-100' : (isDone ? 'border-green-600 bg-green-100' : 'border-gray-300')}">
+                                ${isDone ? '✓' : step.id}
+                            </div>
+                            <span class="hidden md:block">${step.name}</span>
+                        </div>`;
+                        if (step.id < steps.length) {
+                            html += `<div class="flex-1 h-0.5 ${(isDone || (isActive && state.selectedHallIds.size > 0)) ? 'bg-green-600' : 'bg-gray-300'}"></div>`;
+                        }
+                        return html;
+                    }).join('');
+                };
+
+                const checkIfSeatingChartExists = (hallId) => {
+                    for (const key of state.seatingChart.keys()) {
+                        if (key.startsWith(hallId + ':')) { return true; }
+                    }
+                    return false;
+                };
+
+                const renderHallsList = () => {
+                    if(state.halls.length === 0) {
+                        hallsListContainer.innerHTML = `<p class="text-slate-400 text-center col-span-full mt-8">لم يتم إنشاء أي قاعات بعد. انقر على "إنشاء قاعة جديدة" للبدء.</p>`;
+                    } else {
+                        hallsListContainer.innerHTML = state.halls.map(hall => {
+                            const isSelected = state.selectedHallIds.has(hall.id);
+                            const hasChart = checkIfSeatingChartExists(hall.id);
+                            return `
+                            <div class="border rounded-lg p-4 shadow transition flex flex-col ${isSelected ? 'border-sky-500 ring-2 ring-sky-200' : 'bg-white'}">
+                                <div class="flex-grow">
+                                    <h3 class="font-bold text-lg">${hall.name}</h3>
+                                    <p class="text-sm text-slate-600">${hall.location || 'لم يحدد الموقع'}</p>
+                                    <p class="text-sm text-slate-500">الصفوف: ${hall.rows} | القطاعات: ${hall.sector1Name}, ${hall.sector2Name}</p>
+                                    <p class="text-sm text-slate-500">إجمالي المقاعد: ${hall.rows * (hall.sector1Cols + hall.sector2Cols)}</p>
+                                </div>
+                                <div class="flex gap-2 mt-4 pt-4 border-t">
+                                    <button onclick="window.toggleHallSelection(${hall.id})" class="flex-1 text-sm ${isSelected ? 'bg-red-500' : 'bg-green-500'} text-white font-semibold py-1 px-2 rounded hover:bg-green-600">
+                                        ${isSelected ? 'إلغاء التحديد' : 'تحديد'}
+                                    </button>
+                                    <button onclick="window.editHall(${hall.id})" class="text-sm bg-yellow-400 text-white font-semibold py-1 px-2 rounded hover:bg-yellow-500">تعديل</button>
+                                    <button onclick="window.copyHall(${hall.id})" class="text-sm bg-blue-400 text-white font-semibold py-1 px-2 rounded hover:bg-blue-500">نسخ</button>
+                                    <button onclick="window.deleteHall(${hall.id})" class="text-sm bg-red-500 text-white font-semibold py-1 px-2 rounded hover:bg-red-600">حذف</button>
+                                </div>
+                                ${hasChart ? `
+                                <div class="mt-2 pt-2 border-t border-dashed">
+                                    <button onclick="window.goToAbsenceScanning(${hall.id})" class="w-full text-sm bg-teal-500 text-white font-bold py-2 px-2 rounded hover:bg-teal-600 transition">
+                                        تسجيل الغياب
+                                    </button>
+                                </div>
+                                ` : ''}
+                            </div>`;
+                        }).join('');
+                    }
+                    nextBtn.disabled = state.selectedHallIds.size === 0;
+                };
+
+                const toggleHallModal = (show, hall = null) => {
+                    hallModalBackdrop.classList.toggle('hidden', !show);
+                    if (show) {
+                        hallForm.reset();
+                        if (hall) {
+                            hallModalTitle.textContent = 'تعديل القاعة';
+                            hallIdInput.value = hall.id;
+                            hallNameInput.value = hall.name;
+                            hallLocationInput.value = hall.location || '';
+                            hallRowsInput.value = hall.rows;
+                            hallSector1ColsInput.value = hall.sector1Cols;
+                            hallSector2ColsInput.value = hall.sector2Cols;
+                        } else {
+                            hallModalTitle.textContent = 'إنشاء قاعة جديدة';
+                            hallIdInput.value = '';
+                        }
+                    }
+                };
+                
+                showHallModalBtn.addEventListener('click', () => toggleHallModal(true));
+                cancelHallModalBtn.addEventListener('click', () => toggleHallModal(false));
+
+                hallForm.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    const hallId = hallIdInput.value ? parseInt(hallIdInput.value) : Date.now();
+                    const isEditing = !!hallIdInput.value;
+                    const hallData = {
+                        id: hallId, name: hallNameInput.value, location: hallLocationInput.value,
+                        rows: parseInt(hallRowsInput.value), sector1Cols: parseInt(hallSector1ColsInput.value),
+                        sector2Cols: parseInt(hallSector2ColsInput.value), disabledSeats: new Set()
+                    };
+                    const existingIndex = state.halls.findIndex(h => h.id === hallData.id);
+                    if (isEditing) {
+                        const oldHall = state.halls[existingIndex];
+                        hallData.sector1Name = oldHall.sector1Name;
+                        hallData.sector2Name = oldHall.sector2Name;
+                        hallData.disabledSeats = oldHall.disabledSeats;
+                        state.halls[existingIndex] = hallData;
+                    } else {
+                        let maxSectorNum = 0;
+                        state.halls.forEach(h => {
+                            [h.sector1Name, h.sector2Name].forEach(sectorName => {
+                                if (sectorName) {
+                                    const sectorMatch = sectorName.match(/(\d+)/);
+                                    if (sectorMatch) {
+                                        const num = parseInt(sectorMatch[1], 10);
+                                        if (num > maxSectorNum) maxSectorNum = num;
+                                    }
+                                }
+                            });
+                        });
+                        hallData.sector1Name = `قطاع (${maxSectorNum + 1})`;
+                        hallData.sector2Name = `قطاع (${maxSectorNum + 2})`;
+                        state.halls.push(hallData);
+                    }
+                    toggleHallModal(false);
+                    saveStateToLocalStorage();
+                    updateUI();
+                });
+
+                window.toggleHallSelection = (id) => {
+                    if (state.selectedHallIds.has(id)) { state.selectedHallIds.delete(id); } else { state.selectedHallIds.add(id); }
+                    updateUI();
+                };
+                window.editHall = (id) => { const hall = state.halls.find(h => h.id === id); if(hall) toggleHallModal(true, hall); };
+                window.copyHall = (id) => {
+                    const hallToCopy = state.halls.find(h => h.id === id);
+                    if (!hallToCopy) return;
+                    let newHallName = `${hallToCopy.name} (نسخة)`;
+                    const nameMatch = hallToCopy.name.match(/^(.*?)[\s(]*(\d+)\)?$/);
+                    let baseName = hallToCopy.name;
+                    if (nameMatch) { baseName = nameMatch[1].trim(); }
+                    let maxNum = 0;
+                    const regex = new RegExp(`^${baseName.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')}[\\s(]*(\\d+)\\)?$`);
+                    state.halls.forEach(h => {
+                        const match = h.name.match(regex);
+                        if (match) {
+                            const num = parseInt(match[1], 10);
+                            if (num > maxNum) { maxNum = num; }
+                        }
+                    });
+                    newHallName = `${baseName} (${maxNum + 1})`;
                     let maxSectorNum = 0;
                     state.halls.forEach(h => {
                         [h.sector1Name, h.sector2Name].forEach(sectorName => {
@@ -635,801 +684,759 @@
                             }
                         });
                     });
-                    hallData.sector1Name = `قطاع (${maxSectorNum + 1})`;
-                    hallData.sector2Name = `قطاع (${maxSectorNum + 2})`;
-                    state.halls.push(hallData);
-                }
-                toggleHallModal(false);
-                saveStateToLocalStorage();
-                updateUI();
-            });
-
-            window.toggleHallSelection = (id) => {
-                if (state.selectedHallIds.has(id)) { state.selectedHallIds.delete(id); } else { state.selectedHallIds.add(id); }
-                updateUI();
-            };
-            window.editHall = (id) => { const hall = state.halls.find(h => h.id === id); if(hall) toggleHallModal(true, hall); };
-            window.copyHall = (id) => {
-                const hallToCopy = state.halls.find(h => h.id === id);
-                if (!hallToCopy) return;
-                let newHallName = `${hallToCopy.name} (نسخة)`;
-                const nameMatch = hallToCopy.name.match(/^(.*?)[\s(]*(\d+)\)?$/);
-                let baseName = hallToCopy.name;
-                if (nameMatch) { baseName = nameMatch[1].trim(); }
-                let maxNum = 0;
-                const regex = new RegExp(`^${baseName.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')}[\\s(]*(\\d+)\\)?$`);
-                state.halls.forEach(h => {
-                    const match = h.name.match(regex);
-                    if (match) {
-                        const num = parseInt(match[1], 10);
-                        if (num > maxNum) { maxNum = num; }
-                    }
-                });
-                newHallName = `${baseName} (${maxNum + 1})`;
-                let maxSectorNum = 0;
-                state.halls.forEach(h => {
-                    [h.sector1Name, h.sector2Name].forEach(sectorName => {
-                        if (sectorName) {
-                            const sectorMatch = sectorName.match(/(\d+)/);
-                            if (sectorMatch) {
-                                const num = parseInt(sectorMatch[1], 10);
-                                if (num > maxSectorNum) maxSectorNum = num;
-                            }
-                        }
-                    });
-                });
-                const newHall = {
-                    ...hallToCopy, id: Date.now(), name: newHallName,
-                    sector1Name: `قطاع (${maxSectorNum + 1})`, sector2Name: `قطاع (${maxSectorNum + 2})`,
-                    disabledSeats: new Set(hallToCopy.disabledSeats), 
+                    const newHall = {
+                        ...hallToCopy, id: Date.now(), name: newHallName,
+                        sector1Name: `قطاع (${maxSectorNum + 1})`, sector2Name: `قطاع (${maxSectorNum + 2})`,
+                        disabledSeats: new Set(hallToCopy.disabledSeats), 
+                    };
+                    state.halls.push(newHall);
+                    saveStateToLocalStorage();
+                    updateUI();
                 };
-                state.halls.push(newHall);
-                saveStateToLocalStorage();
-                updateUI();
-            };
-            window.deleteHall = (id) => {
-                if (confirm('هل أنت متأكد من حذف هذه القاعة؟ سيتم حذف مخطط الجلوس المرتبط بها أيضًا.')) {
-                    state.halls = state.halls.filter(h => h.id !== id);
-                    state.selectedHallIds.delete(id);
+                window.deleteHall = (id) => {
+                    if (confirm('هل أنت متأكد من حذف هذه القاعة؟ سيتم حذف مخطط الجلوس المرتبط بها أيضًا.')) {
+                        state.halls = state.halls.filter(h => h.id !== id);
+                        state.selectedHallIds.delete(id);
+                        const newSeatingChart = new Map();
+                        state.seatingChart.forEach((value, key) => {
+                            if (!key.startsWith(id + ':')) { newSeatingChart.set(key, value); }
+                        });
+                        state.seatingChart = newSeatingChart;
+                        saveStateToLocalStorage();
+                        updateUI();
+                    }
+                };
+                window.goToAbsenceScanning = (hallId) => {
+                    state.selectedHallIds.clear();
+                    state.selectedHallIds.add(hallId);
+                    state.currentStep = 5;
+                    updateUI();
+                };
+
+                const renderStudentList = () => {
+                    studentCountSpan.textContent = state.students.length;
+                    if (state.students.length === 0) {
+                        studentListContainer.innerHTML = `<p class="text-slate-400 text-center mt-8">لم يتم إضافة أي طلاب بعد.</p>`;
+                        return;
+                    }
+                    studentListContainer.innerHTML = state.students.map(s => `
+                        <div class="p-2 border rounded-md bg-white flex justify-between items-center text-sm">
+                            <div><p class="font-bold">${s.name} (${s.id})</p><p class="text-slate-500">${s.class} - ${s.section}</p></div>
+                            <button class="text-red-500 hover:text-red-700 font-bold p-1" onclick="window.removeStudent(${s.uid})">✕</button>
+                        </div>`).join('');
+                };
+                window.removeStudent = (uid) => { 
+                    state.students = state.students.filter(s => s.uid !== uid); 
                     const newSeatingChart = new Map();
                     state.seatingChart.forEach((value, key) => {
-                        if (!key.startsWith(id + ':')) { newSeatingChart.set(key, value); }
+                        if (value !== uid) { newSeatingChart.set(key, value); }
                     });
                     state.seatingChart = newSeatingChart;
                     saveStateToLocalStorage();
-                    updateUI();
-                }
-            };
-            window.goToAbsenceScanning = (hallId) => {
-                state.selectedHallIds.clear();
-                state.selectedHallIds.add(hallId);
-                state.currentStep = 5;
-                updateUI();
-            };
-
-            const renderStudentList = () => {
-                studentCountSpan.textContent = state.students.length;
-                if (state.students.length === 0) {
-                    studentListContainer.innerHTML = `<p class="text-slate-400 text-center mt-8">لم يتم إضافة أي طلاب بعد.</p>`;
-                    return;
-                }
-                studentListContainer.innerHTML = state.students.map(s => `
-                    <div class="p-2 border rounded-md bg-white flex justify-between items-center text-sm">
-                        <div><p class="font-bold">${s.name} (${s.id})</p><p class="text-slate-500">${s.class} - ${s.section}</p></div>
-                        <button class="text-red-500 hover:text-red-700 font-bold p-1" onclick="window.removeStudent(${s.uid})">✕</button>
-                    </div>`).join('');
-            };
-            window.removeStudent = (uid) => { 
-                state.students = state.students.filter(s => s.uid !== uid); 
-                const newSeatingChart = new Map();
-                state.seatingChart.forEach((value, key) => {
-                    if (value !== uid) { newSeatingChart.set(key, value); }
-                });
-                state.seatingChart = newSeatingChart;
-                saveStateToLocalStorage();
-                renderStudentList(); 
-            };
-            const processNewStudents = (newStudents) => {
-                const uniqueNewStudents = newStudents.filter(ns => !state.students.some(s => s.id === ns.id));
-                state.students = [...state.students, ...uniqueNewStudents];
-                state.students.sort((a,b) => a.name.localeCompare(b.name));
-                saveStateToLocalStorage();
-                renderStudentList();
-            };
-            importTextBtn.addEventListener('click', () => {
-                const lines = studentsTextInput.value.trim().split('\n');
-                const newStudents = lines.map((line, index) => {
-                    const parts = line.split(',').map(p => p.trim());
-                    if (parts.length < 4) return null;
-                    return { uid: Date.now() + index, name: parts[0], id: parts[1], class: parts[2], section: parts[3] };
-                }).filter(Boolean);
-                processNewStudents(newStudents);
-                studentsTextInput.value = '';
-            });
-            excelFileInput.addEventListener('change', (e) => {
-                const file = e.target.files[0];
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                    const data = new Uint8Array(event.target.result);
-                    const workbook = XLSX.read(data, { type: 'array' });
-                    const sheetName = workbook.SheetNames[0];
-                    const worksheet = workbook.Sheets[sheetName];
-                    const json = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-                    const newStudents = json.slice(1).map((row, index) => {
-                        if(row.length < 4) return null;
-                        return { uid: Date.now() + index, name: String(row[0]), id: String(row[1]), class: String(row[2]), section: String(row[3]) };
+                    renderStudentList(); 
+                };
+                const processNewStudents = (newStudents) => {
+                    const uniqueNewStudents = newStudents.filter(ns => !state.students.some(s => s.id === ns.id));
+                    state.students = [...state.students, ...uniqueNewStudents];
+                    state.students.sort((a,b) => a.name.localeCompare(b.name));
+                    saveStateToLocalStorage();
+                    renderStudentList();
+                };
+                importTextBtn.addEventListener('click', () => {
+                    const lines = studentsTextInput.value.trim().split('\n');
+                    const newStudents = lines.map((line, index) => {
+                        const parts = line.split(',').map(p => p.trim());
+                        if (parts.length < 4) return null;
+                        return { uid: Date.now() + index, name: parts[0], id: parts[1], class: parts[2], section: parts[3] };
                     }).filter(Boolean);
                     processNewStudents(newStudents);
-                };
-                reader.readAsArrayBuffer(file);
-            });
-            tabBtns.forEach(btn => {
-                btn.addEventListener('click', () => {
-                    tabBtns.forEach(b => { b.classList.remove('border-sky-600', 'text-sky-600'); b.classList.add('text-gray-500'); });
-                    btn.classList.add('border-sky-600', 'text-sky-600');
-                    btn.classList.remove('text-gray-500');
-                    const tabId = btn.getAttribute('data-tab');
-                    tabContents.forEach(content => content.classList.toggle('hidden', content.id !== tabId));
+                    studentsTextInput.value = '';
                 });
-            });
-
-            const renderDistributionView = () => {
-                const assignedStudentUids = new Set([...state.seatingChart.values()]);
-                const unassignedStudents = state.students.filter(s => !assignedStudentUids.has(s.uid));
-                unassignedStudentsContainer.innerHTML = unassignedStudents.map(s => `
-                    <div id="student-card-${s.uid}" class="student-card p-2 border rounded-md bg-white flex justify-between items-center text-sm" draggable="true" data-uid="${s.uid}">
-                         <div><p class="font-bold">${s.name}</p><p class="text-slate-500">${s.id} - ${s.class} / ${s.section}</p></div>
-                    </div>`).join('') || `<p class="text-slate-400 text-center mt-8">تم توزيع جميع الطلاب.</p>`;
-                multiHallDistributionContainer.innerHTML = '';
-                state.selectedHallIds.forEach(hallId => {
-                    const hall = state.halls.find(h => h.id === hallId);
-                    if (hall) {
-                        const hallContainer = document.createElement('div');
-                        hallContainer.className = 'p-4 border rounded-lg bg-gray-50 overflow-x-auto';
-                        hallContainer.innerHTML = `
-                            <h3 class="font-bold text-xl mb-4 text-center">${hall.name}</h3>
-                            <div class="flex gap-8 justify-center">
-                                <div class="text-center">
-                                    <h4 class="font-bold text-lg mb-2">${hall.sector1Name}</h4>
-                                    <div id="selector-container-${hall.id}-1" class="flex gap-2 justify-center mb-2"></div>
-                                    <div id="dist-grid-${hall.id}-1" class="grid gap-2"></div>
-                                </div>
-                                <div class="text-center">
-                                    <h4 class="font-bold text-lg mb-2">${hall.sector2Name}</h4>
-                                    <div id="selector-container-${hall.id}-2" class="flex gap-2 justify-center mb-2"></div>
-                                    <div id="dist-grid-${hall.id}-2" class="grid gap-2"></div>
-                                </div>
-                            </div>`;
-                        multiHallDistributionContainer.appendChild(hallContainer);
-                        renderSectorGrid(document.getElementById(`dist-grid-${hall.id}-1`), hall, 1);
-                        renderSectorGrid(document.getElementById(`dist-grid-${hall.id}-2`), hall, 2);
-                        renderColumnSelectors(document.getElementById(`selector-container-${hall.id}-1`), hall, 1);
-                        renderColumnSelectors(document.getElementById(`selector-container-${hall.id}-2`), hall, 2);
-                    }
+                excelFileInput.addEventListener('change', (e) => {
+                    const file = e.target.files[0];
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        const data = new Uint8Array(event.target.result);
+                        const workbook = XLSX.read(data, { type: 'array' });
+                        const sheetName = workbook.SheetNames[0];
+                        const worksheet = workbook.Sheets[sheetName];
+                        const json = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                        const newStudents = json.slice(1).map((row, index) => {
+                            if(row.length < 4) return null;
+                            return { uid: Date.now() + index, name: String(row[0]), id: String(row[1]), class: String(row[2]), section: String(row[3]) };
+                        }).filter(Boolean);
+                        processNewStudents(newStudents);
+                    };
+                    reader.readAsArrayBuffer(file);
                 });
-                addDragAndDropListeners();
-            };
-
-            const renderColumnSelectors = (container, hall, sector) => {
-                const uniqueClasses = [...new Set(state.students.map(s => s.class))];
-                const cols = sector === 1 ? hall.sector1Cols : hall.sector2Cols;
-                const colOffset = sector === 1 ? 0 : hall.sector1Cols;
-                container.style.gridTemplateColumns = `repeat(${cols}, minmax(0, 1fr))`;
-                for (let c = 0; c < cols; c++) {
-                    const actualCol = c + colOffset;
-                    const columnId = `${hall.id}:${actualCol}`;
-                    const select = document.createElement('select');
-                    select.className = 'text-xs border rounded-md p-1';
-                    select.dataset.columnId = columnId;
-                    select.innerHTML = `<option value="">أي صف</option>` + uniqueClasses.map(cls => `<option value="${cls}" ${state.columnClassAssignments.get(columnId) === cls ? 'selected' : ''}>${cls}</option>`).join('');
-                    select.addEventListener('change', (e) => {
-                        const selectedClass = e.target.value;
-                        if (selectedClass) { state.columnClassAssignments.set(columnId, selectedClass); } else { state.columnClassAssignments.delete(columnId); }
-                        saveStateToLocalStorage();
+                tabBtns.forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        tabBtns.forEach(b => { b.classList.remove('border-sky-600', 'text-sky-600'); b.classList.add('text-gray-500'); });
+                        btn.classList.add('border-sky-600', 'text-sky-600');
+                        btn.classList.remove('text-gray-500');
+                        const tabId = btn.getAttribute('data-tab');
+                        tabContents.forEach(content => content.classList.toggle('hidden', content.id !== tabId));
                     });
-                    container.appendChild(select);
-                }
-            };
+                });
 
-            const renderSectorGrid = (gridContainer, hall, sector) => {
-                gridContainer.innerHTML = '';
-                const cols = sector === 1 ? hall.sector1Cols : hall.sector2Cols;
-                const colOffset = sector === 1 ? 0 : hall.sector1Cols;
-                gridContainer.style.gridTemplateColumns = `repeat(${cols}, minmax(0, 1fr))`;
-                for (let r = 0; r < hall.rows; r++) {
-                    for (let c = 0; c < cols; c++) {
-                        const actualCol = c + colOffset;
-                        const seatId = `${hall.id}:${r}-${actualCol}`;
-                        const seat = document.createElement('div');
-                        seat.className = 'seat droppable-seat aspect-square border-2 border-dashed border-gray-300 rounded-md p-1 bg-gray-100 overflow-hidden min-w-[80px] cursor-pointer';
-                        seat.dataset.seatId = seatId;
-                        const studentUid = getStudentUidBySeatId(seatId);
-                        if (hall.disabledSeats.has(seatId)) {
-                            seat.classList.add('disabled');
-                        } else if (studentUid) {
-                            const student = state.students.find(s => s.uid === studentUid);
-                            seat.classList.add('occupied');
-                            seat.innerHTML = `<div class="student-card w-full h-full flex flex-col justify-center items-center text-center" draggable="true" data-uid="${student.uid}" data-from-seat-id="${seatId}">
-                                    <p class="font-bold text-xs leading-tight">${student.name}</p>
-                                    <p class="text-slate-600 text-[10px]">${student.id}</p>
-                                    <p class="text-sky-700 font-semibold text-[10px] mt-1">${student.class} / ${student.section}</p>
-                                    <div class="flex justify-center mt-1" id="qrcode-${seatId.replace(/:/g, '-')}"></div>
+                const renderDistributionView = () => {
+                    const assignedStudentUids = new Set([...state.seatingChart.values()]);
+                    const unassignedStudents = state.students.filter(s => !assignedStudentUids.has(s.uid));
+                    unassignedStudentsContainer.innerHTML = unassignedStudents.map(s => `
+                        <div id="student-card-${s.uid}" class="student-card p-2 border rounded-md bg-white flex justify-between items-center text-sm" draggable="true" data-uid="${s.uid}">
+                             <div><p class="font-bold">${s.name}</p><p class="text-slate-500">${s.id} - ${s.class} / ${s.section}</p></div>
+                        </div>`).join('') || `<p class="text-slate-400 text-center mt-8">تم توزيع جميع الطلاب.</p>`;
+                    multiHallDistributionContainer.innerHTML = '';
+                    state.selectedHallIds.forEach(hallId => {
+                        const hall = state.halls.find(h => h.id === hallId);
+                        if (hall) {
+                            const hallContainer = document.createElement('div');
+                            hallContainer.className = 'p-4 border rounded-lg bg-gray-50 overflow-x-auto';
+                            hallContainer.innerHTML = `
+                                <h3 class="font-bold text-xl mb-4 text-center">${hall.name}</h3>
+                                <div class="flex gap-8 justify-center">
+                                    <div class="text-center">
+                                        <h4 class="font-bold text-lg mb-2">${hall.sector1Name}</h4>
+                                        <div id="selector-container-${hall.id}-1" class="flex gap-2 justify-center mb-2"></div>
+                                        <div id="dist-grid-${hall.id}-1" class="grid gap-2"></div>
+                                    </div>
+                                    <div class="text-center">
+                                        <h4 class="font-bold text-lg mb-2">${hall.sector2Name}</h4>
+                                        <div id="selector-container-${hall.id}-2" class="flex gap-2 justify-center mb-2"></div>
+                                        <div id="dist-grid-${hall.id}-2" class="grid gap-2"></div>
+                                    </div>
                                 </div>`;
-                            if(hasConflict(seatId)) seat.classList.add('conflict');
+                            multiHallDistributionContainer.appendChild(hallContainer);
+                            renderSectorGrid(document.getElementById(`dist-grid-${hall.id}-1`), hall, 1);
+                            renderSectorGrid(document.getElementById(`dist-grid-${hall.id}-2`), hall, 2);
+                            renderColumnSelectors(document.getElementById(`selector-container-${hall.id}-1`), hall, 1);
+                            renderColumnSelectors(document.getElementById(`selector-container-${hall.id}-2`), hall, 2);
                         }
-                        seat.addEventListener('click', () => { if (!getStudentUidBySeatId(seatId)) { toggleSeatDisabled(seatId); } });
-                        gridContainer.appendChild(seat);
-                        if (studentUid) {
-                            const student = state.students.find(s => s.uid === studentUid);
-                            new QRCode(document.getElementById(`qrcode-${seatId.replace(/:/g, '-')}`), {
-                                text: student.id.toString(), width: 40, height: 40,
-                                colorDark : "#000000", colorLight : "#ffffff", correctLevel : QRCode.CorrectLevel.H
-                            });
-                        }
-                    }
-                }
-            };
-            
-            const toggleSeatDisabled = (seatId) => {
-                const [hallIdStr] = seatId.split(':');
-                const hallId = parseInt(hallIdStr);
-                const hall = state.halls.find(h => h.id === hallId);
-                if (!hall) return;
-                if (hall.disabledSeats.has(seatId)) { hall.disabledSeats.delete(seatId); } else { hall.disabledSeats.add(seatId); }
-                saveStateToLocalStorage();
-                renderDistributionView();
-            };
-
-            const addDragAndDropListeners = () => {
-                document.querySelectorAll('.student-card').forEach(card => {
-                    card.addEventListener('dragstart', e => {
-                        e.dataTransfer.setData('text/plain', e.target.closest('.student-card').dataset.uid);
-                        e.dataTransfer.setData('fromSeatId', e.target.closest('.student-card').dataset.fromSeatId || '');
-                        setTimeout(() => e.target.classList.add('opacity-50'), 0);
                     });
-                    card.addEventListener('dragend', e => e.target.classList.remove('opacity-50'));
-                });
-                document.querySelectorAll('.droppable-seat').forEach(seat => {
-                    seat.addEventListener('dragover', e => {
-                        e.preventDefault();
-                        if(!seat.classList.contains('disabled') && !seat.querySelector('.student-card')) seat.classList.add('droppable-hover');
-                    });
-                    seat.addEventListener('dragleave', e => e.target.closest('.droppable-seat').classList.remove('droppable-hover'));
-                    seat.addEventListener('drop', e => {
-                        e.preventDefault();
-                        const seatEl = e.target.closest('.droppable-seat');
-                        seatEl.classList.remove('droppable-hover');
-                        const studentUid = parseInt(e.dataTransfer.getData('text/plain'), 10);
-                        const fromSeatId = e.dataTransfer.getData('fromSeatId');
-                        const toSeatId = seatEl.dataset.seatId;
-                        const [hallIdStr] = toSeatId.split(':');
-                        const hall = state.halls.find(h => h.id === parseInt(hallIdStr));
-                        if (hall.disabledSeats.has(toSeatId) && !getStudentUidBySeatId(toSeatId)) { hall.disabledSeats.delete(toSeatId); }
-                        if (fromSeatId) state.seatingChart.delete(fromSeatId);
-                        state.seatingChart.set(toSeatId, studentUid);
-                        saveStateToLocalStorage();
-                        renderDistributionView();
-                    });
-                });
-            };
+                    addDragAndDropListeners();
+                };
 
-            const getStudentUidBySeatId = (seatId) => state.seatingChart.get(seatId);
-
-            const hasConflict = (seatId) => {
-                const studentUid = getStudentUidBySeatId(seatId);
-                if (!studentUid) return false;
-                const student = state.students.find(s => s.uid === studentUid);
-                if (!student) return false;
-                const [hallId, coords] = seatId.split(':');
-                const [r, c] = coords.split('-').map(Number);
-                const neighbors = [ [r, c - 1], [r, c + 1] ];
-                for (const [nr, nc] of neighbors) {
-                    const neighborSeatId = `${hallId}:${nr}-${nc}`;
-                    const neighborUid = getStudentUidBySeatId(neighborSeatId);
-                    if (neighborUid) {
-                        const neighbor = state.students.find(s => s.uid === neighborUid);
-                        if (neighbor && neighbor.class === student.class) return true;
-                    }
-                }
-                return false;
-            };
-            
-            resetDistributionBtn.addEventListener('click', () => { 
-                state.seatingChart.clear();
-                state.columnClassAssignments.clear();
-                saveStateToLocalStorage();
-                renderDistributionView(); 
-            });
-
-            autoDistributeBtn.addEventListener('click', () => {
-                state.seatingChart.clear();
-                const allColumns = [];
-                const sortedHallIds = Array.from(state.selectedHallIds).sort((a, b) => a - b);
-                sortedHallIds.forEach(hallId => {
-                    const hall = state.halls.find(h => h.id === hallId);
-                    if (hall) {
-                        for (let c = 0; c < (hall.sector1Cols + hall.sector2Cols); c++) {
-                            const column = [];
-                            for (let r = 0; r < hall.rows; r++) {
-                                const seatId = `${hall.id}:${r}-${c}`;
-                                if (!hall.disabledSeats.has(seatId)) { column.push(seatId); }
-                            }
-                            if (column.length > 0) allColumns.push({ id: `${hall.id}:${c}`, seats: column });
-                        }
-                    }
-                });
-                const studentsByClass = state.students.reduce((acc, student) => {
-                    if (!acc[student.class]) acc[student.class] = [];
-                    acc[student.class].push(student);
-                    return acc;
-                }, {});
-                const sortedClasses = Object.keys(studentsByClass).sort((a, b) => a.localeCompare(b, undefined, {numeric: true}));
-                sortedClasses.forEach(className => {
-                    studentsByClass[className].sort((a, b) => parseInt(a.id, 10) - parseInt(b.id, 10));
-                });
-                const placementCounters = sortedClasses.reduce((acc, val) => ({...acc, [val]: 0}), {});
-                allColumns.forEach(column => {
-                    const assignedClass = state.columnClassAssignments.get(column.id);
-                    if (assignedClass && studentsByClass[assignedClass]) {
-                        for (const seatId of column.seats) {
-                            const studentIndex = placementCounters[assignedClass];
-                            if (studentIndex < studentsByClass[assignedClass].length) {
-                                const student = studentsByClass[assignedClass][studentIndex];
-                                state.seatingChart.set(seatId, student.uid);
-                                placementCounters[assignedClass]++;
-                            } else { break; }
-                        }
-                    }
-                });
-                const unassignedColumns = allColumns.filter(c => !state.columnClassAssignments.has(c.id));
-                const remainingStudents = state.students.filter(s => !Array.from(state.seatingChart.values()).includes(s.uid));
-                const remainingStudentsByClass = remainingStudents.reduce((acc, student) => {
-                    if (!acc[student.class]) acc[student.class] = [];
-                    acc[student.class].push(student);
-                    return acc;
-                }, {});
-                const remainingSortedClasses = Object.keys(remainingStudentsByClass).sort((a, b) => a.localeCompare(b, undefined, {numeric: true}));
-                remainingSortedClasses.forEach(className => {
-                    remainingStudentsByClass[className].sort((a, b) => parseInt(a.id, 10) - parseInt(b.id, 10));
-                });
-                let colIndex = 0;
-                let classIndex = 0;
-                const remainingPlacementCounters = remainingSortedClasses.reduce((acc, val) => ({...acc, [val]: 0}), {});
-                while(colIndex < unassignedColumns.length) {
-                    const currentColumn = unassignedColumns[colIndex];
-                    const currentClassName = remainingSortedClasses[classIndex];
-                    if (currentClassName && remainingStudentsByClass[currentClassName]) {
-                        const studentsInClass = remainingStudentsByClass[currentClassName];
-                        if (remainingPlacementCounters[currentClassName] < studentsInClass.length) {
-                            for (const seatId of currentColumn.seats) {
-                                const studentIndex = remainingPlacementCounters[currentClassName];
-                                if (studentIndex < studentsInClass.length) {
-                                    const student = studentsInClass[studentIndex];
-                                    if (!state.seatingChart.has(seatId)) {
-                                         state.seatingChart.set(seatId, student.uid);
-                                         remainingPlacementCounters[currentClassName]++;
-                                    }
-                                } else { break; }
-                            }
-                        }
-                    }
-                    colIndex++;
-                    classIndex = (classIndex + 1) % remainingSortedClasses.length;
-                    if (state.seatingChart.size >= state.students.length) { break; }
-                }
-                saveStateToLocalStorage();
-                renderDistributionView();
-            });
-
-            const renderExportView = () => {
-                exportHeader.querySelector('h2').textContent = `الخطوة 4: تصدير (${state.selectedHallIds.size} قاعات محددة)`;
-            };
-
-            const createPageForPdf = (hall, sector) => {
-                const pageContainer = document.createElement('div');
-                pageContainer.className = 'pdf-page-container';
-                pageContainer.style.fontFamily = "'Cairo', sans-serif";
-                const colOffset = sector === 1 ? 0 : hall.sector1Cols;
-                const cols = sector === 1 ? hall.sector1Cols : hall.sector2Cols;
-                const sectorStudents = [];
-                state.seatingChart.forEach((uid, seatId) => {
-                    const [sidHall, sidCoords] = seatId.split(':');
-                    if (parseInt(sidHall) === hall.id) {
-                        const [r, c] = sidCoords.split('-').map(Number);
-                        if (c >= colOffset && c < colOffset + cols) {
-                            const student = state.students.find(s => s.uid === uid);
-                            if(student) sectorStudents.push(student);
-                        }
-                    }
-                });
-                const classCounts = sectorStudents.reduce((acc, student) => {
-                    acc[student.class] = (acc[student.class] || 0) + 1;
-                    return acc;
-                }, {});
-                const headerDiv = document.createElement('div');
-                headerDiv.className = 'pdf-header';
-                const bodyDiv = document.createElement('div');
-                bodyDiv.className = 'pdf-body';
-                if(state.backgrounds.use) {
-                    if(state.backgrounds.header) {
-                        const headerImg = document.createElement('img');
-                        headerImg.src = state.backgrounds.header;
-                        headerImg.className = 'pdf-bg-image';
-                        headerImg.style.opacity = state.backgrounds.headerOpacity;
-                        headerDiv.appendChild(headerImg);
-                    }
-                    if(state.backgrounds.body) {
-                        const bodyImg = document.createElement('img');
-                        bodyImg.src = state.backgrounds.body;
-                        bodyImg.className = 'pdf-bg-image';
-                        bodyImg.style.opacity = state.backgrounds.bodyOpacity;
-                        bodyDiv.appendChild(bodyImg);
-                    }
-                }
-                const headerContent = document.createElement('div');
-                headerContent.className = 'pdf-content flex justify-between items-start mb-6';
-                const leftDiv = document.createElement('div');
-                leftDiv.className = 'w-1/4';
-                const centerDiv = document.createElement('div');
-                centerDiv.className = 'w-1/2 text-center';
-                centerDiv.innerHTML = `<h1 class="text-2xl font-bold">قاعة (${hall.name}) - ${hall.location || ''}</h1><h2 class="text-xl font-bold mt-2">${sector === 1 ? hall.sector1Name : hall.sector2Name}</h2>`;
-                const rightDiv = document.createElement('div');
-                rightDiv.className = 'w-1/4 text-right space-y-1';
-                Object.entries(classCounts).forEach(([className, count]) => {
-                    const p = document.createElement('p');
-                    p.className = 'text-lg font-bold';
-                    const toArabicNumerals = (num) => String(num).replace(/[0-9]/g, d => '٠١٢٣٤٥٦٧٨٩'[d]);
-                    p.textContent = `${className}: ( ${toArabicNumerals(count)} )`;
-                    rightDiv.appendChild(p);
-                });
-                headerContent.appendChild(leftDiv);
-                headerContent.appendChild(centerDiv);
-                headerContent.appendChild(rightDiv);
-                headerDiv.appendChild(headerContent);
-                pageContainer.appendChild(headerDiv);
-                const sectorGrid = document.createElement('div');
-                sectorGrid.className = 'grid gap-2 pdf-content';
-                sectorGrid.style.gridTemplateColumns = `repeat(${cols}, minmax(0, 1fr))`;
-                for (let r = 0; r < hall.rows; r++) {
+                const renderColumnSelectors = (container, hall, sector) => {
+                    const uniqueClasses = [...new Set(state.students.map(s => s.class))];
+                    const cols = sector === 1 ? hall.sector1Cols : hall.sector2Cols;
+                    const colOffset = sector === 1 ? 0 : hall.sector1Cols;
+                    container.style.gridTemplateColumns = `repeat(${cols}, minmax(0, 1fr))`;
                     for (let c = 0; c < cols; c++) {
                         const actualCol = c + colOffset;
-                        const seatId = `${hall.id}:${r}-${actualCol}`;
-                        const seat = document.createElement('div');
-                        seat.className = 'aspect-square border-2 border-black rounded-md p-1 bg-transparent overflow-hidden flex flex-col justify-center items-center text-center';
-                        if (hall.disabledSeats.has(seatId)) {
-                            seat.innerHTML = `<div class="w-full h-full flex justify-center items-center text-3xl text-gray-400">✕</div>`;
-                            seat.style.backgroundColor = '#f3f4f6';
-                        } else {
+                        const columnId = `${hall.id}:${actualCol}`;
+                        const select = document.createElement('select');
+                        select.className = 'text-xs border rounded-md p-1';
+                        select.dataset.columnId = columnId;
+                        select.innerHTML = `<option value="">أي صف</option>` + uniqueClasses.map(cls => `<option value="${cls}" ${state.columnClassAssignments.get(columnId) === cls ? 'selected' : ''}>${cls}</option>`).join('');
+                        select.addEventListener('change', (e) => {
+                            const selectedClass = e.target.value;
+                            if (selectedClass) { state.columnClassAssignments.set(columnId, selectedClass); } else { state.columnClassAssignments.delete(columnId); }
+                            saveStateToLocalStorage();
+                        });
+                        container.appendChild(select);
+                    }
+                };
+
+                const renderSectorGrid = (gridContainer, hall, sector) => {
+                    gridContainer.innerHTML = '';
+                    const cols = sector === 1 ? hall.sector1Cols : hall.sector2Cols;
+                    const colOffset = sector === 1 ? 0 : hall.sector1Cols;
+                    gridContainer.style.gridTemplateColumns = `repeat(${cols}, minmax(0, 1fr))`;
+                    for (let r = 0; r < hall.rows; r++) {
+                        for (let c = 0; c < cols; c++) {
+                            const actualCol = c + colOffset;
+                            const seatId = `${hall.id}:${r}-${actualCol}`;
+                            const seat = document.createElement('div');
+                            seat.className = 'seat droppable-seat aspect-square border-2 border-dashed border-gray-300 rounded-md p-1 bg-gray-100 overflow-hidden min-w-[80px] cursor-pointer';
+                            seat.dataset.seatId = seatId;
                             const studentUid = getStudentUidBySeatId(seatId);
+                            if (hall.disabledSeats.has(seatId)) {
+                                seat.classList.add('disabled');
+                            } else if (studentUid) {
+                                const student = state.students.find(s => s.uid === studentUid);
+                                seat.classList.add('occupied');
+                                seat.innerHTML = `<div class="student-card w-full h-full flex flex-col justify-center items-center text-center" draggable="true" data-uid="${student.uid}" data-from-seat-id="${seatId}">
+                                        <p class="font-bold text-xs leading-tight">${student.name}</p>
+                                        <p class="text-slate-600 text-[10px]">${student.id}</p>
+                                        <p class="text-sky-700 font-semibold text-[10px] mt-1">${student.class} / ${student.section}</p>
+                                        <div class="flex justify-center mt-1" id="qrcode-${seatId.replace(/:/g, '-')}"></div>
+                                    </div>`;
+                                if(hasConflict(seatId)) seat.classList.add('conflict');
+                            }
+                            seat.addEventListener('click', () => { if (!getStudentUidBySeatId(seatId)) { toggleSeatDisabled(seatId); } });
+                            gridContainer.appendChild(seat);
                             if (studentUid) {
                                 const student = state.students.find(s => s.uid === studentUid);
-                                const safeSeatId = seatId.replace(/:/g, '-');
-                                seat.innerHTML = `<p class="font-black text-lg leading-tight">${student.name}</p>
-                                                <p class="font-bold text-slate-800 text-sm">${student.id}</p>
-                                                <p class="font-bold text-slate-800 text-xs mt-1">${student.class} (${student.section})</p>
-                                                <div class="flex justify-center items-center mt-1" id="pdf-qrcode-${safeSeatId}"></div>`;
-                            }
-                        }
-                        sectorGrid.appendChild(seat);
-                    }
-                }
-                bodyDiv.appendChild(sectorGrid);
-                pageContainer.appendChild(bodyDiv);
-                for (let r = 0; r < hall.rows; r++) {
-                    for (let c = 0; c < cols; c++) {
-                        const actualCol = c + colOffset;
-                        const seatId = `${hall.id}:${r}-${actualCol}`;
-                        const studentUid = getStudentUidBySeatId(seatId);
-                        if (studentUid) {
-                            const student = state.students.find(s => s.uid === studentUid);
-                            const safeSeatId = seatId.replace(/:/g, '-');
-                            const qrElement = pageContainer.querySelector(`#pdf-qrcode-${safeSeatId}`);
-                            if(qrElement && student) {
-                                 new QRCode(qrElement, {
-                                    text: student.id.toString(), width: 48, height: 48,
-                                    colorDark : "#000000", colorLight : "#ffffff", correctLevel : QRCode.CorrectLevel.M
+                                new QRCode(document.getElementById(`qrcode-${seatId.replace(/:/g, '-')}`), {
+                                    text: student.id.toString(), width: 40, height: 40,
+                                    colorDark : "#000000", colorLight : "#ffffff", correctLevel : QRCode.CorrectLevel.H
                                 });
                             }
                         }
                     }
-                }
-                return pageContainer;
-            };
-
-            const handleBgUpload = (e, type) => {
-                const file = e.target.files[0];
-                if (!file) return;
-                const reader = new FileReader();
-                reader.onload = (event) => { state.backgrounds[type] = event.target.result; };
-                reader.readAsDataURL(file);
-            };
-
-            useBackgroundsToggle.addEventListener('change', (e) => {
-                state.backgrounds.use = e.target.checked;
-                backgroundInputs.classList.toggle('hidden', !e.target.checked);
-            });
-            headerBgInput.addEventListener('change', (e) => handleBgUpload(e, 'header'));
-            bodyBgInput.addEventListener('change', (e) => handleBgUpload(e, 'body'));
-            headerOpacitySlider.addEventListener('input', (e) => {
-                state.backgrounds.headerOpacity = e.target.value;
-                headerOpacityValue.textContent = Math.round(e.target.value * 100);
-            });
-            bodyOpacitySlider.addEventListener('input', (e) => {
-                state.backgrounds.bodyOpacity = e.target.value;
-                bodyOpacityValue.textContent = Math.round(e.target.value * 100);
-            });
-
-            previewPdfBtn.addEventListener('click', async () => {
-                if (state.selectedHallIds.size === 0) { showAlert('الرجاء تحديد قاعة واحدة على الأقل للمعاينة.'); return; }
-                const firstHallId = Array.from(state.selectedHallIds)[0];
-                const hall = state.halls.find(h => h.id === firstHallId);
-                previewContent.innerHTML = '';
-                const pageContent = createPageForPdf(hall, 1);
-                document.body.appendChild(pageContent);
-                const canvas = await html2canvas(pageContent, { scale: 1, useCORS: true });
-                canvas.style.width = '100%';
-                canvas.style.height = 'auto';
-                previewContent.appendChild(canvas);
-                document.body.removeChild(pageContent);
-                previewModalBackdrop.classList.remove('hidden');
-                previewModalBackdrop.classList.add('flex');
-            });
-
-            closePreviewModalBtn.addEventListener('click', () => {
-                previewModalBackdrop.classList.add('hidden');
-                previewModalBackdrop.classList.remove('flex');
-            });
-
-            const triggerPdfDownload = (pdf, filename) => {
-                try {
-                    const blob = pdf.output('blob');
-                    const url = URL.createObjectURL(blob);
-                    const link = document.createElement('a');
-                    link.href = url;
-                    link.download = filename;
-                    document.body.appendChild(link);
-                    link.click();
-                    setTimeout(() => {
-                        document.body.removeChild(link);
-                        window.URL.revokeObjectURL(url);
-                    }, 100);
-                } catch (e) {
-                    console.error("Error triggering PDF download:", e);
-                    showAlert("حدث خطأ أثناء محاولة تصدير الملف.");
-                }
-            };
-
-            exportChartPdfBtn.addEventListener('click', async () => {
-                if (state.selectedHallIds.size === 0) { showAlert('الرجاء تحديد قاعة واحدة على الأقل.'); return; }
-                pdfExportStatus.classList.remove('hidden');
-                const { jsPDF } = window.jspdf;
-                const pdf = new jsPDF({ orientation: 'p', unit: 'pt', format: 'a4' });
-                let isFirstPage = true;
-                const sortedHallIds = Array.from(state.selectedHallIds).sort((a,b) => a - b);
-                for (const hallId of sortedHallIds) {
+                };
+                
+                const toggleSeatDisabled = (seatId) => {
+                    const [hallIdStr] = seatId.split(':');
+                    const hallId = parseInt(hallIdStr);
                     const hall = state.halls.find(h => h.id === hallId);
-                    if (!hall) continue;
-                    for (const sector of [1, 2]) {
-                        if (!isFirstPage) { pdf.addPage(); }
-                        const pageContent = createPageForPdf(hall, sector);
-                        document.body.appendChild(pageContent);
-                        const canvas = await html2canvas(pageContent, { scale: 2, useCORS: true });
-                        const imgData = canvas.toDataURL('image/png');
-                        const pdfWidth = pdf.internal.pageSize.getWidth();
-                        const pdfHeight = pdf.internal.pageSize.getHeight();
-                        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-                        document.body.removeChild(pageContent);
-                        isFirstPage = false;
-                    }
-                }
-                triggerPdfDownload(pdf, `مخططات الجلوس المجمعة.pdf`);
-                pdfExportStatus.classList.add('hidden');
-            });
+                    if (!hall) return;
+                    if (hall.disabledSeats.has(seatId)) { hall.disabledSeats.delete(seatId); } else { hall.disabledSeats.add(seatId); }
+                    saveStateToLocalStorage();
+                    renderDistributionView();
+                };
 
-            exportListPdfBtn.addEventListener('click', async () => {
-                pdfExportStatus.classList.remove('hidden');
-                const tableContainer = document.createElement('div');
-                tableContainer.className = 'p-10 bg-white';
-                tableContainer.style.fontFamily = "'Cairo', sans-serif";
-                tableContainer.style.width = '210mm';
-                tableContainer.style.position = 'absolute';
-                tableContainer.style.left = '-9999px';
-                tableContainer.style.paddingBottom = '50px'; 
-                let tableHtml = `<h1 class="text-2xl font-bold text-center mb-4">قائمة الحضور المجمعة</h1>
-                                <table class="w-full text-sm text-right" style="border-collapse: collapse;">
-                                    <thead class="text-xs text-gray-700 uppercase bg-gray-200"><tr>
-                                        <th scope="col" class="px-4 py-3 border border-gray-300">القاعة والمقعد</th>
-                                        <th scope="col" class="px-4 py-3 border border-gray-300">اسم الطالب</th>
-                                        <th scope="col" class="px-4 py-3 border border-gray-300">الرقم الامتحاني</th>
-                                        <th scope="col" class="px-4 py-3 border border-gray-300">الصف</th>
-                                        <th scope="col" class="px-4 py-3 border border-gray-300">الشعبة</th>
-                                        <th scope="col" class="px-4 py-3 border border-gray-300" style="width: 15%;">التوقيع</th>
-                                    </tr></thead><tbody>`;
-                const tableData = [];
-                state.seatingChart.forEach((studentUid, seatId) => {
-                    const student = state.students.find(s => s.uid === studentUid);
-                    if(student) {
-                        const [hallId, coords] = seatId.split(':');
-                        const hall = state.halls.find(h => h.id === parseInt(hallId));
-                        const [r, c] = coords.split('-').map(Number);
-                        tableData.push({
-                            seat: `${hall.name} | R${r+1}-C${c+1}`, name: student.name, id: student.id,
-                            class: student.class, section: student.section
+                const addDragAndDropListeners = () => {
+                    document.querySelectorAll('.student-card').forEach(card => {
+                        card.addEventListener('dragstart', e => {
+                            e.dataTransfer.setData('text/plain', e.target.closest('.student-card').dataset.uid);
+                            e.dataTransfer.setData('fromSeatId', e.target.closest('.student-card').dataset.fromSeatId || '');
+                            setTimeout(() => e.target.classList.add('opacity-50'), 0);
                         });
-                    }
-                });
-                tableData.sort((a,b) => parseInt(a.id) - parseInt(b.id)); 
-                tableData.forEach(row => {
-                    tableHtml += `<tr class="bg-white border-b">
-                                    <td class="px-4 py-2 font-medium text-gray-900 border border-gray-300">${row.seat}</td>
-                                    <td class="px-4 py-2 border border-gray-300">${row.name}</td>
-                                    <td class="px-4 py-2 border border-gray-300">${row.id}</td>
-                                    <td class="px-4 py-2 border border-gray-300">${row.class}</td>
-                                    <td class="px-4 py-2 border border-gray-300">${row.section}</td>
-                                    <td class="px-4 py-2 border border-gray-300"></td></tr>`;
-                });
-                tableHtml += `</tbody></table>`;
-                tableContainer.innerHTML = tableHtml;
-                document.body.appendChild(tableContainer);
-                const { jsPDF } = window.jspdf;
-                const pdf = new jsPDF({ orientation: 'p', unit: 'pt', format: 'a4' });
-                const canvas = await html2canvas(tableContainer, {scale: 2});
-                const imgData = canvas.toDataURL('image/png');
-                const pdfWidth = pdf.internal.pageSize.getWidth();
-                const imgProps= pdf.getImageProperties(imgData);
-                const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-                let heightLeft = pdfHeight;
-                let position = 0;
-                pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, pdfHeight);
-                heightLeft -= pdf.internal.pageSize.getHeight();
-                while (heightLeft > 0) {
-                  position = heightLeft - pdfHeight;
-                  pdf.addPage();
-                  pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, pdfHeight);
-                  heightLeft -= pdf.internal.pageSize.getHeight();
-                }
-                document.body.removeChild(tableContainer);
-                triggerPdfDownload(pdf, `قائمة الحضور المجمعة.pdf`);
-                pdfExportStatus.classList.add('hidden');
-            });
+                        card.addEventListener('dragend', e => e.target.classList.remove('opacity-50'));
+                    });
+                    document.querySelectorAll('.droppable-seat').forEach(seat => {
+                        seat.addEventListener('dragover', e => {
+                            e.preventDefault();
+                            if(!seat.classList.contains('disabled') && !seat.querySelector('.student-card')) seat.classList.add('droppable-hover');
+                        });
+                        seat.addEventListener('dragleave', e => e.target.closest('.droppable-seat').classList.remove('droppable-hover'));
+                        seat.addEventListener('drop', e => {
+                            e.preventDefault();
+                            const seatEl = e.target.closest('.droppable-seat');
+                            seatEl.classList.remove('droppable-hover');
+                            const studentUid = parseInt(e.dataTransfer.getData('text/plain'), 10);
+                            const fromSeatId = e.dataTransfer.getData('fromSeatId');
+                            const toSeatId = seatEl.dataset.seatId;
+                            const [hallIdStr] = toSeatId.split(':');
+                            const hall = state.halls.find(h => h.id === parseInt(hallIdStr));
+                            if (hall.disabledSeats.has(toSeatId) && !getStudentUidBySeatId(toSeatId)) { hall.disabledSeats.delete(toSeatId); }
+                            if (fromSeatId) state.seatingChart.delete(fromSeatId);
+                            state.seatingChart.set(toSeatId, studentUid);
+                            saveStateToLocalStorage();
+                            renderDistributionView();
+                        });
+                    });
+                };
 
-            const renderAbsenceView = () => {
-                absentCountSpan.textContent = state.absentStudents.length;
-                exportAbsentPdfBtn.disabled = state.absentStudents.length === 0;
-                if (state.absentStudents.length === 0) {
-                    absentListContainer.innerHTML = `<p class="text-slate-400 text-center mt-8">لم يتم تسجيل أي غياب بعد.</p>`;
-                    return;
-                }
-                absentListContainer.innerHTML = state.absentStudents.map(s => {
-                    const studentSeat = [...state.seatingChart.entries()].find(([key, val]) => val === s.uid);
-                    let seatInfo = 'غير موزّع';
-                    if(studentSeat) {
-                        const [hallId, coords] = studentSeat[0].split(':');
-                        const hall = state.halls.find(h => h.id === parseInt(hallId));
-                        seatInfo = `${hall.name} (${coords})`;
-                    }
-                    return `<div class="p-2 border rounded-md bg-white flex justify-between items-center text-sm">
-                        <div><p class="font-bold">${s.name} (${s.id})</p><p class="text-slate-500">${s.class} - ${seatInfo}</p></div>
-                        <button class="text-red-500 hover:text-red-700 font-bold p-1" onclick="window.removeAbsentStudent(${s.uid})">✕</button>
-                    </div>`;
-                }).join('');
-            };
-            
-            window.removeAbsentStudent = (uid) => {
-                state.absentStudents = state.absentStudents.filter(s => s.uid !== uid);
-                renderAbsenceView();
-            };
+                const getStudentUidBySeatId = (seatId) => state.seatingChart.get(seatId);
 
-            const onScanSuccess = (decodedText, decodedResult) => {
-                const examNumber = decodedText;
-                if (state.absentStudents.some(s => s.id === examNumber)) {
-                    showScanFeedback(`الطالب بالرقم ${examNumber} مسجل كغائب بالفعل.`, 'fail');
-                    return;
-                }
-                const student = state.students.find(s => s.id === examNumber);
-                if (student) {
-                    state.absentStudents.push(student);
+                const hasConflict = (seatId) => {
+                    const studentUid = getStudentUidBySeatId(seatId);
+                    if (!studentUid) return false;
+                    const student = state.students.find(s => s.uid === studentUid);
+                    if (!student) return false;
+                    const [hallId, coords] = seatId.split(':');
+                    const [r, c] = coords.split('-').map(Number);
+                    const neighbors = [ [r, c - 1], [r, c + 1] ];
+                    for (const [nr, nc] of neighbors) {
+                        const neighborSeatId = `${hallId}:${nr}-${nc}`;
+                        const neighborUid = getStudentUidBySeatId(neighborSeatId);
+                        if (neighborUid) {
+                            const neighbor = state.students.find(s => s.uid === neighborUid);
+                            if (neighbor && neighbor.class === student.class) return true;
+                        }
+                    }
+                    return false;
+                };
+                
+                resetDistributionBtn.addEventListener('click', () => { 
+                    state.seatingChart.clear();
+                    state.columnClassAssignments.clear();
+                    saveStateToLocalStorage();
+                    renderDistributionView(); 
+                });
+
+                autoDistributeBtn.addEventListener('click', () => {
+                    state.seatingChart.clear();
+                    const allColumns = [];
+                    const sortedHallIds = Array.from(state.selectedHallIds).sort((a, b) => a - b);
+                    sortedHallIds.forEach(hallId => {
+                        const hall = state.halls.find(h => h.id === hallId);
+                        if (hall) {
+                            for (let c = 0; c < (hall.sector1Cols + hall.sector2Cols); c++) {
+                                const column = [];
+                                for (let r = 0; r < hall.rows; r++) {
+                                    const seatId = `${hall.id}:${r}-${c}`;
+                                    if (!hall.disabledSeats.has(seatId)) { column.push(seatId); }
+                                }
+                                if (column.length > 0) allColumns.push({ id: `${hall.id}:${c}`, seats: column });
+                            }
+                        }
+                    });
+                    const studentsByClass = state.students.reduce((acc, student) => {
+                        if (!acc[student.class]) acc[student.class] = [];
+                        acc[student.class].push(student);
+                        return acc;
+                    }, {});
+                    const sortedClasses = Object.keys(studentsByClass).sort((a, b) => a.localeCompare(b, undefined, {numeric: true}));
+                    sortedClasses.forEach(className => {
+                        studentsByClass[className].sort((a, b) => parseInt(a.id, 10) - parseInt(b.id, 10));
+                    });
+                    const placementCounters = sortedClasses.reduce((acc, val) => ({...acc, [val]: 0}), {});
+                    allColumns.forEach(column => {
+                        const assignedClass = state.columnClassAssignments.get(column.id);
+                        if (assignedClass && studentsByClass[assignedClass]) {
+                            for (const seatId of column.seats) {
+                                const studentIndex = placementCounters[assignedClass];
+                                if (studentIndex < studentsByClass[assignedClass].length) {
+                                    const student = studentsByClass[assignedClass][studentIndex];
+                                    state.seatingChart.set(seatId, student.uid);
+                                    placementCounters[assignedClass]++;
+                                } else { break; }
+                            }
+                        }
+                    });
+                    const unassignedColumns = allColumns.filter(c => !state.columnClassAssignments.has(c.id));
+                    const remainingStudents = state.students.filter(s => !Array.from(state.seatingChart.values()).includes(s.uid));
+                    const remainingStudentsByClass = remainingStudents.reduce((acc, student) => {
+                        if (!acc[student.class]) acc[student.class] = [];
+                        acc[student.class].push(student);
+                        return acc;
+                    }, {});
+                    const remainingSortedClasses = Object.keys(remainingStudentsByClass).sort((a, b) => a.localeCompare(b, undefined, {numeric: true}));
+                    remainingSortedClasses.forEach(className => {
+                        remainingStudentsByClass[className].sort((a, b) => parseInt(a.id, 10) - parseInt(b.id, 10));
+                    });
+                    let colIndex = 0;
+                    let classIndex = 0;
+                    const remainingPlacementCounters = remainingSortedClasses.reduce((acc, val) => ({...acc, [val]: 0}), {});
+                    while(colIndex < unassignedColumns.length) {
+                        const currentColumn = unassignedColumns[colIndex];
+                        const currentClassName = remainingSortedClasses[classIndex];
+                        if (currentClassName && remainingStudentsByClass[currentClassName]) {
+                            const studentsInClass = remainingStudentsByClass[currentClassName];
+                            if (remainingPlacementCounters[currentClassName] < studentsInClass.length) {
+                                for (const seatId of currentColumn.seats) {
+                                    const studentIndex = remainingPlacementCounters[currentClassName];
+                                    if (studentIndex < studentsInClass.length) {
+                                        const student = studentsInClass[studentIndex];
+                                        if (!state.seatingChart.has(seatId)) {
+                                             state.seatingChart.set(seatId, student.uid);
+                                             remainingPlacementCounters[currentClassName]++;
+                                        }
+                                    } else { break; }
+                                }
+                            }
+                        }
+                        colIndex++;
+                        classIndex = (classIndex + 1) % remainingSortedClasses.length;
+                        if (state.seatingChart.size >= state.students.length) { break; }
+                    }
+                    saveStateToLocalStorage();
+                    renderDistributionView();
+                });
+
+                const renderExportView = () => {
+                    exportHeader.querySelector('h2').textContent = `الخطوة 4: تصدير (${state.selectedHallIds.size} قاعات محددة)`;
+                };
+
+                const createPageForPdf = (hall, sector) => {
+                    const pageContainer = document.createElement('div');
+                    pageContainer.className = 'pdf-page-container';
+                    pageContainer.style.fontFamily = "'Cairo', sans-serif";
+                    const colOffset = sector === 1 ? 0 : hall.sector1Cols;
+                    const cols = sector === 1 ? hall.sector1Cols : hall.sector2Cols;
+                    const sectorStudents = [];
+                    state.seatingChart.forEach((uid, seatId) => {
+                        const [sidHall, sidCoords] = seatId.split(':');
+                        if (parseInt(sidHall) === hall.id) {
+                            const [r, c] = sidCoords.split('-').map(Number);
+                            if (c >= colOffset && c < colOffset + cols) {
+                                const student = state.students.find(s => s.uid === uid);
+                                if(student) sectorStudents.push(student);
+                            }
+                        }
+                    });
+                    const classCounts = sectorStudents.reduce((acc, student) => {
+                        acc[student.class] = (acc[student.class] || 0) + 1;
+                        return acc;
+                    }, {});
+                    const headerDiv = document.createElement('div');
+                    headerDiv.className = 'pdf-header';
+                    const bodyDiv = document.createElement('div');
+                    bodyDiv.className = 'pdf-body';
+                    if(state.backgrounds.use) {
+                        if(state.backgrounds.header) {
+                            const headerImg = document.createElement('img');
+                            headerImg.src = state.backgrounds.header;
+                            headerImg.className = 'pdf-bg-image';
+                            headerImg.style.opacity = state.backgrounds.headerOpacity;
+                            headerDiv.appendChild(headerImg);
+                        }
+                        if(state.backgrounds.body) {
+                            const bodyImg = document.createElement('img');
+                            bodyImg.src = state.backgrounds.body;
+                            bodyImg.className = 'pdf-bg-image';
+                            bodyImg.style.opacity = state.backgrounds.bodyOpacity;
+                            bodyDiv.appendChild(bodyImg);
+                        }
+                    }
+                    const headerContent = document.createElement('div');
+                    headerContent.className = 'pdf-content flex justify-between items-start mb-6';
+                    const leftDiv = document.createElement('div');
+                    leftDiv.className = 'w-1/4';
+                    const centerDiv = document.createElement('div');
+                    centerDiv.className = 'w-1/2 text-center';
+                    centerDiv.innerHTML = `<h1 class="text-2xl font-bold">قاعة (${hall.name}) - ${hall.location || ''}</h1><h2 class="text-xl font-bold mt-2">${sector === 1 ? hall.sector1Name : hall.sector2Name}</h2>`;
+                    const rightDiv = document.createElement('div');
+                    rightDiv.className = 'w-1/4 text-right space-y-1';
+                    Object.entries(classCounts).forEach(([className, count]) => {
+                        const p = document.createElement('p');
+                        p.className = 'text-lg font-bold';
+                        const toArabicNumerals = (num) => String(num).replace(/[0-9]/g, d => '٠١٢٣٤٥٦٧٨٩'[d]);
+                        p.textContent = `${className}: ( ${toArabicNumerals(count)} )`;
+                        rightDiv.appendChild(p);
+                    });
+                    headerContent.appendChild(leftDiv);
+                    headerContent.appendChild(centerDiv);
+                    headerContent.appendChild(rightDiv);
+                    headerDiv.appendChild(headerContent);
+                    pageContainer.appendChild(headerDiv);
+                    const sectorGrid = document.createElement('div');
+                    sectorGrid.className = 'grid gap-2 pdf-content';
+                    sectorGrid.style.gridTemplateColumns = `repeat(${cols}, minmax(0, 1fr))`;
+                    for (let r = 0; r < hall.rows; r++) {
+                        for (let c = 0; c < cols; c++) {
+                            const actualCol = c + colOffset;
+                            const seatId = `${hall.id}:${r}-${actualCol}`;
+                            const seat = document.createElement('div');
+                            seat.className = 'aspect-square border-2 border-black rounded-md p-1 bg-transparent overflow-hidden flex flex-col justify-center items-center text-center';
+                            if (hall.disabledSeats.has(seatId)) {
+                                seat.innerHTML = `<div class="w-full h-full flex justify-center items-center text-3xl text-gray-400">✕</div>`;
+                                seat.style.backgroundColor = '#f3f4f6';
+                            } else {
+                                const studentUid = getStudentUidBySeatId(seatId);
+                                if (studentUid) {
+                                    const student = state.students.find(s => s.uid === studentUid);
+                                    const safeSeatId = seatId.replace(/:/g, '-');
+                                    seat.innerHTML = `<p class="font-black text-lg leading-tight">${student.name}</p>
+                                                    <p class="font-bold text-slate-800 text-sm">${student.id}</p>
+                                                    <p class="font-bold text-slate-800 text-xs mt-1">${student.class} (${student.section})</p>
+                                                    <div class="flex justify-center items-center mt-1" id="pdf-qrcode-${safeSeatId}"></div>`;
+                                }
+                            }
+                            sectorGrid.appendChild(seat);
+                        }
+                    }
+                    bodyDiv.appendChild(sectorGrid);
+                    pageContainer.appendChild(bodyDiv);
+                    for (let r = 0; r < hall.rows; r++) {
+                        for (let c = 0; c < cols; c++) {
+                            const actualCol = c + colOffset;
+                            const seatId = `${hall.id}:${r}-${actualCol}`;
+                            const studentUid = getStudentUidBySeatId(seatId);
+                            if (studentUid) {
+                                const student = state.students.find(s => s.uid === studentUid);
+                                const safeSeatId = seatId.replace(/:/g, '-');
+                                const qrElement = pageContainer.querySelector(`#pdf-qrcode-${safeSeatId}`);
+                                if(qrElement && student) {
+                                     new QRCode(qrElement, {
+                                        text: student.id.toString(), width: 48, height: 48,
+                                        colorDark : "#000000", colorLight : "#ffffff", correctLevel : QRCode.CorrectLevel.M
+                                    });
+                                }
+                            }
+                        }
+                    }
+                    return pageContainer;
+                };
+
+                const handleBgUpload = (e, type) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = (event) => { state.backgrounds[type] = event.target.result; };
+                    reader.readAsDataURL(file);
+                };
+
+                useBackgroundsToggle.addEventListener('change', (e) => {
+                    state.backgrounds.use = e.target.checked;
+                    backgroundInputs.classList.toggle('hidden', !e.target.checked);
+                });
+                headerBgInput.addEventListener('change', (e) => handleBgUpload(e, 'header'));
+                bodyBgInput.addEventListener('change', (e) => handleBgUpload(e, 'body'));
+                headerOpacitySlider.addEventListener('input', (e) => {
+                    state.backgrounds.headerOpacity = e.target.value;
+                    headerOpacityValue.textContent = Math.round(e.target.value * 100);
+                });
+                bodyOpacitySlider.addEventListener('input', (e) => {
+                    state.backgrounds.bodyOpacity = e.target.value;
+                    bodyOpacityValue.textContent = Math.round(e.target.value * 100);
+                });
+
+                previewPdfBtn.addEventListener('click', async () => {
+                    if (state.selectedHallIds.size === 0) { showAlert('الرجاء تحديد قاعة واحدة على الأقل للمعاينة.'); return; }
+                    const firstHallId = Array.from(state.selectedHallIds)[0];
+                    const hall = state.halls.find(h => h.id === firstHallId);
+                    previewContent.innerHTML = '';
+                    const pageContent = createPageForPdf(hall, 1);
+                    document.body.appendChild(pageContent);
+                    const canvas = await html2canvas(pageContent, { scale: 1, useCORS: true });
+                    canvas.style.width = '100%';
+                    canvas.style.height = 'auto';
+                    previewContent.appendChild(canvas);
+                    document.body.removeChild(pageContent);
+                    previewModalBackdrop.classList.remove('hidden');
+                    previewModalBackdrop.classList.add('flex');
+                });
+
+                closePreviewModalBtn.addEventListener('click', () => {
+                    previewModalBackdrop.classList.add('hidden');
+                    previewModalBackdrop.classList.remove('flex');
+                });
+
+                const triggerPdfDownload = (pdf, filename) => {
+                    try {
+                        const blob = pdf.output('blob');
+                        const url = URL.createObjectURL(blob);
+                        const link = document.createElement('a');
+                        link.href = url;
+                        link.download = filename;
+                        document.body.appendChild(link);
+                        link.click();
+                        setTimeout(() => {
+                            document.body.removeChild(link);
+                            window.URL.revokeObjectURL(url);
+                        }, 100);
+                    } catch (e) {
+                        console.error("Error triggering PDF download:", e);
+                        showAlert("حدث خطأ أثناء محاولة تصدير الملف.");
+                    }
+                };
+
+                exportChartPdfBtn.addEventListener('click', async () => {
+                    if (state.selectedHallIds.size === 0) { showAlert('الرجاء تحديد قاعة واحدة على الأقل.'); return; }
+                    pdfExportStatus.classList.remove('hidden');
+                    const { jsPDF } = window.jspdf;
+                    const pdf = new jsPDF({ orientation: 'p', unit: 'pt', format: 'a4' });
+                    let isFirstPage = true;
+                    const sortedHallIds = Array.from(state.selectedHallIds).sort((a,b) => a - b);
+                    for (const hallId of sortedHallIds) {
+                        const hall = state.halls.find(h => h.id === hallId);
+                        if (!hall) continue;
+                        for (const sector of [1, 2]) {
+                            if (!isFirstPage) { pdf.addPage(); }
+                            const pageContent = createPageForPdf(hall, sector);
+                            document.body.appendChild(pageContent);
+                            const canvas = await html2canvas(pageContent, { scale: 2, useCORS: true });
+                            const imgData = canvas.toDataURL('image/png');
+                            const pdfWidth = pdf.internal.pageSize.getWidth();
+                            const pdfHeight = pdf.internal.pageSize.getHeight();
+                            pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+                            document.body.removeChild(pageContent);
+                            isFirstPage = false;
+                        }
+                    }
+                    triggerPdfDownload(pdf, `مخططات الجلوس المجمعة.pdf`);
+                    pdfExportStatus.classList.add('hidden');
+                });
+
+                exportListPdfBtn.addEventListener('click', async () => {
+                    pdfExportStatus.classList.remove('hidden');
+                    const tableContainer = document.createElement('div');
+                    tableContainer.className = 'p-10 bg-white';
+                    tableContainer.style.fontFamily = "'Cairo', sans-serif";
+                    tableContainer.style.width = '210mm';
+                    tableContainer.style.position = 'absolute';
+                    tableContainer.style.left = '-9999px';
+                    tableContainer.style.paddingBottom = '50px'; 
+                    let tableHtml = `<h1 class="text-2xl font-bold text-center mb-4">قائمة الحضور المجمعة</h1>
+                                    <table class="w-full text-sm text-right" style="border-collapse: collapse;">
+                                        <thead class="text-xs text-gray-700 uppercase bg-gray-200"><tr>
+                                            <th scope="col" class="px-4 py-3 border border-gray-300">القاعة والمقعد</th>
+                                            <th scope="col" class="px-4 py-3 border border-gray-300">اسم الطالب</th>
+                                            <th scope="col" class="px-4 py-3 border border-gray-300">الرقم الامتحاني</th>
+                                            <th scope="col" class="px-4 py-3 border border-gray-300">الصف</th>
+                                            <th scope="col" class="px-4 py-3 border border-gray-300">الشعبة</th>
+                                            <th scope="col" class="px-4 py-3 border border-gray-300" style="width: 15%;">التوقيع</th>
+                                        </tr></thead><tbody>`;
+                    const tableData = [];
+                    state.seatingChart.forEach((studentUid, seatId) => {
+                        const student = state.students.find(s => s.uid === studentUid);
+                        if(student) {
+                            const [hallId, coords] = seatId.split(':');
+                            const hall = state.halls.find(h => h.id === parseInt(hallId));
+                            const [r, c] = coords.split('-').map(Number);
+                            tableData.push({
+                                seat: `${hall.name} | R${r+1}-C${c+1}`, name: student.name, id: student.id,
+                                class: student.class, section: student.section
+                            });
+                        }
+                    });
+                    tableData.sort((a,b) => parseInt(a.id) - parseInt(b.id)); 
+                    tableData.forEach(row => {
+                        tableHtml += `<tr class="bg-white border-b">
+                                        <td class="px-4 py-2 font-medium text-gray-900 border border-gray-300">${row.seat}</td>
+                                        <td class="px-4 py-2 border border-gray-300">${row.name}</td>
+                                        <td class="px-4 py-2 border border-gray-300">${row.id}</td>
+                                        <td class="px-4 py-2 border border-gray-300">${row.class}</td>
+                                        <td class="px-4 py-2 border border-gray-300">${row.section}</td>
+                                        <td class="px-4 py-2 border border-gray-300"></td></tr>`;
+                    });
+                    tableHtml += `</tbody></table>`;
+                    tableContainer.innerHTML = tableHtml;
+                    document.body.appendChild(tableContainer);
+                    const { jsPDF } = window.jspdf;
+                    const pdf = new jsPDF({ orientation: 'p', unit: 'pt', format: 'a4' });
+                    const canvas = await html2canvas(tableContainer, {scale: 2});
+                    const imgData = canvas.toDataURL('image/png');
+                    const pdfWidth = pdf.internal.pageSize.getWidth();
+                    const imgProps= pdf.getImageProperties(imgData);
+                    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+                    let heightLeft = pdfHeight;
+                    let position = 0;
+                    pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, pdfHeight);
+                    heightLeft -= pdf.internal.pageSize.getHeight();
+                    while (heightLeft > 0) {
+                      position = heightLeft - pdfHeight;
+                      pdf.addPage();
+                      pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, pdfHeight);
+                      heightLeft -= pdf.internal.pageSize.getHeight();
+                    }
+                    document.body.removeChild(tableContainer);
+                    triggerPdfDownload(pdf, `قائمة الحضور المجمعة.pdf`);
+                    pdfExportStatus.classList.add('hidden');
+                });
+
+                const renderAbsenceView = () => {
+                    absentCountSpan.textContent = state.absentStudents.length;
+                    exportAbsentPdfBtn.disabled = state.absentStudents.length === 0;
+                    if (state.absentStudents.length === 0) {
+                        absentListContainer.innerHTML = `<p class="text-slate-400 text-center mt-8">لم يتم تسجيل أي غياب بعد.</p>`;
+                        return;
+                    }
+                    absentListContainer.innerHTML = state.absentStudents.map(s => {
+                        const studentSeat = [...state.seatingChart.entries()].find(([key, val]) => val === s.uid);
+                        let seatInfo = 'غير موزّع';
+                        if(studentSeat) {
+                            const [hallId, coords] = studentSeat[0].split(':');
+                            const hall = state.halls.find(h => h.id === parseInt(hallId));
+                            seatInfo = `${hall.name} (${coords})`;
+                        }
+                        return `<div class="p-2 border rounded-md bg-white flex justify-between items-center text-sm">
+                            <div><p class="font-bold">${s.name} (${s.id})</p><p class="text-slate-500">${s.class} - ${seatInfo}</p></div>
+                            <button class="text-red-500 hover:text-red-700 font-bold p-1" onclick="window.removeAbsentStudent(${s.uid})">✕</button>
+                        </div>`;
+                    }).join('');
+                };
+                
+                window.removeAbsentStudent = (uid) => {
+                    state.absentStudents = state.absentStudents.filter(s => s.uid !== uid);
                     renderAbsenceView();
-                    showScanFeedback(`تم تسجيل غياب: ${student.name} (${student.id})`, 'success');
-                } else {
-                    showScanFeedback(`الرقم الامتحاني ${examNumber} غير موجود في قوائم الطلاب.`, 'fail');
-                }
-            };
+                };
 
-            const onScanFailure = (error) => { /* Ignore */ };
-
-            const showScanFeedback = (message, type) => {
-                scanFeedbackDiv.innerHTML = `<span class="${type}">${message}</span>`;
-                setTimeout(() => { scanFeedbackDiv.innerHTML = ''; }, 3000);
-            };
-
-            startScanBtn.addEventListener('click', () => {
-                html5QrCode = new Html5Qrcode("reader");
-                startScanBtn.classList.add('hidden');
-                stopScanBtn.classList.remove('hidden');
-                scanFeedbackDiv.innerHTML = '';
-                const config = { fps: 10, qrbox: { width: 250, height: 250 } };
-                html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess, onScanFailure)
-                .catch(err => {
-                    showAlert(`خطأ في تشغيل الكاميرا: ${err}`);
-                    stopScanBtn.click();
-                });
-            });
-
-            stopScanBtn.addEventListener('click', () => {
-                if (html5QrCode && html5QrCode.isScanning) {
-                    html5QrCode.stop().then(() => {
-                        startScanBtn.classList.remove('hidden');
-                        stopScanBtn.classList.add('hidden');
-                    }).catch(err => console.error("Failed to stop QR scanner.", err));
-                }
-            });
-
-            exportAbsentPdfBtn.addEventListener('click', () => {
-                const { jsPDF } = window.jspdf;
-                const doc = new jsPDF();
-                doc.setR2L(true);
-                doc.setFont('helvetica', 'bold');
-                doc.text("تقرير غياب الطلبة", 105, 15, { align: 'center' });
-                const tableColumn = ["القطاع", "القاعة", "الصف", "الرقم الامتحاني", "اسم الطالب"];
-                const tableRows = [];
-                state.absentStudents.forEach(student => {
-                    const studentSeat = [...state.seatingChart.entries()].find(([key, val]) => val === student.uid);
-                    let hallName = 'N/A', sectorName = 'N/A';
-                    if(studentSeat) {
-                        const [hallId, coords] = studentSeat[0].split(':');
-                        const [r, c] = coords.split('-').map(Number);
-                        const hall = state.halls.find(h => h.id === parseInt(hallId));
-                        if(hall) {
-                            hallName = hall.name;
-                            sectorName = c < hall.sector1Cols ? hall.sector1Name : hall.sector2Name;
-                        }
+                const onScanSuccess = (decodedText, decodedResult) => {
+                    const examNumber = decodedText;
+                    if (state.absentStudents.some(s => s.id === examNumber)) {
+                        showScanFeedback(`الطالب بالرقم ${examNumber} مسجل كغائب بالفعل.`, 'fail');
+                        return;
                     }
-                    tableRows.push([sectorName, hallName, student.class, student.id, student.name]);
-                });
-                doc.autoTable({
-                    head: [tableColumn], body: tableRows, startY: 25,
-                    styles: { halign: 'center', font: 'helvetica' },
-                    headStyles: { fillColor: [44, 62, 80], textColor: 255, fontStyle: 'bold' },
-                    alternateRowStyles: { fillColor: [236, 240, 241] },
-                    didParseCell: function (data) {
-                        if (data.cell.section === 'body' || data.cell.section === 'head') {
-                           data.cell.styles.halign = 'right';
-                        }
+                    const student = state.students.find(s => s.id === examNumber);
+                    if (student) {
+                        state.absentStudents.push(student);
+                        renderAbsenceView();
+                        showScanFeedback(`تم تسجيل غياب: ${student.name} (${student.id})`, 'success');
+                    } else {
+                        showScanFeedback(`الرقم الامتحاني ${examNumber} غير موجود في قوائم الطلاب.`, 'fail');
                     }
-                });
-                triggerPdfDownload(doc, 'تقرير_الغياب.pdf');
-            });
+                };
 
-            const navigate = (direction) => {
-                if (direction === 'next' && state.currentStep === 1 && state.selectedHallIds.size === 0) {
-                    showAlert('الرجاء تحديد قاعة واحدة على الأقل للمتابعة.');
-                    return;
-                }
-                const newStep = state.currentStep + (direction === 'next' ? 1 : -1);
-                if (newStep > 0 && newStep <= steps.length) {
-                    if(state.currentStep === 5 && html5QrCode && html5QrCode.isScanning) {
+                const onScanFailure = (error) => { /* Ignore */ };
+
+                const showScanFeedback = (message, type) => {
+                    scanFeedbackDiv.innerHTML = `<span class="${type}">${message}</span>`;
+                    setTimeout(() => { scanFeedbackDiv.innerHTML = ''; }, 3000);
+                };
+
+                startScanBtn.addEventListener('click', () => {
+                    html5QrCode = new Html5Qrcode("reader");
+                    startScanBtn.classList.add('hidden');
+                    stopScanBtn.classList.remove('hidden');
+                    scanFeedbackDiv.innerHTML = '';
+                    const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+                    html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess, onScanFailure)
+                    .catch(err => {
+                        showAlert(`خطأ في تشغيل الكاميرا: ${err}`);
                         stopScanBtn.click();
+                    });
+                });
+
+                stopScanBtn.addEventListener('click', () => {
+                    if (html5QrCode && html5QrCode.isScanning) {
+                        html5QrCode.stop().then(() => {
+                            startScanBtn.classList.remove('hidden');
+                            stopScanBtn.classList.add('hidden');
+                        }).catch(err => console.error("Failed to stop QR scanner.", err));
                     }
-                    state.currentStep = newStep;
-                    updateUI();
-                }
-            };
-            
-            const showAlert = (message) => {
-                const alertBox = document.getElementById('custom-alert');
-                const alertMessage = document.getElementById('alert-message');
-                alertMessage.textContent = message;
-                alertBox.classList.remove('hidden');
-                setTimeout(() => alertBox.classList.add('hidden'), 3000);
-            };
+                });
 
-            nextBtn.addEventListener('click', () => navigate('next'));
-            prevBtn.addEventListener('click', () => navigate('prev'));
+                exportAbsentPdfBtn.addEventListener('click', () => {
+                    const { jsPDF } = window.jspdf;
+                    const doc = new jsPDF();
+                    doc.setR2L(true);
+                    doc.setFont('helvetica', 'bold');
+                    doc.text("تقرير غياب الطلبة", 105, 15, { align: 'center' });
+                    const tableColumn = ["القطاع", "القاعة", "الصف", "الرقم الامتحاني", "اسم الطالب"];
+                    const tableRows = [];
+                    state.absentStudents.forEach(student => {
+                        const studentSeat = [...state.seatingChart.entries()].find(([key, val]) => val === student.uid);
+                        let hallName = 'N/A', sectorName = 'N/A';
+                        if(studentSeat) {
+                            const [hallId, coords] = studentSeat[0].split(':');
+                            const [r, c] = coords.split('-').map(Number);
+                            const hall = state.halls.find(h => h.id === parseInt(hallId));
+                            if(hall) {
+                                hallName = hall.name;
+                                sectorName = c < hall.sector1Cols ? hall.sector1Name : hall.sector2Name;
+                            }
+                        }
+                        tableRows.push([sectorName, hallName, student.class, student.id, student.name]);
+                    });
+                    doc.autoTable({
+                        head: [tableColumn], body: tableRows, startY: 25,
+                        styles: { halign: 'center', font: 'helvetica' },
+                        headStyles: { fillColor: [44, 62, 80], textColor: 255, fontStyle: 'bold' },
+                        alternateRowStyles: { fillColor: [236, 240, 241] },
+                        didParseCell: function (data) {
+                            if (data.cell.section === 'body' || data.cell.section === 'head') {
+                               data.cell.styles.halign = 'right';
+                            }
+                        }
+                    });
+                    triggerPdfDownload(doc, 'تقرير_الغياب.pdf');
+                });
 
-            loadStateFromLocalStorage();
-            updateUI();
-        }
+                const navigate = (direction) => {
+                    if (direction === 'next' && state.currentStep === 1 && state.selectedHallIds.size === 0) {
+                        showAlert('الرجاء تحديد قاعة واحدة على الأقل للمتابعة.');
+                        return;
+                    }
+                    const newStep = state.currentStep + (direction === 'next' ? 1 : -1);
+                    if (newStep > 0 && newStep <= steps.length) {
+                        if(state.currentStep === 5 && html5QrCode && html5QrCode.isScanning) {
+                            stopScanBtn.click();
+                        }
+                        state.currentStep = newStep;
+                        updateUI();
+                    }
+                };
+                
+                const showAlert = (message) => {
+                    const alertBox = document.getElementById('custom-alert');
+                    const alertMessage = document.getElementById('alert-message');
+                    alertMessage.textContent = message;
+                    alertBox.classList.remove('hidden');
+                    setTimeout(() => alertBox.classList.add('hidden'), 3000);
+                };
+
+                nextBtn.addEventListener('click', () => navigate('next'));
+                prevBtn.addEventListener('click', () => navigate('prev'));
+
+                loadStateFromLocalStorage();
+                updateUI();
+            }
+        });
     </script>
 </body>
 </html>
