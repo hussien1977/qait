@@ -18,6 +18,8 @@
     <!-- مكتبات Firebase -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <!-- مكتبة Google API -->
+    <script src="https://apis.google.com/js/api.js"></script>
 
     <style>
         body { font-family: 'Cairo', sans-serif; }
@@ -78,7 +80,6 @@
             position: relative;
             z-index: 1;
         }
-        /* QR Scanner Styles */
         #reader {
             width: 100%;
             max-width: 500px;
@@ -87,13 +88,20 @@
             border-radius: 8px;
             overflow: hidden;
         }
-        #scan-feedback .success {
-            color: #16a34a;
+        #scan-feedback .success { color: #16a34a; }
+        #scan-feedback .fail { color: #dc2626; }
+        .drive-btn {
+            background-color: #16a34a;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            margin-right: 8px;
         }
-        #scan-feedback .fail {
-            color: #dc2626;
+        .drive-btn:disabled {
+            background-color: #9ca3af;
+            cursor: not-allowed;
         }
-
     </style>
 </head>
 <body class="bg-stone-50 text-slate-800">
@@ -119,7 +127,12 @@
                 <p class="text-slate-500 mt-2">أداة ذكية لتوزيع الطلاب في القاعات الامتحانية بسهولة وكفاءة</p>
                 <div id="auth-info" class="absolute top-0 left-0 text-left">
                     <div id="welcome-message" class="text-sm text-slate-600"></div>
-                    <button id="clear-data-btn" class="text-red-700 text-xs font-bold hover:underline">مسح بياناتي</button>
+                     <div class="flex items-center mt-1">
+                        <button id="sync-to-drive-btn" class="drive-btn" disabled>حفظ في Drive</button>
+                        <button id="load-from-drive-btn" class="drive-btn" disabled>تحميل من Drive</button>
+                        <span id="drive-sync-status" class="text-xs text-gray-500 mr-2"></span>
+                    </div>
+                    <button id="clear-data-btn" class="text-red-700 text-xs font-bold hover:underline mt-1">مسح بياناتي المحلية</button>
                 </div>
             </header>
 
@@ -268,7 +281,7 @@
                         <div class="bg-gray-50 p-4 rounded-lg border">
                             <h3 class="font-bold text-lg mb-4">قائمة الطلاب الغائبين (<span id="absent-count">0</span>)</h3>
                             <div id="absent-list" class="h-64 overflow-y-auto space-y-2 pr-2">
-                               <p class="text-slate-400 text-center mt-8">لم يتم تسجيل أي غياب بعد.</p>
+                               <p class="text-slate-400 text-center mt-8">لم يتم إضافة أي غياب بعد.</p>
                             </div>
                             <button id="export-absent-pdf-btn" class="mt-4 w-full bg-orange-500 text-white font-bold py-2 px-4 rounded-md hover:bg-orange-600 transition" disabled>تصدير قائمة الغياب (PDF)</button>
                         </div>
@@ -335,11 +348,7 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // --- Firebase Authentication ---
-            const loginScreen = document.getElementById('login-screen');
-            const appContainer = document.getElementById('app-container');
-            const loginBtn = document.getElementById('login-btn');
-
+            // --- Firebase and Google API Config ---
             const firebaseConfig = {
                 apiKey: "AIzaSyDqGTfHTuj1cu2a6eTPYR29l7H65Q-x810",
                 authDomain: "murasil-al-moalem.firebaseapp.com",
@@ -348,25 +357,33 @@
                 messagingSenderId: "314929620446",
                 appId: "1:314929620446:web:fb7abd1cee260d85dca94f"
             };
+            // استبدل هذه القيم بالقيم الخاصة بك من Google Cloud Console
+            const GOOGLE_API_KEY = 'YOUR_API_KEY';
+            const GOOGLE_CLIENT_ID = 'YOUR_CLIENT_ID';
+            const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.file';
+            const DRIVE_DISCOVERY_DOCS = ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"];
+            const APP_DATA_FILENAME = 'seating-chart-app-data.json';
+
+            // --- Firebase Authentication ---
+            const loginScreen = document.getElementById('login-screen');
+            const appContainer = document.getElementById('app-container');
+            const loginBtn = document.getElementById('login-btn');
 
             firebase.initializeApp(firebaseConfig);
             const auth = firebase.auth();
             const provider = new firebase.auth.GoogleAuthProvider();
+            provider.addScope(DRIVE_SCOPE); // طلب إذن الوصول لـ Drive
+            
+            let appInitialized = false;
+            let gapiInitialized = false;
+            let gapiTokenClient;
 
             loginBtn.addEventListener('click', () => {
                 auth.signInWithPopup(provider).catch((error) => {
                     console.error("Authentication failed:", error);
-                    if (error.code === 'auth/unauthorized-domain') {
-                        alert("النطاق غير مصرح به. يرجى إضافة نطاق هذا الموقع إلى قائمة النطاقات المعتمدة في لوحة تحكم Firebase.");
-                    } else if (error.code === 'auth/popup-blocked') {
-                        alert("تم حظر النافذة المنبثقة. يرجى السماح بالنوافذ المنبثقة لهذا الموقع والمحاولة مرة أخرى.");
-                    } else {
-                        alert("فشل تسجيل الدخول. الرجاء المحاولة مرة أخرى.");
-                    }
+                    showAlert("فشل تسجيل الدخول. الرجاء المحاولة مرة أخرى.");
                 });
             });
-            
-            let appInitialized = false;
 
             auth.onAuthStateChanged(user => {
                 if (user) {
@@ -383,13 +400,46 @@
                         });
 
                         initializeAppLogic(user);
+                        initializeGapiClient(user);
                     }
                 } else {
                     appInitialized = false;
+                    gapiInitialized = false;
                     loginScreen.classList.remove('hidden');
                     appContainer.classList.add('hidden');
                 }
             });
+
+            function initializeGapiClient(user) {
+                gapi.load('client', async () => {
+                    await gapi.client.init({
+                        apiKey: GOOGLE_API_KEY,
+                        clientId: GOOGLE_CLIENT_ID,
+                        scope: DRIVE_SCOPE,
+                        discoveryDocs: DRIVE_DISCOVERY_DOCS,
+                    });
+                    
+                    user.getIdToken(true).then(idToken => {
+                        const credential = firebase.auth.GoogleAuthProvider.credential(idToken);
+                        auth.currentUser.linkWithCredential(credential).then(result => {
+                             const oauthAccessToken = result.credential.accessToken;
+                             gapi.client.setToken({ access_token: oauthAccessToken });
+                             gapiInitialized = true;
+                             document.getElementById('sync-to-drive-btn').disabled = false;
+                             document.getElementById('load-from-drive-btn').disabled = false;
+                        }).catch(error => {
+                            if (error.code === 'auth/credential-already-in-use') {
+                                gapi.client.setToken({ access_token: error.credential.accessToken });
+                                gapiInitialized = true;
+                                document.getElementById('sync-to-drive-btn').disabled = false;
+                                document.getElementById('load-from-drive-btn').disabled = false;
+                            } else {
+                                console.error("Error linking credential:", error);
+                            }
+                        });
+                    });
+                });
+            }
 
             function initializeAppLogic(user) {
                 // --- State Management ---
@@ -405,6 +455,7 @@
                 };
                 
                 let html5QrCode;
+                let fileId = null; // To store Google Drive file ID
 
                 // --- DOM Elements ---
                 const stepperContainer = document.getElementById('stepper');
@@ -452,6 +503,9 @@
                 const previewContent = document.getElementById('preview-content');
                 const closePreviewModalBtn = document.getElementById('close-preview-modal-btn');
                 const clearDataBtn = document.getElementById('clear-data-btn');
+                const syncToDriveBtn = document.getElementById('sync-to-drive-btn');
+                const loadFromDriveBtn = document.getElementById('load-from-drive-btn');
+                const driveSyncStatus = document.getElementById('drive-sync-status');
 
                 const startScanBtn = document.getElementById('start-scan-btn');
                 const stopScanBtn = document.getElementById('stop-scan-btn');
@@ -505,11 +559,124 @@
                 };
 
                 clearDataBtn.addEventListener('click', () => {
-                    if (confirm("هل أنت متأكد من رغبتك في مسح جميع القاعات والطلاب والمخططات المحفوظة؟ سيتم تسجيل خروجك أيضًا.")) {
+                    if (confirm("هل أنت متأكد من رغبتك في مسح جميع البيانات المحلية؟ لن يتم حذف البيانات من Google Drive.")) {
                         localStorage.removeItem(`seatingChartState_${user.uid}`);
-                        auth.signOut();
+                        window.location.reload();
                     }
                 });
+
+                // --- Google Drive Logic ---
+                async function findAppFile() {
+                    if (!gapiInitialized) { showAlert("لم تتم تهيئة Google Drive API بعد."); return null; }
+                    try {
+                        const response = await gapi.client.drive.files.list({
+                            q: `name='${APP_DATA_FILENAME}' and 'appDataFolder' in parents and trashed=false`,
+                            spaces: 'appDataFolder',
+                            fields: 'files(id, name)'
+                        });
+                        if (response.result.files && response.result.files.length > 0) {
+                            return response.result.files[0].id;
+                        }
+                        return null;
+                    } catch (err) {
+                        console.error("Error finding file:", err);
+                        return null;
+                    }
+                }
+
+                async function saveToDrive() {
+                    if (!gapiInitialized) { showAlert("لم تتم تهيئة Google Drive API بعد."); return; }
+                    driveSyncStatus.textContent = 'جاري الحفظ...';
+                    
+                    const stateToSave = {
+                        ...state,
+                        selectedHallIds: [...state.selectedHallIds],
+                        seatingChart: [...state.seatingChart],
+                        columnClassAssignments: [...state.columnClassAssignments],
+                        halls: state.halls.map(h => ({ ...h, disabledSeats: [...h.disabledSeats] })),
+                    };
+                    const content = JSON.stringify(stateToSave);
+                    const blob = new Blob([content], { type: 'application/json' });
+                    
+                    if (!fileId) {
+                        fileId = await findAppFile();
+                    }
+
+                    const metadata = {
+                        'name': APP_DATA_FILENAME,
+                        'mimeType': 'application/json',
+                    };
+                    
+                    const form = new FormData();
+                    form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+                    form.append('file', blob);
+
+                    let path = '/upload/drive/v3/files';
+                    let method = 'POST';
+
+                    if (fileId) {
+                        path = `/upload/drive/v3/files/${fileId}`;
+                        method = 'PATCH';
+                        metadata.parents = undefined; // Do not change parents on update
+                    } else {
+                         metadata.parents = ['appDataFolder'];
+                    }
+
+                    try {
+                        const response = await gapi.client.request({
+                            path: path,
+                            method: method,
+                            params: { uploadType: 'multipart' },
+                            body: form
+                        });
+                        fileId = response.result.id;
+                        driveSyncStatus.textContent = 'تم الحفظ بنجاح!';
+                    } catch (err) {
+                        console.error("Error saving to drive:", err);
+                        driveSyncStatus.textContent = 'فشل الحفظ!';
+                    }
+                    setTimeout(() => driveSyncStatus.textContent = '', 3000);
+                }
+
+                async function loadFromDrive() {
+                    if (!gapiInitialized) { showAlert("لم تتم تهيئة Google Drive API بعد."); return; }
+                    driveSyncStatus.textContent = 'جاري التحميل...';
+                    
+                    if (!fileId) {
+                        fileId = await findAppFile();
+                    }
+
+                    if (fileId) {
+                        try {
+                            const response = await gapi.client.drive.files.get({
+                                fileId: fileId,
+                                alt: 'media'
+                            });
+                            const savedState = JSON.parse(response.body);
+                            state = {
+                                ...state,
+                                ...savedState,
+                                selectedHallIds: new Set(savedState.selectedHallIds || []),
+                                seatingChart: new Map(savedState.seatingChart || []),
+                                columnClassAssignments: new Map(savedState.columnClassAssignments || []),
+                                halls: savedState.halls.map(h => ({ ...h, disabledSeats: new Set(h.disabledSeats || []) })),
+                            };
+                            saveStateToLocalStorage(); // Sync to local storage as well
+                            updateUI();
+                            driveSyncStatus.textContent = 'تم التحميل بنجاح!';
+                        } catch (err) {
+                            console.error("Error loading from drive:", err);
+                            driveSyncStatus.textContent = 'فشل التحميل!';
+                        }
+                    } else {
+                        driveSyncStatus.textContent = 'لا توجد بيانات محفوظة.';
+                    }
+                    setTimeout(() => driveSyncStatus.textContent = '', 3000);
+                }
+
+                syncToDriveBtn.addEventListener('click', saveToDrive);
+                loadFromDriveBtn.addEventListener('click', loadFromDrive);
+
 
                 const updateUI = () => {
                     renderStepper();
