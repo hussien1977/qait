@@ -375,7 +375,6 @@
             
             let appInitialized = false;
             let gapiInited = false;
-            let gisInited = false;
             let tokenClient;
 
             loginBtn.addEventListener('click', () => {
@@ -402,11 +401,6 @@
                         initializeAppLogic(user);
                         // Initialize GAPI and GSI clients after user logs in
                         gapi.load('client', initializeGapiClient);
-                        tokenClient = google.accounts.oauth2.initTokenClient({
-                            client_id: GOOGLE_CLIENT_ID,
-                            scope: DRIVE_SCOPE,
-                            callback: '', // Callback will be set dynamically
-                        });
                     }
                 } else {
                     appInitialized = false;
@@ -422,9 +416,19 @@
                     discoveryDocs: DRIVE_DISCOVERY_DOCS,
                 });
                 gapiInited = true;
-                // Enable buttons after GAPI is initialized
-                document.getElementById('sync-to-drive-btn').disabled = false;
-                document.getElementById('load-from-drive-btn').disabled = false;
+                
+                tokenClient = google.accounts.oauth2.initTokenClient({
+                    client_id: GOOGLE_CLIENT_ID,
+                    scope: DRIVE_SCOPE,
+                    callback: (tokenResponse) => {
+                        if (tokenResponse && tokenResponse.access_token) {
+                            gapi.client.setToken(tokenResponse);
+                        } else {
+                            console.error("Provided token response was invalid", tokenResponse);
+                            showAlert("فشل الحصول على رمز الوصول من Google.");
+                        }
+                    },
+                });
             }
 
 
