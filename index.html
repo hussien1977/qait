@@ -18,8 +18,9 @@
     <!-- مكتبات Firebase -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-    <!-- مكتبة Google API -->
+    <!-- مكتبات Google API الجديدة -->
     <script src="https://apis.google.com/js/api.js"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
 
     <style>
         body { font-family: 'Cairo', sans-serif; }
@@ -357,7 +358,6 @@
                 messagingSenderId: "314929620446",
                 appId: "1:314929620446:web:fb7abd1cee260d85dca94f"
             };
-            // استبدل هذه القيم بالقيم الخاصة بك من Google Cloud Console
             const GOOGLE_API_KEY = 'AIzaSyDqGTfHTuj1cu2a6eTPYR29l7H65Q-x810';
             const GOOGLE_CLIENT_ID = '314929620446-8pjqlrmgkgl9bhppkejvucfpqnamjmqu.apps.googleusercontent.com';
             const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.file';
@@ -372,11 +372,11 @@
             firebase.initializeApp(firebaseConfig);
             const auth = firebase.auth();
             const provider = new firebase.auth.GoogleAuthProvider();
-            provider.addScope(DRIVE_SCOPE); // طلب إذن الوصول لـ Drive
+            provider.addScope(DRIVE_SCOPE); 
             
             let appInitialized = false;
             let gapiInitialized = false;
-            let gapiTokenClient;
+            let tokenClient;
 
             loginBtn.addEventListener('click', () => {
                 auth.signInWithPopup(provider).catch((error) => {
@@ -400,7 +400,7 @@
                         });
 
                         initializeAppLogic(user);
-                        initializeGapiClient(user);
+                        initializeGapiClient();
                     }
                 } else {
                     appInitialized = false;
@@ -410,34 +410,21 @@
                 }
             });
 
-            function initializeGapiClient(user) {
+            function initializeGapiClient() {
                 gapi.load('client', async () => {
                     await gapi.client.init({
                         apiKey: GOOGLE_API_KEY,
-                        clientId: GOOGLE_CLIENT_ID,
-                        scope: DRIVE_SCOPE,
                         discoveryDocs: DRIVE_DISCOVERY_DOCS,
                     });
-                    
-                    user.getIdToken(true).then(idToken => {
-                        const credential = firebase.auth.GoogleAuthProvider.credential(idToken);
-                        auth.currentUser.linkWithCredential(credential).then(result => {
-                             const oauthAccessToken = result.credential.accessToken;
-                             gapi.client.setToken({ access_token: oauthAccessToken });
-                             gapiInitialized = true;
-                             document.getElementById('sync-to-drive-btn').disabled = false;
-                             document.getElementById('load-from-drive-btn').disabled = false;
-                        }).catch(error => {
-                            if (error.code === 'auth/credential-already-in-use') {
-                                gapi.client.setToken({ access_token: error.credential.accessToken });
-                                gapiInitialized = true;
-                                document.getElementById('sync-to-drive-btn').disabled = false;
-                                document.getElementById('load-from-drive-btn').disabled = false;
-                            } else {
-                                console.error("Error linking credential:", error);
-                            }
-                        });
-                    });
+                    gapiInitialized = true;
+                    document.getElementById('sync-to-drive-btn').disabled = false;
+                    document.getElementById('load-from-drive-btn').disabled = false;
+                });
+
+                tokenClient = google.accounts.oauth2.initTokenClient({
+                    client_id: GOOGLE_CLIENT_ID,
+                    scope: DRIVE_SCOPE,
+                    callback: '', // Will be set dynamically
                 });
             }
 
@@ -566,8 +553,29 @@
                 });
 
                 // --- Google Drive Logic ---
+                function handleDriveAction(actionCallback) {
+                    if (!gapiInitialized || !tokenClient) {
+                        showAlert('واجهة Google API لم تُهيأ بعد. الرجاء الانتظار.');
+                        return;
+                    }
+
+                    tokenClient.callback = async (resp) => {
+                        if (resp.error !== undefined) {
+                            throw (resp);
+                        }
+                        // Set the token for gapi.client
+                        gapi.client.setToken(resp);
+                        await actionCallback();
+                    };
+
+                    if (gapi.client.getToken() === null) {
+                        tokenClient.requestAccessToken({prompt: 'consent'});
+                    } else {
+                        tokenClient.requestAccessToken({prompt: ''});
+                    }
+                }
+
                 async function findAppFile() {
-                    if (!gapiInitialized) { showAlert("لم تتم تهيئة Google Drive API بعد."); return null; }
                     try {
                         const response = await gapi.client.drive.files.list({
                             q: `name='${APP_DATA_FILENAME}' and 'appDataFolder' in parents and trashed=false`,
@@ -585,7 +593,6 @@
                 }
 
                 async function saveToDrive() {
-                    if (!gapiInitialized) { showAlert("لم تتم تهيئة Google Drive API بعد."); return; }
                     driveSyncStatus.textContent = 'جاري الحفظ...';
                     
                     const stateToSave = {
@@ -608,25 +615,26 @@
                     };
                     
                     const form = new FormData();
-                    form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
-                    form.append('file', blob);
-
+                    
                     let path = '/upload/drive/v3/files';
                     let method = 'POST';
 
                     if (fileId) {
                         path = `/upload/drive/v3/files/${fileId}`;
                         method = 'PATCH';
-                        metadata.parents = undefined; // Do not change parents on update
                     } else {
                          metadata.parents = ['appDataFolder'];
                     }
+
+                    form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+                    form.append('file', blob);
 
                     try {
                         const response = await gapi.client.request({
                             path: path,
                             method: method,
                             params: { uploadType: 'multipart' },
+                            headers: { 'Content-Type': 'multipart/related' },
                             body: form
                         });
                         fileId = response.result.id;
@@ -639,7 +647,6 @@
                 }
 
                 async function loadFromDrive() {
-                    if (!gapiInitialized) { showAlert("لم تتم تهيئة Google Drive API بعد."); return; }
                     driveSyncStatus.textContent = 'جاري التحميل...';
                     
                     if (!fileId) {
@@ -674,8 +681,8 @@
                     setTimeout(() => driveSyncStatus.textContent = '', 3000);
                 }
 
-                syncToDriveBtn.addEventListener('click', saveToDrive);
-                loadFromDriveBtn.addEventListener('click', loadFromDrive);
+                syncToDriveBtn.addEventListener('click', () => handleDriveAction(saveToDrive));
+                loadFromDriveBtn.addEventListener('click', () => handleDriveAction(loadFromDrive));
 
 
                 const updateUI = () => {
