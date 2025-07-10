@@ -400,7 +400,7 @@
                         });
 
                         initializeAppLogic(user);
-                        initializeGapiClient(user);
+                        initializeGapiClient();
                     }
                 } else {
                     appInitialized = false;
@@ -410,7 +410,7 @@
                 }
             });
 
-            function initializeGapiClient(user) {
+            function initializeGapiClient() {
                 gapi.load('client', async () => {
                     await gapi.client.init({
                         apiKey: GOOGLE_API_KEY,
@@ -421,10 +421,12 @@
                         client_id: GOOGLE_CLIENT_ID,
                         scope: DRIVE_SCOPE,
                         callback: (tokenResponse) => {
-                            gapi.client.setToken(tokenResponse);
-                            gapiInitialized = true;
-                            document.getElementById('sync-to-drive-btn').disabled = false;
-                            document.getElementById('load-from-drive-btn').disabled = false;
+                            if (tokenResponse && tokenResponse.access_token) {
+                                gapi.client.setToken(tokenResponse);
+                                gapiInitialized = true;
+                                document.getElementById('sync-to-drive-btn').disabled = false;
+                                document.getElementById('load-from-drive-btn').disabled = false;
+                            }
                         },
                     });
                 });
@@ -563,6 +565,7 @@
 
                     tokenClient.callback = async (resp) => {
                         if (resp.error !== undefined) {
+                            showAlert('فشل الحصول على إذن الوصول إلى Google Drive.');
                             throw (resp);
                         }
                         await actionCallback();
