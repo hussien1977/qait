@@ -400,7 +400,7 @@
                         });
 
                         initializeAppLogic(user);
-                        initializeGapiClient();
+                        initializeGapiClient(user);
                     }
                 } else {
                     appInitialized = false;
@@ -410,21 +410,23 @@
                 }
             });
 
-            function initializeGapiClient() {
+            function initializeGapiClient(user) {
                 gapi.load('client', async () => {
                     await gapi.client.init({
                         apiKey: GOOGLE_API_KEY,
                         discoveryDocs: DRIVE_DISCOVERY_DOCS,
                     });
-                    gapiInitialized = true;
-                    document.getElementById('sync-to-drive-btn').disabled = false;
-                    document.getElementById('load-from-drive-btn').disabled = false;
-                });
-
-                tokenClient = google.accounts.oauth2.initTokenClient({
-                    client_id: GOOGLE_CLIENT_ID,
-                    scope: DRIVE_SCOPE,
-                    callback: '', // Will be set dynamically
+                    
+                    tokenClient = google.accounts.oauth2.initTokenClient({
+                        client_id: GOOGLE_CLIENT_ID,
+                        scope: DRIVE_SCOPE,
+                        callback: (tokenResponse) => {
+                            gapi.client.setToken(tokenResponse);
+                            gapiInitialized = true;
+                            document.getElementById('sync-to-drive-btn').disabled = false;
+                            document.getElementById('load-from-drive-btn').disabled = false;
+                        },
+                    });
                 });
             }
 
@@ -563,8 +565,6 @@
                         if (resp.error !== undefined) {
                             throw (resp);
                         }
-                        // Set the token for gapi.client
-                        gapi.client.setToken(resp);
                         await actionCallback();
                     };
 
