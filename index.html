@@ -251,6 +251,9 @@
                                 <span>📋</span> تصدير قائمة الحضور (PDF)
                             </button>
                         </div>
+                          <div id="pdf-export-status" class="mt-6 text-center text-blue-600 font-semibold hidden">
+                            جاري تحضير الملف...
+                        </div>
                     </div>
                  </section>
 
@@ -275,8 +278,8 @@
                             <div id="absent-list" class="h-64 overflow-y-auto space-y-2 pr-2">
                                <p class="text-slate-400 text-center mt-8">لم يتم إضافة أي غياب بعد.</p>
                             </div>
-                            <button id="export-absent-pdf-btn" class="mt-4 w-full bg-orange-500 text-white font-bold py-2 px-4 rounded-md hover:bg-orange-600 transition" disabled>تصدير قائمة الغياب (صورة)</button>
-                         </div>
+							<button id="export-absent-pdf-btn" class="mt-4 w-full bg-orange-500 text-white font-bold py-2 px-4 rounded-md hover:bg-orange-600 transition" disabled>تصدير قائمة الغياب (صورة)</button>
+							</div>
                     </div>
                 </section>
 
@@ -337,16 +340,6 @@
         <p id="alert-message"></p>
     </div>
 
-    <div id="progress-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-        <div class="bg-white p-8 rounded-lg shadow-xl text-center w-11/12 md:w-1/3">
-            <h3 id="progress-title" class="text-lg font-bold mb-4">جاري تحضير الملف...</h3>
-            <div class="w-full bg-gray-200 rounded-full h-4">
-                <div id="progress-bar" class="bg-blue-600 h-4 rounded-full transition-all duration-300" style="width: 0%;"></div>
-            </div>
-            <p id="progress-text" class="mt-2 text-sm text-gray-600">0%</p>
-        </div>
-    </div>
-
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             // --- Firebase and Google API Config ---
@@ -363,9 +356,6 @@
             const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.file';
             const DRIVE_DISCOVERY_DOCS = ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"];
             const APP_DATA_FILENAME = 'seating-chart-app-data.json';
-			
-			// ######## MODIFICATION START: Add Amiri Font Data ########
-			const amiriFont = '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ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAAAAIAAgAAAAAFAAEAAAAAAAAAAQIDBAEFAAcACgAAAAAAAAABAAEAAgABAAEAAQAAAAEAAAAAAAAAAQAAAAAAAQAAAAIAAQAAAAAAAAAAAAMAAAAAAAAAAQAAAAACAAEAAgABAAEAAwAAAAAABAACAAAAAQAJ//8ABwABAAAAAAAAAAEAAAABAAAAAAAAAAEAAAAAAAAAAgAAAAEAAAAAAAAAAQAAAAQAAQAFAAAABQAGAAcACAADAAQABQAHAAMABAAFAAcAAwAEAAsADgAPABAABQAIAAkACgALAAgACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAk-i...'
 
             // --- Firebase Authentication ---
             const loginScreen = document.getElementById('login-screen');
@@ -485,6 +475,7 @@
                 const exportHeader = document.getElementById('export-header');
                 const exportChartPdfBtn = document.getElementById('export-chart-pdf-btn');
                 const exportListPdfBtn = document.getElementById('export-list-pdf-btn');
+                const pdfExportStatus = document.getElementById('pdf-export-status');
                 const useBackgroundsToggle = document.getElementById('use-backgrounds-toggle');
                 const backgroundInputs = document.getElementById('background-inputs');
                 const headerBgInput = document.getElementById('header-bg-input');
@@ -508,10 +499,6 @@
                 const absentListContainer = document.getElementById('absent-list');
                 const absentCountSpan = document.getElementById('absent-count');
                 const exportAbsentPdfBtn = document.getElementById('export-absent-pdf-btn');
-				const progressModal = document.getElementById('progress-modal');
-				const progressBar = document.getElementById('progress-bar');
-				const progressText = document.getElementById('progress-text');
-				const progressTitle = document.getElementById('progress-title');
 
                 const steps = [
                     { id: 1, name: 'إدارة القاعات' }, { id: 2, name: 'بيانات الطلاب' }, { id: 3, name: 'التوزيع' },
@@ -628,14 +615,16 @@
                     let headers = {};
 
                     if (fileId) {
+                        // Patch (update) existing file
                         path = `/upload/drive/v3/files/${fileId}?uploadType=media`;
                         method = 'PATCH';
                         requestBody = content;
                         headers = {'Content-Type': 'application/json'};
                     } else {
+                        // Create new file using multipart upload
                         path = `/upload/drive/v3/files?uploadType=multipart`;
                         method = 'POST';
-                        metadata.parents = ['root'];
+                        metadata.parents = ['root']; // Save to main Drive folder
 
                         const boundary = '-------314159265358979323846';
                         const delimiter = "\r\n--" + boundary + "\r\n";
@@ -669,7 +658,7 @@
                     }
                     setTimeout(() => driveSyncStatus.textContent = '', 3000);
                 }
-				
+
                 async function loadFromDrive() {
                     driveSyncStatus.textContent = 'جاري التحميل...';
                     if (!fileId) {
@@ -691,16 +680,9 @@
                                 columnClassAssignments: new Map(savedState.columnClassAssignments || []),
                                 halls: savedState.halls.map(h => ({ ...h, disabledSeats: new Set(h.disabledSeats || []) })),
                             };
-                            saveStateToLocalStorage();
-                            updateUI(); 
+                            saveStateToLocalStorage(); // Sync to local storage as well
+                            updateUI();
                             driveSyncStatus.textContent = 'تم التحميل بنجاح!';
-
-                            if (state.seatingChart.size > 0) {
-                                state.currentStep = 5;
-                                updateUI();
-                                showAlert('تم تحميل البيانات بنجاح. تم نقلك إلى خطوة تسجيل الغياب.');
-                            }
-
                         } catch (err) {
                             console.error("Error loading from drive:", err);
                             driveSyncStatus.textContent = 'فشل التحميل!';
@@ -714,25 +696,6 @@
                 syncToDriveBtn.addEventListener('click', () => handleDriveAction(saveToDrive));
                 loadFromDriveBtn.addEventListener('click', () => handleDriveAction(loadFromDrive));
 
-				function updateProgress(current, total, title = "جاري تحضير الملف...") {
-					if (current === 0 && total > 0) {
-						progressTitle.textContent = title;
-						progressBar.style.width = '0%';
-						progressText.textContent = '0%';
-						progressModal.classList.remove('hidden');
-						return;
-					}
-
-					const percentage = Math.round((current / total) * 100);
-					progressBar.style.width = percentage + '%';
-					progressText.textContent = percentage + '%';
-
-					if (current >= total) {
-						setTimeout(() => {
-							progressModal.classList.add('hidden');
-						}, 500);
-					}
-				}
 
                 const updateUI = () => {
                     renderStepper();
@@ -1249,6 +1212,7 @@
                     exportHeader.querySelector('h2').textContent = `الخطوة 4: تصدير (${state.selectedHallIds.size} قاعات محددة)`;
                 };
 
+				// ######## MODIFICATION START: createPageForPdf (QR Size and Margin) ########
                 const createPageForPdf = (hall, sector) => {
                     const pageContainer = document.createElement('div');
                     pageContainer.className = 'pdf-page-container';
@@ -1332,7 +1296,7 @@
                                     seat.innerHTML = `<p class="font-black text-lg leading-tight">${student.name}</p>
                                                     <p class="font-bold text-slate-800 text-sm">${student.id}</p>
                                                      <p class="font-bold text-slate-800 text-xs mt-1">${student.class} (${student.section})</p>
-                                                     <div class="flex justify-center items-center mt-3" id="pdf-qrcode-${safeSeatId}"></div>`;
+                                                     <div class="flex justify-center items-center mt-3" id="pdf-qrcode-${safeSeatId}"></div>`; // mt-1 changed to mt-3
                                 }
                             }
                             sectorGrid.appendChild(seat);
@@ -1352,8 +1316,8 @@
                                 if(qrElement && student) {
                                      new QRCode(qrElement, {
                                         text: student.id.toString(), 
-                                        width: 64,
-                                        height: 64,
+                                        width: 64, // Increased from 48
+                                        height: 64, // Increased from 48
                                         colorDark : "#000000", 
                                         colorLight : "#ffffff", 
                                         correctLevel : QRCode.CorrectLevel.M
@@ -1364,6 +1328,8 @@
                     }
                     return pageContainer;
                 };
+				// ######## MODIFICATION END: createPageForPdf ########
+
 
                 const handleBgUpload = (e, type) => {
                     const file = e.target.files[0];
@@ -1423,21 +1389,13 @@
                         showAlert("حدث خطأ أثناء محاولة تصدير الملف.");
                     }
                 };
-
                 exportChartPdfBtn.addEventListener('click', async () => {
                     if (state.selectedHallIds.size === 0) { showAlert('الرجاء تحديد قاعة واحدة على الأقل.'); return; }
-                    
-                    const sortedHallIds = Array.from(state.selectedHallIds).sort((a,b) => a - b);
-                    const totalPages = sortedHallIds.length * 2;
-                    let pagesProcessed = 0;
-
-                    updateProgress(0, totalPages, 'جاري تصدير مخططات القاعات...');
-                    await new Promise(resolve => setTimeout(resolve, 50));
-
+                    pdfExportStatus.classList.remove('hidden');
                     const { jsPDF } = window.jspdf;
-                    const pdf = new jsPDF({ orientation: 'p', unit: 'pt', format: 'a4' });
+                     const pdf = new jsPDF({ orientation: 'p', unit: 'pt', format: 'a4' });
                     let isFirstPage = true;
-
+                    const sortedHallIds = Array.from(state.selectedHallIds).sort((a,b) => a - b);
                     for (const hallId of sortedHallIds) {
                          const hall = state.halls.find(h => h.id === hallId);
                         if (!hall) continue;
@@ -1452,101 +1410,78 @@
                             pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
                             document.body.removeChild(pageContent);
                             isFirstPage = false;
-
-							pagesProcessed++;
-							updateProgress(pagesProcessed, totalPages, 'جاري تصدير مخططات القاعات...');
-							await new Promise(resolve => setTimeout(resolve, 20));
                         }
                     }
                     triggerPdfDownload(pdf, `مخططات الجلوس المجمعة.pdf`);
-					updateProgress(totalPages, totalPages);
+                    pdfExportStatus.classList.add('hidden');
                 });
 
-				// ######## MODIFICATION START: Rebuilt exportListPdfBtn ########
                 exportListPdfBtn.addEventListener('click', async () => {
-                    updateProgress(0, 100, 'جاري تصدير قائمة الحضور...');
-                    await new Promise(resolve => setTimeout(resolve, 50));
-
-                    try {
-                        const { jsPDF } = window.jspdf;
-                        const doc = new jsPDF();
-
-                        doc.addFileToVFS('Amiri-Regular.ttf', amiriFont);
-                        doc.addFont('Amiri-Regular.ttf', 'Amiri', 'normal');
-                        doc.setFont('Amiri');
-                        doc.setR2L(true);
-
-                        updateProgress(20, 100, 'جاري تجميع البيانات...');
-                        await new Promise(resolve => setTimeout(resolve, 50));
-                        
-                        const tableData = [];
-                        state.seatingChart.forEach((studentUid, seatId) => {
-                            const student = state.students.find(s => s.uid === studentUid);
-                            if (student) {
-                                const [hallId, coords] = seatId.split(':');
-                                const hall = state.halls.find(h => h.id === parseInt(hallId));
-                                const [r, c] = coords.split('-').map(Number);
-                                tableData.push({
-                                    seat: `${hall ? hall.name : 'N/A'} | R${r+1}-C${c+1}`,
-                                    name: student.name,
-                                    id: student.id,
-                                    class: student.class,
-                                    section: student.section
-                                });
-                            }
-                        });
-                        
-                        tableData.sort((a, b) => a.name.localeCompare(b.name, 'ar'));
-
-                        const head = [['', 'الشعبة', 'الصف', 'الرقم الامتحاني', 'اسم الطالب', 'المقعد والقاعة']];
-                        const body = tableData.map(row => [
-                            '',
-                            row.section,
-                            row.class,
-                            row.id,
-                            row.name,
-                            row.seat
-                        ]);
-                        
-                        updateProgress(60, 100, 'جاري إنشاء الجدول...');
-                        await new Promise(resolve => setTimeout(resolve, 50));
-                        
-                        doc.text("قائمة الحضور المجمعة", doc.internal.pageSize.getWidth() / 2, 15, { align: 'center' });
-                        
-                        doc.autoTable({
-                            head: head,
-                            body: body,
-                            startY: 25,
-                            styles: {
-                                font: 'Amiri',
-                                halign: 'right',
-                                cellPadding: 2,
-                                fontSize: 10,
-                            },
-                            headStyles: {
-                                halign: 'center',
-                                fillColor: [41, 128, 185],
-                                textColor: 255,
-                                fontStyle: 'bold'
-                            },
-                            columnStyles: {
-                                0: {cellWidth: 40}, // Signature column
-                            }
-                        });
-
-                        updateProgress(90, 100, 'جاري الحفظ...');
-                        await new Promise(resolve => setTimeout(resolve, 50));
-
-                        triggerPdfDownload(doc, `قائمة_الحضور.pdf`);
-                        updateProgress(100, 100);
-
-                    } catch (e) {
-                        console.error("Failed to export attendance list:", e);
-                        showAlert("حدث خطأ فني أثناء تصدير قائمة الحضور.");
-                        updateProgress(100, 100); // Hide progress bar on error
+                    pdfExportStatus.classList.remove('hidden');
+                    const tableContainer = document.createElement('div');
+                    tableContainer.className = 'p-10 bg-white';
+                    tableContainer.style.fontFamily = "'Cairo', sans-serif";
+                     tableContainer.style.width = '210mm';
+                    tableContainer.style.position = 'absolute';
+                    tableContainer.style.left = '-9999px';
+                    tableContainer.style.paddingBottom = '50px'; 
+                 let tableHtml = `<h1 class="text-2xl font-bold text-center mb-4">قائمة الحضور المجمعة</h1>
+                                    <table class="w-full text-sm text-right" style="border-collapse: collapse;">
+                                        <thead class="text-xs text-gray-700 uppercase bg-gray-200"><tr>
+                                             <th scope="col" class="px-4 py-3 border border-gray-300">القاعة والمقعد</th>
+                                            <th scope="col" class="px-4 py-3 border border-gray-300">اسم الطالب</th>
+                                             <th scope="col" class="px-4 py-3 border border-gray-300">الرقم الامتحاني</th>
+                                            <th scope="col" class="px-4 py-3 border border-gray-300">الصف</th>
+                                             <th scope="col" class="px-4 py-3 border border-gray-300">الشعبة</th>
+                                            <th scope="col" class="px-4 py-3 border border-gray-300" style="width: 15%;">التوقيع</th>
+                                         </tr></thead><tbody>`;
+                    const tableData = [];
+                    state.seatingChart.forEach((studentUid, seatId) => {
+                        const student = state.students.find(s => s.uid === studentUid);
+                        if(student) {
+                            const [hallId, coords] = seatId.split(':');
+                             const hall = state.halls.find(h => h.id === parseInt(hallId));
+                            const [r, c] = coords.split('-').map(Number);
+                            tableData.push({
+                                 seat: `${hall.name} | R${r+1}-C${c+1}`, name: student.name, id: student.id,
+                                class: student.class, section: student.section
+                            });
+                         }
+                    });
+                    tableData.sort((a,b) => parseInt(a.id) - parseInt(b.id)); 
+                    tableData.forEach(row => {
+                        tableHtml += `<tr class="bg-white border-b">
+                                        <td class="px-4 py-2 font-medium text-gray-900 border border-gray-300">${row.seat}</td>
+                                         <td class="px-4 py-2 border border-gray-300">${row.name}</td>
+                                        <td class="px-4 py-2 border border-gray-300">${row.id}</td>
+                                         <td class="px-4 py-2 border border-gray-300">${row.class}</td>
+                                        <td class="px-4 py-2 border border-gray-300">${row.section}</td>
+                                        <td class="px-4 py-2 border border-gray-300"></td></tr>`;
+                    });
+                    tableHtml += `</tbody></table>`;
+                    tableContainer.innerHTML = tableHtml;
+                    document.body.appendChild(tableContainer);
+                    const { jsPDF } = window.jspdf;
+                    const pdf = new jsPDF({ orientation: 'p', unit: 'pt', format: 'a4' });
+                    const canvas = await html2canvas(tableContainer, {scale: 2});
+                    const imgData = canvas.toDataURL('image/png');
+                    const pdfWidth = pdf.internal.pageSize.getWidth();
+                    const imgProps= pdf.getImageProperties(imgData);
+                    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+                    let heightLeft = pdfHeight;
+                    let position = 0;
+                    pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, pdfHeight);
+                    heightLeft -= pdf.internal.pageSize.getHeight();
+                    while (heightLeft > 0) {
+                      position = heightLeft - pdfHeight;
+                      pdf.addPage();
+                      pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, pdfHeight);
+                      heightLeft -= pdf.internal.pageSize.getHeight();
                     }
+                    document.body.removeChild(tableContainer);
+                    triggerPdfDownload(pdf, `قائمة الحضور المجمعة.pdf`);
+                    pdfExportStatus.classList.add('hidden');
                 });
-				// ######## MODIFICATION END: Rebuilt exportListPdfBtn ########
 
                 const renderAbsenceView = () => {
                     absentCountSpan.textContent = state.absentStudents.length;
@@ -1561,7 +1496,7 @@
                          if(studentSeat) {
                             const [hallId, coords] = studentSeat[0].split(':');
                             const hall = state.halls.find(h => h.id === parseInt(hallId));
-                             seatInfo = `${hall ? hall.name : ''} (${coords})`;
+                             seatInfo = `${hall.name} (${coords})`;
                         }
                         return `<div class="p-2 border rounded-md bg-white flex justify-between items-center text-sm">
                             <div><p class="font-bold">${s.name} (${s.id})</p><p class="text-slate-500">${s.class} - ${seatInfo}</p></div>
@@ -1617,6 +1552,7 @@
                     }
                 });
 
+				// ######## MODIFICATION START: Absentee Export to Image ########
                 exportAbsentPdfBtn.addEventListener('click', async () => {
                     const statusDiv = document.getElementById('scan-feedback');
                     statusDiv.innerHTML = `<span class="success">جاري تحضير الصورة...</span>`;
@@ -1695,6 +1631,7 @@
                         setTimeout(() => { statusDiv.innerHTML = ''; }, 3000);
                     }
                 });
+				// ######## MODIFICATION END: Absentee Export to Image ########
 
                 const navigate = (direction) => {
                     if (direction === 'next' && state.currentStep === 1 && state.selectedHallIds.size === 0) {
