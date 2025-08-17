@@ -109,7 +109,7 @@
             <h1 class="text-3xl font-bold text-sky-700 mb-2">نظام إدارة مخططات الجلوس</h1>
             <p class="text-slate-500 mb-6">الرجاء تسجيل الدخول للمتابعة</p>
             <button id="login-btn" class="bg-sky-600 text-white font-bold py-3 px-8 rounded-md hover:bg-sky-700 transition flex items-center gap-3">
-                <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"></path><path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"></path><path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"></path><path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.574l6.19,5.238C42.022,35.244,44,30.036,44,24C44,22.659,43.862,21.35,43.611,20.083z"></path></svg>
+              <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"></path><path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"></path><path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"></path><path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.574l6.19,5.238C42.022,35.244,44,30.036,44,24C44,22.659,43.862,21.35,43.611,20.083z"></path></svg>
                 <span>تسجيل الدخول باستخدام Google</span>
             </button>
         </div>
@@ -179,14 +179,14 @@
                             </div>
                         </div>
                         
-                         <div class="bg-gray-50 p-4 rounded-lg border">
+                        <div class="bg-gray-50 p-4 rounded-lg border">
                             <h3 class="font-bold text-lg mb-4">قائمة الطلاب (<span id="student-count">0</span>)</h3>
                             <div id="student-list" class="h-64 overflow-y-auto space-y-2 pr-2">
                                 <p class="text-slate-400 text-center mt-8">لم يتم إضافة أي طلاب بعد.</p>
                             </div>
                         </div>
                     </div>
-                 </section>
+                </section>
 
                 <section id="step-3" class="step-section">
                     <div id="distribution-header" class="text-center mb-8">
@@ -195,47 +195,47 @@
                     </div>
                     <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
                         <div class="lg:col-span-1 bg-gray-50 p-4 rounded-lg border">
-                             <h3 class="font-bold text-lg mb-4">الطلاب غير الموزعين</h3>
+                            <h3 class="font-bold text-lg mb-4">الطلاب غير الموزعين</h3>
                             <div id="unassigned-students" class="h-96 overflow-y-auto space-y-2 p-1"></div>
                             <button id="auto-distribute-btn" class="mt-4 w-full bg-emerald-600 text-white font-bold py-2 px-4 rounded-md hover:bg-emerald-700 transition">توزيع تلقائي</button>
-                             <button id="reset-distribution-btn" class="mt-2 w-full bg-red-600 text-white font-bold py-2 px-4 rounded-md hover:bg-red-700 transition">إعادة تعيين التوزيع</button>
+                            <button id="reset-distribution-btn" class="mt-2 w-full bg-red-600 text-white font-bold py-2 px-4 rounded-md hover:bg-red-700 transition">إعادة تعيين التوزيع</button>
                         </div>
 
                         <div id="multi-hall-distribution-container" class="lg:col-span-3 space-y-8">
-                         </div>
+                        </div>
                     </div>
                 </section>
 
                 <section id="step-4" class="step-section">
                     <div id="export-header" class="text-center mb-8">
-                         <h2 class="text-2xl font-bold">الخطوة 4: التصدير والطباعة</h2>
+                          <h2 class="text-2xl font-bold">الخطوة 4: التصدير والطباعة</h2>
                         <p class="text-slate-500 mt-1">اختر إعدادات التصدير ثم قم بمعاينة أو تصدير الملفات.</p>
                     </div>
                     <div class="max-w-4xl mx-auto">
-                         <div class="bg-gray-50 p-6 rounded-lg border mb-6 space-y-4">
+                        <div class="bg-gray-50 p-6 rounded-lg border mb-6 space-y-4">
                             <label class="flex items-center justify-center cursor-pointer">
                                 <span class="font-semibold ml-4">استخدام خلفيات مخصصة:</span>
-                                 <div class="relative">
+                                <div class="relative">
                                     <input type="checkbox" id="use-backgrounds-toggle" class="sr-only peer">
                                     <div class="block bg-gray-300 w-14 h-8 rounded-full peer-checked:bg-sky-600"></div>
                                     <div class="dot absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition-transform transform peer-checked:translate-x-full"></div>
                                 </div>
-                             </label>
+                            </label>
                             <div id="background-inputs" class="hidden grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t">
                                 <div class="flex-1">
-                                     <label for="header-bg-input" class="block font-semibold mb-1">خلفية العنوان:</label>
+                                    <label for="header-bg-input" class="block font-semibold mb-1">خلفية العنوان:</label>
                                     <input type="file" id="header-bg-input" accept="image/*" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-sky-50 file:text-sky-700 hover:file:bg-sky-100"/>
-                                 </div>
+                                </div>
                                 <div class="flex-1">
                                     <label for="body-bg-input" class="block font-semibold mb-1">خلفية الجدول:</label>
-                                     <input type="file" id="body-bg-input" accept="image/*" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-sky-50 file:text-sky-700 hover:file:bg-sky-100"/>
+                                    <input type="file" id="body-bg-input" accept="image/*" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-sky-50 file:text-sky-700 hover:file:bg-sky-100"/>
                                 </div>
-                                 <div class="md:col-span-2 space-y-2">
+                                <div class="md:col-span-2 space-y-2">
                                      <div>
                                         <label for="header-opacity-slider" class="block font-semibold mb-1">شفافية خلفية العنوان: <span id="header-opacity-value">100</span>%</label>
-                                         <input type="range" id="header-opacity-slider" min="0" max="1" step="0.05" value="1" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                                        <input type="range" id="header-opacity-slider" min="0" max="1" step="0.05" value="1" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
                                     </div>
-                                     <div>
+                                    <div>
                                         <label for="body-opacity-slider" class="block font-semibold mb-1">شفافية خلفية الجدول: <span id="body-opacity-value">100</span>%</label>
                                         <input type="range" id="body-opacity-slider" min="0" max="1" step="0.05" value="1" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
                                     </div>
@@ -249,7 +249,7 @@
                             <button id="export-chart-pdf-btn" class="bg-sky-600 text-white font-bold py-3 px-6 rounded-md hover:bg-sky-700 transition flex items-center justify-center gap-2">
                                  <span>📄</span> تصدير مخطط القاعات (PDF)
                             </button>
-                             <button id="export-list-pdf-btn" class="bg-green-600 text-white font-bold py-3 px-6 rounded-md hover:bg-green-700 transition flex items-center justify-center gap-2">
+                            <button id="export-list-pdf-btn" class="bg-green-600 text-white font-bold py-3 px-6 rounded-md hover:bg-green-700 transition flex items-center justify-center gap-2">
                                 <span>📋</span> تصدير قائمة الحضور (PDF)
                             </button>
                         </div>
@@ -258,27 +258,27 @@
 
                 <section id="step-5" class="step-section">
                     <div class="text-center mb-8">
-                        <h2 class="text-2xl font-bold">الخطوة 5: تسجيل الغياب عبر QR</h2>
+                          <h2 class="text-2xl font-bold">الخطوة 5: تسجيل الغياب عبر QR</h2>
                         <p class="text-slate-500 mt-1">امسح رموز QR للطلاب الغائبين لتسجيلهم في القائمة.</p>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                         <div>
+                        <div>
                             <h3 class="font-bold text-lg mb-4 text-center">لوحة التحكم بالماسح</h3>
                             <div class="flex justify-center gap-4 mb-4">
-                                 <button id="start-scan-btn" class="bg-green-600 text-white font-bold py-2 px-6 rounded-md hover:bg-green-700 transition">بدء المسح</button>
+                                <button id="start-scan-btn" class="bg-green-600 text-white font-bold py-2 px-6 rounded-md hover:bg-green-700 transition">بدء المسح</button>
                                 <button id="stop-scan-btn" class="bg-red-600 text-white font-bold py-2 px-6 rounded-md hover:bg-red-700 transition hidden">إيقاف المسح</button>
                             </div>
-                             <div id="reader"></div>
+                            <div id="reader"></div>
                             <div id="scan-feedback" class="text-center font-semibold mt-2 h-6"></div>
                         </div>
                         <div class="bg-gray-50 p-4 rounded-lg border">
                              <h3 class="font-bold text-lg mb-4">قائمة الطلاب الغائبين (<span id="absent-count">0</span>)</h3>
                             <div id="absent-list" class="h-64 overflow-y-auto space-y-2 pr-2">
-                               <p class="text-slate-400 text-center mt-8">لم يتم إضافة أي غياب بعد.</p>
+                                <p class="text-slate-400 text-center mt-8">لم يتم إضافة أي غياب بعد.</p>
                             </div>
                             <button id="export-absent-pdf-btn" class="mt-4 w-full bg-orange-500 text-white font-bold py-2 px-4 rounded-md hover:bg-orange-600 transition" disabled>تصدير قائمة الغياب (صورة)</button>
-                         </div>
+                        </div>
                     </div>
                 </section>
 
@@ -297,7 +297,7 @@
                 <input type="hidden" id="hall-id-input">
                 <div>
                     <label for="hall-name" class="block font-semibold mb-1">اسم القاعة:</label>
-                     <input type="text" id="hall-name" placeholder="مثال: قاعة 101" class="w-full p-2 border rounded-md focus:ring-2 focus:ring-sky-500" required>
+                    <input type="text" id="hall-name" placeholder="مثال: قاعة 101" class="w-full p-2 border rounded-md focus:ring-2 focus:ring-sky-500" required>
                 </div>
                 <div>
                     <label for="hall-location" class="block font-semibold mb-1">موقع القاعة:</label>
@@ -310,7 +310,7 @@
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label for="hall-sector1-cols" class="block font-semibold mb-1">أعمدة قطاع 1:</label>
-                         <input type="number" id="hall-sector1-cols" min="1" max="15" value="3" class="w-full p-2 border rounded-md focus:ring-2 focus:ring-sky-500" required>
+                        <input type="number" id="hall-sector1-cols" min="1" max="15" value="3" class="w-full p-2 border rounded-md focus:ring-2 focus:ring-sky-500" required>
                     </div>
                     <div>
                         <label for="hall-sector2-cols" class="block font-semibold mb-1">أعمدة قطاع 2:</label>
@@ -318,7 +318,7 @@
                     </div>
                 </div>
                 <div class="flex justify-end gap-4 pt-4 border-t">
-                     <button type="button" id="cancel-hall-modal-btn" class="bg-gray-200 text-gray-800 font-bold py-2 px-6 rounded-md hover:bg-gray-300 transition">إلغاء</button>
+                    <button type="button" id="cancel-hall-modal-btn" class="bg-gray-200 text-gray-800 font-bold py-2 px-6 rounded-md hover:bg-gray-300 transition">إلغاء</button>
                     <button type="submit" class="bg-sky-600 text-white font-bold py-2 px-6 rounded-md hover:bg-sky-700 transition">حفظ القاعة</button>
                 </div>
             </form>
@@ -351,6 +351,7 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+
             // --- Firebase and Google API Config ---
             const firebaseConfig = {
                 apiKey: "AIzaSyDqGTfHTuj1cu2a6eTPYR29l7H65Q-x810",
@@ -365,7 +366,6 @@
             const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.file';
             const DRIVE_DISCOVERY_DOCS = ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"];
             const APP_DATA_FILENAME = 'seating-chart-app-data.json';
-			
             // --- Firebase Authentication ---
             const loginScreen = document.getElementById('login-screen');
             const appContainer = document.getElementById('app-container');
@@ -377,14 +377,12 @@
             let appInitialized = false;
             let gapiInited = false;
             let tokenClient;
-
             loginBtn.addEventListener('click', () => {
                 auth.signInWithPopup(provider).catch((error) => {
                     console.error("Authentication failed:", error);
                     showAlert("فشل تسجيل الدخول. الرجاء المحاولة مرة أخرى.");
                 });
             });
-
             auth.onAuthStateChanged(user => {
                 if (user) {
                     if (!appInitialized) {
@@ -409,7 +407,6 @@
                     appContainer.classList.add('hidden');
                 }
             });
-
             async function initializeGapiClient() {
                 try {
                     await gapi.client.init({
@@ -509,19 +506,18 @@
                 const exportAbsentPdfBtn = document.getElementById('export-absent-pdf-btn');
 				const progressModal = document.getElementById('progress-modal');
 				const progressBar = document.getElementById('progress-bar');
-				const progressText = document.getElementById('progress-text');
+                const progressText = document.getElementById('progress-text');
 				const progressTitle = document.getElementById('progress-title');
 
                 const steps = [
                     { id: 1, name: 'إدارة القاعات' }, { id: 2, name: 'بيانات الطلاب' }, { id: 3, name: 'التوزيع' },
                     { id: 4, name: 'التصدير' }, { id: 5, name: 'تسجيل الغياب' }
                 ];
-
                 // --- Persistence Logic ---
                 const saveStateToLocalStorage = () => {
                     try {
                         const stateToSave = {
-                             ...state,
+                            ...state,
                             selectedHallIds: [...state.selectedHallIds],
                             seatingChart: [...state.seatingChart],
                             columnClassAssignments: [...state.columnClassAssignments],
@@ -534,7 +530,6 @@
                         showAlert("خطأ: لم يتم حفظ البيانات. قد تكون سعة التخزين ممتلئة.");
                     }
                 };
-
                 const loadStateFromLocalStorage = () => {
                     const savedStateJSON = localStorage.getItem(`seatingChartState_${user.uid}`);
                     if (savedStateJSON) {
@@ -554,14 +549,12 @@
                         }
                     }
                 };
-
                 clearDataBtn.addEventListener('click', () => {
                     if (confirm("هل أنت متأكد من رغبتك في مسح جميع البيانات المحلية؟ لن يتم حذف البيانات من Google Drive.")) {
                         localStorage.removeItem(`seatingChartState_${user.uid}`);
                         window.location.reload();
-                     }
+                    }
                 });
-
                 // --- Google Drive Logic ---
                 function handleDriveAction(actionCallback) {
                     if (!gapiInited || !tokenClient) {
@@ -620,12 +613,10 @@
                         'name': APP_DATA_FILENAME,
                         'mimeType': 'application/json',
                     };
-                    
                     let path;
                     let method;
                     let requestBody;
                     let headers = {};
-
                     if (fileId) {
                         path = `/upload/drive/v3/files/${fileId}?uploadType=media`;
                         method = 'PATCH';
@@ -648,7 +639,6 @@
                             'Content-Type: application/json\r\n\r\n' +
                             content +
                             close_delim;
-                        
                         requestBody = multipartRequestBody;
                         headers = {'Content-Type': 'multipart/related; boundary="' + boundary + '"'};
                     }
@@ -748,18 +738,17 @@
                     if (state.currentStep === 4) renderExportView();
                     if (state.currentStep === 5) renderAbsenceView();
                 };
-
                 const renderStepper = () => {
                     stepperContainer.innerHTML = steps.map(step => {
                         const isActive = state.currentStep === step.id;
                         const isDone = state.currentStep > step.id;
-                         const baseClasses = 'flex items-center gap-2 transition-all';
+                        const baseClasses = 'flex items-center gap-2 transition-all';
                         const activeClasses = 'text-sky-600 font-bold';
                         const doneClasses = 'text-green-600';
                         let html = `<div class="${baseClasses} ${isActive ? activeClasses : (isDone ? doneClasses : 'text-gray-400')}">
                             <div class="w-8 h-8 rounded-full flex items-center justify-center border-2 ${isActive ? 'border-sky-600 bg-sky-100' : (isDone ? 'border-green-600 bg-green-100' : 'border-gray-300')}">
                                 ${isDone ? '✓' : step.id}
-                             </div>
+                            </div>
                             <span class="hidden md:block">${step.name}</span>
                         </div>`;
                         if (step.id < steps.length) {
@@ -783,29 +772,29 @@
                         hallsListContainer.innerHTML = state.halls.map(hall => {
                             const isSelected = state.selectedHallIds.has(hall.id);
                             const hasChart = checkIfSeatingChartExists(hall.id);
-                             return `
+                            return `
                             <div class="border rounded-lg p-4 shadow transition flex flex-col ${isSelected ? 'border-sky-500 ring-2 ring-sky-200' : 'bg-white'}">
-                                 <div class="flex-grow">
+                                <div class="flex-grow">
                                     <h3 class="font-bold text-lg">${hall.name}</h3>
                                     <p class="text-sm text-slate-600">${hall.location || 'لم يحدد الموقع'}</p>
-                                     <p class="text-sm text-slate-500">الصفوف: ${hall.rows} | القطاعات: ${hall.sector1Name}, ${hall.sector2Name}</p>
+                                    <p class="text-sm text-slate-500">الصفوف: ${hall.rows} | القطاعات: ${hall.sector1Name}, ${hall.sector2Name}</p>
                                     <p class="text-sm text-slate-500">إجمالي المقاعد: ${hall.rows * (hall.sector1Cols + hall.sector2Cols)}</p>
-                                 </div>
+                                </div>
                                 <div class="flex gap-2 mt-4 pt-4 border-t">
                                     <button onclick="window.toggleHallSelection(${hall.id})" class="flex-1 text-sm ${isSelected ? 'bg-red-500' : 'bg-green-500'} text-white font-semibold py-1 px-2 rounded hover:bg-green-600">
                                         ${isSelected ? 'إلغاء التحديد' : 'تحديد'}
                                     </button>
-                                     <button onclick="window.editHall(${hall.id})" class="text-sm bg-yellow-400 text-white font-semibold py-1 px-2 rounded hover:bg-yellow-500">تعديل</button>
+                                    <button onclick="window.editHall(${hall.id})" class="text-sm bg-yellow-400 text-white font-semibold py-1 px-2 rounded hover:bg-yellow-500">تعديل</button>
                                     <button onclick="window.copyHall(${hall.id})" class="text-sm bg-blue-400 text-white font-semibold py-1 px-2 rounded hover:bg-blue-500">نسخ</button>
-                                     <button onclick="window.deleteHall(${hall.id})" class="text-sm bg-red-500 text-white font-semibold py-1 px-2 rounded hover:bg-red-600">حذف</button>
+                                    <button onclick="window.deleteHall(${hall.id})" class="text-sm bg-red-500 text-white font-semibold py-1 px-2 rounded hover:bg-red-600">حذف</button>
                                 </div>
                                 ${hasChart ? `
-                                 <div class="mt-2 pt-2 border-t border-dashed">
+                                <div class="mt-2 pt-2 border-t border-dashed">
                                     <button onclick="window.goToAbsenceScanning(${hall.id})" class="w-full text-sm bg-teal-500 text-white font-bold py-2 px-2 rounded hover:bg-teal-600 transition">
-                                         تسجيل الغياب
+                                        تسجيل الغياب
                                     </button>
                                 </div>
-                                 ` : ''}
+                                ` : ''}
                             </div>`;
                         }).join('');
                     }
@@ -837,15 +826,15 @@
                     e.preventDefault();
                     const hallId = hallIdInput.value ? parseInt(hallIdInput.value) : Date.now();
                     const isEditing = !!hallIdInput.value;
-                     const hallData = {
+                    const hallData = {
                         id: hallId, name: hallNameInput.value, location: hallLocationInput.value,
                         rows: parseInt(hallRowsInput.value), sector1Cols: parseInt(hallSector1ColsInput.value),
                         sector2Cols: parseInt(hallSector2ColsInput.value), disabledSeats: new Set()
-                     };
+                    };
                     const existingIndex = state.halls.findIndex(h => h.id === hallData.id);
                     if (isEditing) {
                         const oldHall = state.halls[existingIndex];
-                         hallData.sector1Name = oldHall.sector1Name;
+                        hallData.sector1Name = oldHall.sector1Name;
                         hallData.sector2Name = oldHall.sector2Name;
                         hallData.disabledSeats = oldHall.disabledSeats;
                         state.halls[existingIndex] = hallData;
@@ -854,12 +843,12 @@
                         state.halls.forEach(h => {
                             [h.sector1Name, h.sector2Name].forEach(sectorName => {
                                 if (sectorName) {
-                                     const sectorMatch = sectorName.match(/(\d+)/);
+                                    const sectorMatch = sectorName.match(/(\d+)/);
                                     if (sectorMatch) {
                                         const num = parseInt(sectorMatch[1], 10);
-                                         if (num > maxSectorNum) maxSectorNum = num;
+                                        if (num > maxSectorNum) maxSectorNum = num;
                                     }
-                                 }
+                                }
                             });
                         });
                         hallData.sector1Name = `قطاع (${maxSectorNum + 1})`;
@@ -889,7 +878,7 @@
                         const match = h.name.match(regex);
                         if (match) {
                             const num = parseInt(match[1], 10);
-                             if (num > maxNum) { maxNum = num; }
+                            if (num > maxNum) { maxNum = num; }
                         }
                     });
                     newHallName = `${baseName} (${maxNum + 1})`;
@@ -898,18 +887,18 @@
                         [h.sector1Name, h.sector2Name].forEach(sectorName => {
                             if (sectorName) {
                                 const sectorMatch = sectorName.match(/(\d+)/);
-                                 if (sectorMatch) {
+                                if (sectorMatch) {
                                     const num = parseInt(sectorMatch[1], 10);
-                                     if (num > maxSectorNum) maxSectorNum = num;
+                                    if (num > maxSectorNum) maxSectorNum = num;
                                 }
                             }
                         });
-                     });
+                    });
                     const newHall = {
                         ...hallToCopy, id: Date.now(), name: newHallName,
                         sector1Name: `قطاع (${maxSectorNum + 1})`, sector2Name: `قطاع (${maxSectorNum + 2})`,
                         disabledSeats: new Set(hallToCopy.disabledSeats), 
-                     };
+                    };
                     state.halls.push(newHall);
                     saveStateToLocalStorage();
                     updateUI();
@@ -943,7 +932,7 @@
                     studentListContainer.innerHTML = state.students.map(s => `
                         <div class="p-2 border rounded-md bg-white flex justify-between items-center text-sm">
                             <div><p class="font-bold">${s.name} (${s.id})</p><p class="text-slate-500">${s.class} - ${s.section}</p></div>
-                             <button class="text-red-500 hover:text-red-700 font-bold p-1" onclick="window.removeStudent(${s.uid})">✕</button>
+                            <button class="text-red-500 hover:text-red-700 font-bold p-1" onclick="window.removeStudent(${s.uid})">✕</button>
                         </div>`).join('');
                 };
                 window.removeStudent = (uid) => { 
@@ -967,11 +956,11 @@
                     const lines = studentsTextInput.value.trim().split('\n');
                     const newStudents = lines.map((line, index) => {
                         const parts = line.split(',').map(p => p.trim());
-                         if (parts.length < 4) return null;
+                        if (parts.length < 4) return null;
                         return { uid: Date.now() + index, name: parts[0], id: parts[1], class: parts[2], section: parts[3] };
                     }).filter(Boolean);
                     processNewStudents(newStudents);
-                     studentsTextInput.value = '';
+                    studentsTextInput.value = '';
                 });
                 excelFileInput.addEventListener('change', (e) => {
                     const file = e.target.files[0];
@@ -981,10 +970,10 @@
                         const workbook = XLSX.read(data, { type: 'array' });
                         const sheetName = workbook.SheetNames[0];
                         const worksheet = workbook.Sheets[sheetName];
-                         const json = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                        const json = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
                         const newStudents = json.slice(1).map((row, index) => {
                             if(row.length < 4) return null;
-                             return { uid: Date.now() + index, name: String(row[0]), id: String(row[1]), class: String(row[2]), section: String(row[3]) };
+                            return { uid: Date.now() + index, name: String(row[0]), id: String(row[1]), class: String(row[2]), section: String(row[3]) };
                         }).filter(Boolean);
                         processNewStudents(newStudents);
                     };
@@ -994,7 +983,7 @@
                     btn.addEventListener('click', () => {
                         tabBtns.forEach(b => { b.classList.remove('border-sky-600', 'text-sky-600'); b.classList.add('text-gray-500'); });
                         btn.classList.add('border-sky-600', 'text-sky-600');
-                         btn.classList.remove('text-gray-500');
+                        btn.classList.remove('text-gray-500');
                         const tabId = btn.getAttribute('data-tab');
                         tabContents.forEach(content => content.classList.toggle('hidden', content.id !== tabId));
                     });
@@ -1005,23 +994,23 @@
                     unassignedStudentsContainer.innerHTML = unassignedStudents.map(s => `
                         <div id="student-card-${s.uid}" class="student-card p-2 border rounded-md bg-white flex justify-between items-center text-sm" draggable="true" data-uid="${s.uid}">
                              <div><p class="font-bold">${s.name}</p><p class="text-slate-500">${s.id} - ${s.class} / ${s.section}</p></div>
-                         </div>`).join('') || `<p class="text-slate-400 text-center mt-8">تم توزيع جميع الطلاب.</p>`;
+                        </div>`).join('') || `<p class="text-slate-400 text-center mt-8">تم توزيع جميع الطلاب.</p>`;
                     multiHallDistributionContainer.innerHTML = '';
                     state.selectedHallIds.forEach(hallId => {
                         const hall = state.halls.find(h => h.id === hallId);
                         if (hall) {
                             const hallContainer = document.createElement('div');
-                             hallContainer.className = 'p-4 border rounded-lg bg-gray-50 overflow-x-auto';
+                            hallContainer.className = 'p-4 border rounded-lg bg-gray-50 overflow-x-auto';
                             hallContainer.innerHTML = `
                                 <h3 class="font-bold text-xl mb-4 text-center">${hall.name}</h3>
-                                 <div class="flex gap-8 justify-center">
+                                <div class="flex gap-8 justify-center">
                                     <div class="text-center">
-                                         <h4 class="font-bold text-lg mb-2">${hall.sector1Name}</h4>
+                                        <h4 class="font-bold text-lg mb-2">${hall.sector1Name}</h4>
                                         <div id="selector-container-${hall.id}-1" class="flex gap-2 justify-center mb-2"></div>
                                         <div id="dist-grid-${hall.id}-1" class="grid gap-2"></div>
-                                     </div>
+                                    </div>
                                     <div class="text-center">
-                                         <h4 class="font-bold text-lg mb-2">${hall.sector2Name}</h4>
+                                        <h4 class="font-bold text-lg mb-2">${hall.sector2Name}</h4>
                                         <div id="selector-container-${hall.id}-2" class="flex gap-2 justify-center mb-2"></div>
                                         <div id="dist-grid-${hall.id}-2" class="grid gap-2"></div>
                                      </div>
@@ -1052,7 +1041,7 @@
                             const selectedClass = e.target.value;
                             if (selectedClass) { state.columnClassAssignments.set(columnId, selectedClass); } else { state.columnClassAssignments.delete(columnId); }
                             saveStateToLocalStorage();
-                         });
+                        });
                         container.appendChild(select);
                     }
                 };
@@ -1077,9 +1066,9 @@
                                 seat.innerHTML = `<div class="student-card w-full h-full flex flex-col justify-center items-center text-center" draggable="true" data-uid="${student.uid}" data-from-seat-id="${seatId}">
                                         <p class="font-bold text-xs leading-tight">${student.name}</p>
                                         <p class="text-slate-600 text-[10px]">${student.id}</p>
-                                         <p class="text-sky-700 font-semibold text-[10px] mt-1">${student.class} / ${student.section}</p>
+                                        <p class="text-sky-700 font-semibold text-[10px] mt-1">${student.class} / ${student.section}</p>
                                         <div class="flex justify-center mt-1" id="qrcode-${seatId.replace(/:/g, '-')}"></div>
-                                     </div>`;
+                                    </div>`;
                                 if(hasConflict(seatId)) seat.classList.add('conflict');
                             }
                             seat.addEventListener('click', () => { if (!getStudentUidBySeatId(seatId)) { toggleSeatDisabled(seatId); } });
@@ -1089,7 +1078,7 @@
                                 new QRCode(document.getElementById(`qrcode-${seatId.replace(/:/g, '-')}`), {
                                     text: student.id.toString(), width: 40, height: 40,
                                     colorDark : "#000000", colorLight : "#ffffff", correctLevel : QRCode.CorrectLevel.H
-                                 });
+                                });
                             }
                         }
                     }
@@ -1108,23 +1097,23 @@
                     document.querySelectorAll('.student-card').forEach(card => {
                         card.addEventListener('dragstart', e => {
                             e.dataTransfer.setData('text/plain', e.target.closest('.student-card').dataset.uid);
-                             e.dataTransfer.setData('fromSeatId', e.target.closest('.student-card').dataset.fromSeatId || '');
+                            e.dataTransfer.setData('fromSeatId', e.target.closest('.student-card').dataset.fromSeatId || '');
                             setTimeout(() => e.target.classList.add('opacity-50'), 0);
                         });
                         card.addEventListener('dragend', e => e.target.classList.remove('opacity-50'));
-                     });
+                    });
                     document.querySelectorAll('.droppable-seat').forEach(seat => {
                         seat.addEventListener('dragover', e => {
                             e.preventDefault();
                             if(!seat.classList.contains('disabled') && !seat.querySelector('.student-card')) seat.classList.add('droppable-hover');
-                         });
+                        });
                         seat.addEventListener('dragleave', e => e.target.closest('.droppable-seat').classList.remove('droppable-hover'));
                         seat.addEventListener('drop', e => {
                             e.preventDefault();
-                             const seatEl = e.target.closest('.droppable-seat');
+                            const seatEl = e.target.closest('.droppable-seat');
                             seatEl.classList.remove('droppable-hover');
                             const studentUid = parseInt(e.dataTransfer.getData('text/plain'), 10);
-                             const fromSeatId = e.dataTransfer.getData('fromSeatId');
+                            const fromSeatId = e.dataTransfer.getData('fromSeatId');
                             const toSeatId = seatEl.dataset.seatId;
                             const [hallIdStr] = toSeatId.split(':');
                             const hall = state.halls.find(h => h.id === parseInt(hallIdStr));
@@ -1162,7 +1151,7 @@
                     state.columnClassAssignments.clear();
                     saveStateToLocalStorage();
                     renderDistributionView(); 
-                 });
+                });
 
                 autoDistributeBtn.addEventListener('click', () => {
                     state.seatingChart.clear();
@@ -1172,12 +1161,12 @@
                          const hall = state.halls.find(h => h.id === hallId);
                         if (hall) {
                             for (let c = 0; c < (hall.sector1Cols + hall.sector2Cols); c++) {
-                                 const column = [];
+                                const column = [];
                                 for (let r = 0; r < hall.rows; r++) {
-                                     const seatId = `${hall.id}:${r}-${c}`;
+                                    const seatId = `${hall.id}:${r}-${c}`;
                                     if (!hall.disabledSeats.has(seatId)) { column.push(seatId); }
                                 }
-                                 if (column.length > 0) allColumns.push({ id: `${hall.id}:${c}`, seats: column });
+                                if (column.length > 0) allColumns.push({ id: `${hall.id}:${c}`, seats: column });
                             }
                         }
                     });
@@ -1185,7 +1174,7 @@
                         if (!acc[student.class]) acc[student.class] = [];
                         acc[student.class].push(student);
                         return acc;
-                     }, {});
+                    }, {});
                     const sortedClasses = Object.keys(studentsByClass).sort((a, b) => a.localeCompare(b, undefined, {numeric: true}));
                     sortedClasses.forEach(className => {
                         studentsByClass[className].sort((a, b) => parseInt(a.id, 10) - parseInt(b.id, 10));
@@ -1195,12 +1184,12 @@
                         const assignedClass = state.columnClassAssignments.get(column.id);
                         if (assignedClass && studentsByClass[assignedClass]) {
                             for (const seatId of column.seats) {
-                                 const studentIndex = placementCounters[assignedClass];
+                                const studentIndex = placementCounters[assignedClass];
                                 if (studentIndex < studentsByClass[assignedClass].length) {
                                     const student = studentsByClass[assignedClass][studentIndex];
                                     state.seatingChart.set(seatId, student.uid);
                                     placementCounters[assignedClass]++;
-                                 } else { break; }
+                                } else { break; }
                             }
                         }
                     });
@@ -1210,7 +1199,7 @@
                         if (!acc[student.class]) acc[student.class] = [];
                         acc[student.class].push(student);
                         return acc;
-                     }, {});
+                    }, {});
                     const remainingSortedClasses = Object.keys(remainingStudentsByClass).sort((a, b) => a.localeCompare(b, undefined, {numeric: true}));
                     remainingSortedClasses.forEach(className => {
                         remainingStudentsByClass[className].sort((a, b) => parseInt(a.id, 10) - parseInt(b.id, 10));
@@ -1236,7 +1225,7 @@
                                 }
                             }
                         }
-                         colIndex++;
+                        colIndex++;
                         classIndex = (classIndex + 1) % remainingSortedClasses.length;
                         if (state.seatingChart.size >= state.students.length) { break; }
                     }
@@ -1259,9 +1248,8 @@
                         const [sidHall, sidCoords] = seatId.split(':');
                         if (parseInt(sidHall) === hall.id) {
                             const [r, c] = sidCoords.split('-').map(Number);
-                             if (c >= colOffset && c < colOffset + cols) {
+                            if (c >= colOffset && c < colOffset + cols) {
                                 const student = state.students.find(s => s.uid === uid);
-                                
                                 if(student) sectorStudents.push(student);
                             }
                         }
@@ -1303,7 +1291,7 @@
                         const p = document.createElement('p');
                         p.className = 'text-lg font-bold';
                         const toArabicNumerals = (num) => String(num).replace(/[0-9]/g, d => '٠١٢٣٤٥٦٧٨٩'[d]);
-                         p.textContent = `${className}: ( ${toArabicNumerals(count)} )`;
+                        p.textContent = `${className}: ( ${toArabicNumerals(count)} )`;
                         rightDiv.appendChild(p);
                     });
                     headerContent.appendChild(leftDiv);
@@ -1319,7 +1307,7 @@
                             const actualCol = c + colOffset;
                             const seatId = `${hall.id}:${r}-${actualCol}`;
                             const seat = document.createElement('div');
-                            seat.className = 'aspect-square border-2 border-black rounded-md p-1 bg-transparent overflow-hidden flex flex-col justify-center items-center text-center';
+                            seat.className = 'relative aspect-square border-2 border-black rounded-md p-1 bg-transparent overflow-hidden flex flex-col justify-start items-center text-center';
                             if (hall.disabledSeats.has(seatId)) {
                                 seat.innerHTML = `<div class="w-full h-full flex justify-center items-center text-3xl text-gray-400">✕</div>`;
                                 seat.style.backgroundColor = '#f3f4f6';
@@ -1328,10 +1316,12 @@
                                 if (studentUid) {
                                     const student = state.students.find(s => s.uid === studentUid);
                                     const safeSeatId = seatId.replace(/:/g, '-');
-                                    seat.innerHTML = `<p class="font-black text-lg leading-tight">${student.name}</p>
+                                    seat.innerHTML = `<div class="w-full flex-grow flex flex-col justify-center items-center">
+                                                    <p class="font-black text-lg leading-tight">${student.name}</p>
                                                     <p class="font-bold text-slate-800 text-sm">${student.id}</p>
-                                                     <p class="font-bold text-slate-800 text-xs mt-1">${student.class} (${student.section})</p>
-                                                     <div class="flex justify-center items-center mt-3" id="pdf-qrcode-${safeSeatId}"></div>`;
+                                                    <p class="font-bold text-slate-800 text-xs mt-1">${student.class} (${student.section})</p>
+                                                 </div>
+                                                 <div class="absolute bottom-1 right-1" style="width: 64px; height: 64px;" id="pdf-qrcode-${safeSeatId}"></div>`;
                                 }
                             }
                             sectorGrid.appendChild(seat);
@@ -1389,16 +1379,16 @@
                     if (state.selectedHallIds.size === 0) { showAlert('الرجاء تحديد قاعة واحدة على الأقل للمعاينة.'); return; }
                     const firstHallId = Array.from(state.selectedHallIds)[0];
                     const hall = state.halls.find(h => h.id === firstHallId);
-                     previewContent.innerHTML = '';
+                    previewContent.innerHTML = '';
                     const pageContent = createPageForPdf(hall, 1);
                     document.body.appendChild(pageContent);
                     const canvas = await html2canvas(pageContent, { scale: 1, useCORS: true });
-                     canvas.style.width = '100%';
+                    canvas.style.width = '100%';
                     canvas.style.height = 'auto';
                     previewContent.appendChild(canvas);
                     document.body.removeChild(pageContent);
                     previewModalBackdrop.classList.remove('hidden');
-                     previewModalBackdrop.classList.add('flex');
+                    previewModalBackdrop.classList.add('flex');
                 });
                 closePreviewModalBtn.addEventListener('click', () => {
                     previewModalBackdrop.classList.add('hidden');
@@ -1422,7 +1412,6 @@
                         showAlert("حدث خطأ أثناء محاولة تصدير الملف.");
                     }
                 };
-
                 exportChartPdfBtn.addEventListener('click', async () => {
                     if (state.selectedHallIds.size === 0) { showAlert('الرجاء تحديد قاعة واحدة على الأقل.'); return; }
                     
@@ -1438,10 +1427,10 @@
                     let isFirstPage = true;
 
                     for (const hallId of sortedHallIds) {
-                         const hall = state.halls.find(h => h.id === hallId);
+                        const hall = state.halls.find(h => h.id === hallId);
                         if (!hall) continue;
                         for (const sector of [1, 2]) {
-                             if (!isFirstPage) { pdf.addPage(); }
+                            if (!isFirstPage) { pdf.addPage(); }
                             const pageContent = createPageForPdf(hall, sector);
                             document.body.appendChild(pageContent);
                             
@@ -1457,12 +1446,12 @@
                             isFirstPage = false;
 
 							pagesProcessed++;
-							updateProgress(pagesProcessed, totalPages, 'جاري تصدير مخططات القاعات...');
+                            updateProgress(pagesProcessed, totalPages, 'جاري تصدير مخططات القاعات...');
 							await new Promise(resolve => setTimeout(resolve, 20));
                         }
                     }
                     triggerPdfDownload(pdf, `مخططات الجلوس المجمعة.pdf`);
-					updateProgress(totalPages, totalPages);
+                    updateProgress(totalPages, totalPages);
                 });
 
                 exportListPdfBtn.addEventListener('click', async () => {
@@ -1471,16 +1460,14 @@
 
                     try {
 						// ######## MODIFICATION START: Moved amiriFont inside function ########
-						const amiriFont = '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ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAAAAIAAgAAAAAFAAEAAAAAAAAAAQIDBAEFAAcACgAAAAAAAAABAAEAAgABAAEAAQAAAAEAAAAAAAAAAQAAAAAAAQAAAAIAAQAAAAAAAAAAAAMAAAAAAAAAAQAAAAACAAEAAgABAAEAAwAAAAAABAACAAAAAQAJ//8ABwABAAAAAAAAAAEAAAABAAAAAAAAAAEAAAAAAAAAAgAAAAEAAAAAAAAAAQAAAAQAAQAFAAAABQAGAAcACAADAAQABQAHAAMABAAFAAcAAwAEAAsADgAPABAABQAIAAkACgALAAgACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACRAQ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AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAAAAIAAgAAAAAFAAEAAAAAAAAAAQIDBAEFAAcACgAAAAAAAAABAAEAAgABAAEAAQAAAAEAAAAAAAAAAQAAAAAAAQAAAAIAAQAAAAAAAAAAAAMAAAAAAAAAAQAAAAACAAEAAgABAAEAAwAAAAAABAACAAAAAQAJ//8ABwABAAAAAAAAAAEAAAABAAAAAAAAAAEAAAAAAAAAAgAAAAEAAAAAAAAAAQAAAAQAAQAFAAAABQAGAAcACAADAAQABQAHAAMABAAFAAcAAwAEAAsADgAPABAABQAIAAkACgALAAgACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkAC...im';
-
+						const amiriFont = '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ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAAAAIAAgAAAAAFAAEAAAAAAAAAAQIDBAEFAAcACgAAAAAAAAABAAEAAgABAAEAAQAAAAEAAAAAAAAAAQAAAAAAAQAAAAIAAQAAAAAAAAAAAAMAAAAAAAAAAQAAAAACAAEAAgABAAEAAwAAAAAABAACAAAAAQAJ//8ABwABAAAAAAAAAAEAAAABAAAAAAAAAAEAAAAAAAAAAgAAAAEAAAAAAAAAAQAAAAQAAQAFAAAABQAGAAcACAADAAQABQAHAAMABAAFAAcAAwAEAAsADgAPABAABQAIAAkACgALAAgACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAk.m';
 						const { jsPDF } = window.jspdf;
-                        const doc = new js_PDF();
+                        const doc = new jsPDF();
 
                         doc.addFileToVFS('Amiri-Regular.ttf', amiriFont);
                         doc.addFont('Amiri-Regular.ttf', 'Amiri', 'normal');
                         doc.setFont('Amiri');
                         doc.setR2L(true);
-
                         updateProgress(20, 100, 'جاري تجميع البيانات...');
                         await new Promise(resolve => setTimeout(resolve, 50));
                         
@@ -1500,7 +1487,6 @@
                                 });
                             }
                         });
-                        
                         tableData.sort((a, b) => a.name.localeCompare(b.name, 'ar'));
 
                         const head = [['', 'الشعبة', 'الصف', 'الرقم الامتحاني', 'اسم الطالب', 'المقعد والقاعة']];
@@ -1512,12 +1498,9 @@
                             row.name,
                             row.seat
                         ]);
-                        
                         updateProgress(60, 100, 'جاري إنشاء الجدول...');
                         await new Promise(resolve => setTimeout(resolve, 50));
-                        
                         doc.text("قائمة الحضور المجمعة", doc.internal.pageSize.getWidth() / 2, 15, { align: 'center' });
-                        
                         doc.autoTable({
                             head: head,
                             body: body,
@@ -1538,20 +1521,17 @@
                                 0: {cellWidth: 40}, // Signature column
                             }
                         });
-
                         updateProgress(90, 100, 'جاري الحفظ...');
                         await new Promise(resolve => setTimeout(resolve, 50));
 
                         triggerPdfDownload(doc, `قائمة_الحضور.pdf`);
                         updateProgress(100, 100);
-
                     } catch (e) {
                         console.error("Failed to export attendance list:", e);
                         showAlert("حدث خطأ فني أثناء تصدير قائمة الحضور.");
                         updateProgress(100, 100);
                     }
                 });
-
                 const renderAbsenceView = () => {
                     absentCountSpan.textContent = state.absentStudents.length;
                     exportAbsentPdfBtn.disabled = state.absentStudents.length === 0;
@@ -1562,10 +1542,10 @@
                     absentListContainer.innerHTML = state.absentStudents.map(s => {
                         const studentSeat = [...state.seatingChart.entries()].find(([key, val]) => val === s.uid);
                         let seatInfo = 'غير موزّع';
-                         if(studentSeat) {
+                        if(studentSeat) {
                             const [hallId, coords] = studentSeat[0].split(':');
                             const hall = state.halls.find(h => h.id === parseInt(hallId));
-                             seatInfo = `${hall ? hall.name : ''} (${coords})`;
+                            seatInfo = `${hall ? hall.name : ''} (${coords})`;
                         }
                         return `<div class="p-2 border rounded-md bg-white flex justify-between items-center text-sm">
                             <div><p class="font-bold">${s.name} (${s.id})</p><p class="text-slate-500">${s.class} - ${seatInfo}</p></div>
@@ -1605,10 +1585,10 @@
                     startScanBtn.classList.add('hidden');
                     stopScanBtn.classList.remove('hidden');
                     scanFeedbackDiv.innerHTML = '';
-                     const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+                    const config = { fps: 10, qrbox: { width: 250, height: 250 } };
                     html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess, onScanFailure)
                     .catch(err => {
-                         showAlert(`خطأ في تشغيل الكاميرا: ${err}`);
+                        showAlert(`خطأ في تشغيل الكاميرا: ${err}`);
                         stopScanBtn.click();
                     });
                 });
@@ -1616,11 +1596,10 @@
                     if (html5QrCode && html5QrCode.isScanning) {
                         html5QrCode.stop().then(() => {
                             startScanBtn.classList.remove('hidden');
-                             stopScanBtn.classList.add('hidden');
+                            stopScanBtn.classList.add('hidden');
                         }).catch(err => console.error("Failed to stop QR scanner.", err));
                     }
                 });
-
                 exportAbsentPdfBtn.addEventListener('click', async () => {
                     const statusDiv = document.getElementById('scan-feedback');
                     statusDiv.innerHTML = `<span class="success">جاري تحضير الصورة...</span>`;
@@ -1635,7 +1614,7 @@
 
                     let tableHtml = `<h1 class="text-2xl font-bold text-center mb-6">تقرير غياب الطلبة</h1>
                                      <table class="w-full text-base text-right" style="border-collapse: collapse;">
-                                        <thead class="text-gray-700 uppercase bg-gray-200">
+                                            <thead class="text-gray-700 uppercase bg-gray-200">
                                             <tr>
                                                 <th scope="col" class="px-4 py-3 border border-gray-400">اسم الطالب</th>
                                                 <th scope="col" class="px-4 py-3 border border-gray-400">الرقم الامتحاني</th>
@@ -1643,9 +1622,8 @@
                                                 <th scope="col" class="px-4 py-3 border border-gray-400">القاعة</th>
                                                 <th scope="col" class="px-4 py-3 border border-gray-400">القطاع</th>
                                             </tr>
-                                        </thead>
+                                          </thead>
                                         <tbody>`;
-
                     const tableRows = [];
                     state.absentStudents.forEach(student => {
                         const studentSeat = [...state.seatingChart.entries()].find(([key, val]) => val === student.uid);
@@ -1673,7 +1651,6 @@
                                         <td class="px-4 py-2 border border-gray-300">${row.sector}</td>
                                       </tr>`;
                     });
-
                     tableHtml += `</tbody></table>`;
                     reportContainer.innerHTML = tableHtml;
                     document.body.appendChild(reportContainer);
@@ -1699,7 +1676,6 @@
                         setTimeout(() => { statusDiv.innerHTML = ''; }, 3000);
                     }
                 });
-
                 const navigate = (direction) => {
                     if (direction === 'next' && state.currentStep === 1 && state.selectedHallIds.size === 0) {
                         showAlert('الرجاء تحديد قاعة واحدة على الأقل للمتابعة.');
