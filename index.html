@@ -8,12 +8,18 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    
+    <script src="https://unpkg.com/docx@7.1.0/build/index.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://apis.google.com/js/api.js"></script>
@@ -22,94 +28,66 @@
     <style>
         body { font-family: 'Cairo', sans-serif; }
         .step-section { display: none; }
-        .step-section.active { display: block; }
+        .step-section.active { display: block; animation: fadeIn 0.5s; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
         .seat { transition: all 0.2s ease-in-out; }
         .seat.disabled { background-color: #4b5563 !important; border-color: #1f2937 !important; cursor: not-allowed; }
         .seat.disabled::after { content: '✕'; color: white; font-size: 1.5rem; display: flex; justify-content: center; align-items: center; height: 100%; }
         .seat.occupied { background-color: #e0f2fe; border-color: #0284c7; }
         .seat.conflict { border: 3px solid #ef4444 !important; animation: shake 0.5s; }
         @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+        
         .student-card { cursor: grab; }
         .student-card:active { cursor: grabbing; }
         .droppable-hover { background-color: #d1fae5 !important; }
+        
         #hall-modal-backdrop, #preview-modal-backdrop { background-color: rgba(0,0,0,0.5); }
+        
         .pdf-page-container {
-            background: white;
-            width: 210mm;
-            min-height: 297mm;
-            padding: 1cm;
-            position: absolute;
-            left: -9999px;
-            top: 0;
-            font-family: 'Cairo', sans-serif;
-            display: flex;
-            flex-direction: column;
+            background: white; width: 210mm; min-height: 297mm; padding: 1cm;
+            position: absolute; left: -9999px; top: 0;
+            font-family: 'Cairo', sans-serif; display: flex; flex-direction: column;
         }
         .pdf-header {
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-            padding: 20px;
-            border: 2px solid black;
-            border-radius: 10px;
-            text-align: center;
-            position: relative;
-            overflow: hidden;
+            background-size: cover; background-position: center; background-repeat: no-repeat;
+            padding: 20px; border: 2px solid black; border-radius: 10px;
+            text-align: center; position: relative; overflow: hidden;
         }
         .pdf-body {
-            flex-grow: 1;
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-            padding-top: 20px;
-            position: relative;
-            overflow: hidden;
+            flex-grow: 1; background-size: cover; background-position: center; background-repeat: no-repeat;
+            padding-top: 20px; position: relative; overflow: hidden;
         }
         .pdf-bg-image {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            z-index: 0;
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0;
         }
-        .pdf-content {
-            position: relative;
-            z-index: 1;
-        }
-        #reader {
-            width: 100%;
-            max-width: 500px;
-            margin: 20px auto;
-            border: 2px solid #d1d5db;
-            border-radius: 8px;
-            overflow: hidden;
-        }
+        .pdf-content { position: relative; z-index: 1; }
+        
+        #reader { width: 100%; max-width: 500px; margin: 20px auto; border: 2px solid #d1d5db; border-radius: 8px; overflow: hidden; }
         #scan-feedback .success { color: #16a34a; }
         #scan-feedback .fail { color: #dc2626; }
-        .drive-btn {
-            background-color: #16a34a;
-            color: white;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 0.75rem;
-            margin-right: 8px;
+
+        /* Custom Button Styles */
+        .action-btn {
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            padding: 8px 16px; border-radius: 8px; font-weight: 600; font-size: 0.9rem;
+            transition: all 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
-        .drive-btn:disabled {
-            background-color: #9ca3af;
-            cursor: not-allowed;
-        }
+        .action-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 6px rgba(0,0,0,0.15); }
+        .action-btn:active { transform: translateY(0); }
+        .action-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+        
+        .btn-icon { width: 18px; height: 18px; fill: currentColor; }
     </style>
 </head>
 <body class="bg-stone-50 text-slate-800">
 
     <div id="login-screen" class="fixed inset-0 bg-stone-100 z-50 flex flex-col items-center justify-center">
-        <div class="text-center p-8 bg-white rounded-xl shadow-lg">
+        <div class="text-center p-8 bg-white rounded-xl shadow-lg border border-slate-200">
             <h1 class="text-3xl font-bold text-sky-700 mb-2">نظام إدارة مخططات الجلوس</h1>
             <p class="text-slate-500 mb-6">الرجاء تسجيل الدخول للمتابعة</p>
-            <button id="login-btn" class="bg-sky-600 text-white font-bold py-3 px-8 rounded-md hover:bg-sky-700 transition flex items-center gap-3">
-              <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"></path><path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"></path><path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"></path><path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.574l6.19-5.238C42.022,35.244,44,30.036,44,24C44,22.659,43.862,21.35,43.611,20.083z"></path></svg>
+            <button id="login-btn" class="bg-white text-slate-700 border border-slate-300 font-bold py-3 px-8 rounded-lg hover:bg-slate-50 transition flex items-center gap-3 shadow-sm">
+                <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"></path><path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"></path><path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"></path><path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.574l6.19-5.238C42.022,35.244,44,30.036,44,24C44,22.659,43.862,21.35,43.611,20.083z"></path></svg>
                 <span>تسجيل الدخول باستخدام Google</span>
             </button>
         </div>
@@ -119,23 +97,43 @@
         <div class="container mx-auto p-4 md:p-8">
             
             <header class="text-center mb-8 border-b pb-4 relative">
+                <div id="auth-info" class="w-full flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+                    <div id="welcome-message" class="text-sm font-bold text-sky-800 bg-sky-50 px-4 py-2 rounded-lg border border-sky-100"></div>
+                    
+                    <div class="flex flex-wrap items-center justify-center gap-3">
+                        <button id="sync-to-drive-btn" class="action-btn bg-emerald-600 text-white hover:bg-emerald-700">
+                            <svg class="btn-icon" viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/></svg>
+                            حفظ في Drive
+                        </button>
+                        
+                        <button id="load-from-drive-btn" class="action-btn bg-indigo-600 text-white hover:bg-indigo-700">
+                            <svg class="btn-icon" viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg>
+                            تحميل من Drive
+                        </button>
+                        
+                        <button id="clear-data-btn" class="action-btn bg-rose-600 text-white hover:bg-rose-700">
+                            <svg class="btn-icon" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                            مسح البيانات
+                        </button>
+
+                        <button id="logout-btn" class="action-btn bg-slate-600 text-white hover:bg-slate-700">
+                            <svg class="btn-icon" viewBox="0 0 24 24"><path d="M10.09 15.59L11.5 17l5-5-5-5-1.41 1.41L12.67 11H3v2h9.67l-2.58 2.59zM19 3H5c-1.11 0-2 .9-2 2v4h2V5h14v14H5v-4H3v4c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z"/></svg>
+                            خروج
+                        </button>
+                    </div>
+                </div>
+                
+                <span id="drive-sync-status" class="block text-xs font-semibold text-emerald-600 h-4 mb-2"></span>
+
                 <h1 class="text-3xl md:text-4xl font-bold text-sky-700">نظام إدارة مخططات الجلوس الامتحانية</h1>
                 <p class="text-slate-500 mt-2">أداة ذكية لتوزيع الطلاب في القاعات الامتحانية بسهولة وكفاءة</p>
-              <p class="text-2xl md:text-3xl font-bold text-red-600 text-right">اعداد الاستاذ : حسين جهاد رضا</p>
-              <p class="text-2xl md:text-2xl font-bold text-purple-500 text-left">اشراف الاستاذ : تحسين هارون مهدي </p>
-                <div id="auth-info" class="absolute top-0 left-0 text-left">
-                    <div id="welcome-message" class="text-sm text-slate-600"></div>
-                     <div class="flex items-center mt-1">
-                        <button id="sync-to-drive-btn" class="drive-btn">حفظ في Drive</button>
-                        <button id="load-from-drive-btn" class="drive-btn">تحميل من Drive</button>
-                        <span id="drive-sync-status" class="text-xs text-gray-500 mr-2"></span>
-                    </div>
-                    <button id="clear-data-btn" class="text-red-700 text-xs font-bold hover:underline mt-1">مسح بياناتي المحلية</button>
+                <div class="mt-4 flex flex-col items-center">
+                    <p class="text-xl font-bold text-red-600">اعداد الاستاذ : حسين جهاد رضا</p>
+                    <p class="text-xl font-bold text-purple-600">اشراف الاستاذ : تحسين هارون مهدي</p>
                 </div>
             </header>
 
-            <div id="stepper" class="flex justify-center items-center mb-10 space-x-4 md:space-x-8 rtl:space-x-reverse">
-            </div>
+            <div id="stepper" class="flex justify-center items-center mb-10 space-x-4 md:space-x-8 rtl:space-x-reverse"></div>
 
             <main class="bg-white rounded-xl shadow-lg p-6 md:p-8 min-h-[500px]">
                 
@@ -145,15 +143,14 @@
                         <p class="text-slate-500 mt-1">قم بإنشاء قاعة جديدة أو حدد قاعة أو أكثر من القائمة للعمل عليها.</p>
                      </div>
                     <div class="mb-6 text-center">
-                        <button id="show-hall-modal-btn" class="bg-sky-600 text-white font-bold py-2 px-6 rounded-md hover:bg-sky-700 transition">
-                            + إنشاء قاعة جديدة
+                        <button id="show-hall-modal-btn" class="bg-sky-600 text-white font-bold py-2 px-6 rounded-md hover:bg-sky-700 transition shadow-md">
+                             + إنشاء قاعة جديدة
                          </button>
                     </div>
-                    <div id="halls-list-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    </div>
+                    <div id="halls-list-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
                 </section>
 
-                 <section id="step-2" class="step-section">
+                <section id="step-2" class="step-section">
                     <div class="text-center mb-8">
                         <h2 class="text-2xl font-bold">الخطوة 2: إدارة بيانات الطلاب</h2>
                         <p class="text-slate-500 mt-1">قم باستيراد بيانات الطلاب من ملف Excel أو قم بلصقها كنص.</p>
@@ -186,7 +183,7 @@
                             </div>
                         </div>
                     </div>
-                </section>
+                 </section>
 
                 <section id="step-3" class="step-section">
                     <div id="distribution-header" class="text-center mb-8">
@@ -195,20 +192,19 @@
                     </div>
                     <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
                         <div class="lg:col-span-1 bg-gray-50 p-4 rounded-lg border">
-                            <h3 class="font-bold text-lg mb-4">الطلاب غير الموزعين</h3>
+                             <h3 class="font-bold text-lg mb-4">الطلاب غير الموزعين</h3>
                             <div id="unassigned-students" class="h-96 overflow-y-auto space-y-2 p-1"></div>
                             <button id="auto-distribute-btn" class="mt-4 w-full bg-emerald-600 text-white font-bold py-2 px-4 rounded-md hover:bg-emerald-700 transition">توزيع تلقائي</button>
-                            <button id="reset-distribution-btn" class="mt-2 w-full bg-red-600 text-white font-bold py-2 px-4 rounded-md hover:bg-red-700 transition">إعادة تعيين التوزيع</button>
+                             <button id="reset-distribution-btn" class="mt-2 w-full bg-red-600 text-white font-bold py-2 px-4 rounded-md hover:bg-red-700 transition">إعادة تعيين التوزيع</button>
                         </div>
 
-                        <div id="multi-hall-distribution-container" class="lg:col-span-3 space-y-8">
-                        </div>
+                        <div id="multi-hall-distribution-container" class="lg:col-span-3 space-y-8"></div>
                     </div>
                 </section>
 
                 <section id="step-4" class="step-section">
                     <div id="export-header" class="text-center mb-8">
-                           <h2 class="text-2xl font-bold">الخطوة 4: التصدير والطباعة</h2>
+                        <h2 class="text-2xl font-bold">الخطوة 4: التصدير والطباعة</h2>
                         <p class="text-slate-500 mt-1">اختر إعدادات التصدير ثم قم بمعاينة أو تصدير الملفات.</p>
                     </div>
                     <div class="max-w-4xl mx-auto">
@@ -231,7 +227,7 @@
                                     <input type="file" id="body-bg-input" accept="image/*" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-sky-50 file:text-sky-700 hover:file:bg-sky-100"/>
                                 </div>
                                 <div class="md:col-span-2 space-y-2">
-                                     <div>
+                                    <div>
                                         <label for="header-opacity-slider" class="block font-semibold mb-1">شفافية خلفية العنوان: <span id="header-opacity-value">100</span>%</label>
                                         <input type="range" id="header-opacity-slider" min="0" max="1" step="0.05" value="1" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
                                     </div>
@@ -244,7 +240,7 @@
                          </div>
                         <div class="flex flex-col md:flex-row justify-center gap-4">
                             <button id="preview-pdf-btn" class="bg-indigo-600 text-white font-bold py-3 px-6 rounded-md hover:bg-indigo-700 transition flex items-center justify-center gap-2">
-                                 <span>👁️</span> معاينة المخطط
+                                <span>👁️</span> معاينة المخطط
                             </button>
                             <button id="export-chart-pdf-btn" class="bg-sky-600 text-white font-bold py-3 px-6 rounded-md hover:bg-sky-700 transition flex items-center justify-center gap-2">
                                  <span>📄</span> تصدير مخطط القاعات (PDF)
@@ -258,8 +254,8 @@
 
                 <section id="step-5" class="step-section">
                     <div class="text-center mb-8">
-                           <h2 class="text-2xl font-bold">الخطوة 5: تسجيل الغياب عبر QR</h2>
-                        <p class="text-slate-500 mt-1">امسح رموز QR للطلاب الغائبين لتسجيلهم في القائمة.</p>
+                        <h2 class="text-2xl font-bold">الخطوة 5: تسجيل الغياب وتصدير القوائم</h2>
+                        <p class="text-slate-500 mt-1">امسح رموز QR لتسجيل الغياب، ثم قم بتصدير القوائم بالصيغة المطلوبة.</p>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -277,14 +273,29 @@
                             <div id="absent-list" class="h-64 overflow-y-auto space-y-2 pr-2">
                                 <p class="text-slate-400 text-center mt-8">لم يتم إضافة أي غياب بعد.</p>
                             </div>
-                            <button id="export-absent-pdf-btn" class="mt-4 w-full bg-orange-500 text-white font-bold py-2 px-4 rounded-md hover:bg-orange-600 transition" disabled>تصدير قائمة الغياب (صورة)</button>
+                            
+                            <h4 class="font-bold mt-4 mb-2 text-gray-700 border-t pt-2">خيارات التصدير:</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+                                <button id="export-absent-pdf-img-btn" class="bg-orange-500 text-white font-bold py-2 px-2 rounded-md hover:bg-orange-600 transition text-sm flex justify-center items-center gap-1" disabled>
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                    صورة
+                                </button>
+                                <button id="export-absent-file-pdf-btn" class="bg-red-600 text-white font-bold py-2 px-2 rounded-md hover:bg-red-700 transition text-sm flex justify-center items-center gap-1" disabled>
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                                    ملف PDF
+                                </button>
+                                <button id="export-absent-word-btn" class="bg-blue-600 text-white font-bold py-2 px-2 rounded-md hover:bg-blue-700 transition text-sm flex justify-center items-center gap-1" disabled>
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                    ملف Word
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </section>
 
                 <div id="navigation-btns" class="mt-10 flex justify-between border-t pt-6">
                     <button id="prev-btn" class="bg-gray-200 text-gray-800 font-bold py-2 px-6 rounded-md hover:bg-gray-300 transition" disabled>السابق</button>
-                     <button id="next-btn" class="bg-sky-600 text-white font-bold py-2 px-6 rounded-md hover:bg-sky-700 transition">التالي</button>
+                    <button id="next-btn" class="bg-sky-600 text-white font-bold py-2 px-6 rounded-md hover:bg-sky-700 transition">التالي</button>
                 </div>
             </main>
         </div>
@@ -292,7 +303,7 @@
 
     <div id="hall-modal-backdrop" class="fixed inset-0 z-40 hidden">
         <div id="hall-modal" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 bg-white p-8 rounded-xl shadow-2xl w-full max-w-lg">
-             <h2 id="hall-modal-title" class="text-2xl font-bold mb-6">إنشاء قاعة جديدة</h2>
+            <h2 id="hall-modal-title" class="text-2xl font-bold mb-6">إنشاء قاعة جديدة</h2>
             <form id="hall-form" class="space-y-4">
                 <input type="hidden" id="hall-id-input">
                 <div>
@@ -306,7 +317,7 @@
                 <div>
                     <label for="hall-rows" class="block font-semibold mb-1">عدد الصفوف:</label>
                     <input type="number" id="hall-rows" min="1" max="30" value="5" class="w-full p-2 border rounded-md focus:ring-2 focus:ring-sky-500" required>
-                 </div>
+                </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label for="hall-sector1-cols" class="block font-semibold mb-1">أعمدة قطاع 1:</label>
@@ -314,7 +325,7 @@
                     </div>
                     <div>
                         <label for="hall-sector2-cols" class="block font-semibold mb-1">أعمدة قطاع 2:</label>
-                         <input type="number" id="hall-sector2-cols" min="1" max="15" value="3" class="w-full p-2 border rounded-md focus:ring-2 focus:ring-sky-500" required>
+                        <input type="number" id="hall-sector2-cols" min="1" max="15" value="3" class="w-full p-2 border rounded-md focus:ring-2 focus:ring-sky-500" required>
                     </div>
                 </div>
                 <div class="flex justify-end gap-4 pt-4 border-t">
@@ -366,23 +377,32 @@
             const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.file';
             const DRIVE_DISCOVERY_DOCS = ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"];
             const APP_DATA_FILENAME = 'seating-chart-app-data.json';
+
             // --- Firebase Authentication ---
             const loginScreen = document.getElementById('login-screen');
             const appContainer = document.getElementById('app-container');
             const loginBtn = document.getElementById('login-btn');
+            const logoutBtn = document.getElementById('logout-btn');
 
             firebase.initializeApp(firebaseConfig);
             const auth = firebase.auth();
             const provider = new firebase.auth.GoogleAuthProvider();
+
             let appInitialized = false;
             let gapiInited = false;
             let tokenClient;
+
             loginBtn.addEventListener('click', () => {
                 auth.signInWithPopup(provider).catch((error) => {
                     console.error("Authentication failed:", error);
                     showAlert("فشل تسجيل الدخول. الرجاء المحاولة مرة أخرى.");
                 });
             });
+
+            logoutBtn.addEventListener('click', () => {
+                auth.signOut();
+            });
+
             auth.onAuthStateChanged(user => {
                 if (user) {
                     if (!appInitialized) {
@@ -391,12 +411,8 @@
                         appContainer.classList.remove('hidden');
                         
                         const welcomeMsg = document.getElementById('welcome-message');
-                        welcomeMsg.innerHTML = `مرحباً، ${user.displayName} | <button id="logout-btn" class="text-red-500 font-bold hover:underline">تسجيل الخروج</button>`;
+                        welcomeMsg.textContent = `مرحباً، ${user.displayName}`;
                         
-                        document.getElementById('logout-btn').addEventListener('click', () => {
-                            auth.signOut();
-                        });
-
                         initializeAppLogic(user);
                         gapi.load('client', initializeGapiClient);
                     }
@@ -407,6 +423,7 @@
                     appContainer.classList.add('hidden');
                 }
             });
+
             async function initializeGapiClient() {
                 try {
                     await gapi.client.init({
@@ -447,7 +464,7 @@
                     absentStudents: [],
                 };
                 let html5QrCode;
-                let fileId = null; // To store Google Drive file ID
+                let fileId = null; 
 
                 // --- DOM Elements ---
                 const stepperContainer = document.getElementById('stepper');
@@ -503,7 +520,12 @@
                 const scanFeedbackDiv = document.getElementById('scan-feedback');
                 const absentListContainer = document.getElementById('absent-list');
                 const absentCountSpan = document.getElementById('absent-count');
-                const exportAbsentPdfBtn = document.getElementById('export-absent-pdf-btn');
+                
+                // New Buttons
+                const exportAbsentImgBtn = document.getElementById('export-absent-pdf-img-btn');
+                const exportAbsentPdfBtn = document.getElementById('export-absent-file-pdf-btn');
+                const exportAbsentWordBtn = document.getElementById('export-absent-word-btn');
+                
                 const progressModal = document.getElementById('progress-modal');
                 const progressBar = document.getElementById('progress-bar');
                 const progressText = document.getElementById('progress-text');
@@ -513,6 +535,7 @@
                     { id: 1, name: 'إدارة القاعات' }, { id: 2, name: 'بيانات الطلاب' }, { id: 3, name: 'التوزيع' },
                     { id: 4, name: 'التصدير' }, { id: 5, name: 'تسجيل الغياب' }
                 ];
+
                 // --- Persistence Logic ---
                 const saveStateToLocalStorage = () => {
                     try {
@@ -530,6 +553,7 @@
                         showAlert("خطأ: لم يتم حفظ البيانات. قد تكون سعة التخزين ممتلئة.");
                     }
                 };
+
                 const loadStateFromLocalStorage = () => {
                     const savedStateJSON = localStorage.getItem(`seatingChartState_${user.uid}`);
                     if (savedStateJSON) {
@@ -549,12 +573,14 @@
                         }
                     }
                 };
+
                 clearDataBtn.addEventListener('click', () => {
                     if (confirm("هل أنت متأكد من رغبتك في مسح جميع البيانات المحلية؟ لن يتم حذف البيانات من Google Drive.")) {
                         localStorage.removeItem(`seatingChartState_${user.uid}`);
                         window.location.reload();
                     }
                 });
+
                 // --- Google Drive Logic ---
                 function handleDriveAction(actionCallback) {
                     if (!gapiInited || !tokenClient) {
@@ -617,6 +643,7 @@
                     let method;
                     let requestBody;
                     let headers = {};
+
                     if (fileId) {
                         path = `/upload/drive/v3/files/${fileId}?uploadType=media`;
                         method = 'PATCH';
@@ -715,7 +742,6 @@
                     const percentage = Math.round((current / total) * 100);
                     progressBar.style.width = percentage + '%';
                     progressText.textContent = percentage + '%';
-
                     if (current >= total) {
                         setTimeout(() => {
                             progressModal.classList.add('hidden');
@@ -738,6 +764,7 @@
                     if (state.currentStep === 4) renderExportView();
                     if (state.currentStep === 5) renderAbsenceView();
                 };
+
                 const renderStepper = () => {
                     stepperContainer.innerHTML = steps.map(step => {
                         const isActive = state.currentStep === step.id;
@@ -789,7 +816,7 @@
                                     <button onclick="window.deleteHall(${hall.id})" class="text-sm bg-red-500 text-white font-semibold py-1 px-2 rounded hover:bg-red-600">حذف</button>
                                 </div>
                                 ${hasChart ? `
-                                <div class="mt-2 pt-2 border-t border-dashed">
+                                    <div class="mt-2 pt-2 border-t border-dashed">
                                     <button onclick="window.goToAbsenceScanning(${hall.id})" class="w-full text-sm bg-teal-500 text-white font-bold py-2 px-2 rounded hover:bg-teal-600 transition">
                                         تسجيل الغياب
                                     </button>
@@ -988,6 +1015,7 @@
                         tabContents.forEach(content => content.classList.toggle('hidden', content.id !== tabId));
                     });
                 });
+
                 const renderDistributionView = () => {
                     const assignedStudentUids = new Set([...state.seatingChart.values()]);
                     const unassignedStudents = state.students.filter(s => !assignedStudentUids.has(s.uid));
@@ -1013,7 +1041,7 @@
                                         <h4 class="font-bold text-lg mb-2">${hall.sector2Name}</h4>
                                         <div id="selector-container-${hall.id}-2" class="flex gap-2 justify-center mb-2"></div>
                                         <div id="dist-grid-${hall.id}-2" class="grid gap-2"></div>
-                                     </div>
+                                    </div>
                                 </div>`;
                             multiHallDistributionContainer.appendChild(hallContainer);
                             renderSectorGrid(document.getElementById(`dist-grid-${hall.id}-1`), hall, 1);
@@ -1158,7 +1186,7 @@
                     const allColumns = [];
                     const sortedHallIds = Array.from(state.selectedHallIds).sort((a, b) => a - b);
                     sortedHallIds.forEach(hallId => {
-                         const hall = state.halls.find(h => h.id === hallId);
+                        const hall = state.halls.find(h => h.id === hallId);
                         if (hall) {
                             for (let c = 0; c < (hall.sector1Cols + hall.sector2Cols); c++) {
                                 const column = [];
@@ -1219,7 +1247,7 @@
                                         const student = studentsInClass[studentIndex];
                                         if (!state.seatingChart.has(seatId)) {
                                              state.seatingChart.set(seatId, student.uid);
-                                             remainingPlacementCounters[currentClassName]++;
+                                            remainingPlacementCounters[currentClassName]++;
                                         }
                                     } else { break; }
                                 }
@@ -1340,12 +1368,8 @@
                                 const qrElement = pageContainer.querySelector(`#pdf-qrcode-${safeSeatId}`);
                                 if(qrElement && student) {
                                      new QRCode(qrElement, {
-                                        text: student.id.toString(), 
-                                        width: 64,
-                                        height: 64,
-                                        colorDark : "#000000", 
-                                        colorLight : "#ffffff", 
-                                        correctLevel : QRCode.CorrectLevel.M
+                                        text: student.id.toString(), width: 64, height: 64,
+                                        colorDark : "#000000", colorLight : "#ffffff", correctLevel : QRCode.CorrectLevel.M
                                     });
                                 }
                             }
@@ -1433,11 +1457,7 @@
                             if (!isFirstPage) { pdf.addPage(); }
                             const pageContent = createPageForPdf(hall, sector);
                             document.body.appendChild(pageContent);
-                            
-                            // ######## MODIFICATION START: Reduced scale ########
                             const canvas = await html2canvas(pageContent, { scale: 1.2, useCORS: true });
-                            // ######## MODIFICATION END: Reduced scale ########
-
                             const imgData = canvas.toDataURL('image/png');
                             const pdfWidth = pdf.internal.pageSize.getWidth();
                             const pdfHeight = pdf.internal.pageSize.getHeight();
@@ -1459,8 +1479,7 @@
                     await new Promise(resolve => setTimeout(resolve, 50));
 
                     try {
-                        // ######## MODIFICATION START: Moved amiriFont inside function ########
-                        const amiriFont = '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ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAAAAIAAgAAAAAFAAEAAAAAAAAAAQIDBAEFAAcACgAAAAAAAAABAAEAAgABAAEAAQAAAAEAAAAAAAAAAQAAAAAAAQAAAAIAAQAAAAAAAAAAAAMAAAAAAAAAAQAAAAACAAEAAgABAAEAAwAAAAAABAACAAAAAQAJ//8ABwABAAAAAAAAAAEAAAABAAAAAAAAAAEAAAAAAAAAAgAAAAEAAAAAAAAAAQAAAAQAAQAFAAAABQAGAAcACAADAAQABQAHAAMABAAFAAcAAwAEAAsADgAPABAABQAIAAkACgALAAgACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAk.m';
+                        const amiriFont = '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ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAAAAIAAgAAAAAFAAEAAAAAAAAAAQIDBAEFAAcACgAAAAAAAAABAAEAAgABAAEAAQAAAAEAAAAAAAAAAQAAAAAAAQAAAAIAAQAAAAAAAAAAAAMAAAAAAAAAAQAAAAACAAEAAgABAAEAAwAAAAAABAACAAAAAQAJ//8ABwABAAAAAAAAAAEAAAABAAAAAAAAAAEAAAAAAAAAAgAAAAEAAAAAAAAAAQAAAAQAAQAFAAAABQAGAAcACAADAAQABQAHAAMABAAFAAcAAwAEAAsADgAPABAABQAIAAkACgALAAgACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAk.m';
                         const { jsPDF } = window.jspdf;
                         const doc = new jsPDF();
 
@@ -1518,7 +1537,7 @@
                                 fontStyle: 'bold'
                             },
                             columnStyles: {
-                                0: {cellWidth: 40}, // Signature column
+                                0: {cellWidth: 40}, 
                             }
                         });
                         updateProgress(90, 100, 'جاري الحفظ...');
@@ -1532,10 +1551,16 @@
                         updateProgress(100, 100);
                     }
                 });
+
                 const renderAbsenceView = () => {
                     absentCountSpan.textContent = state.absentStudents.length;
-                    exportAbsentPdfBtn.disabled = state.absentStudents.length === 0;
-                    if (state.absentStudents.length === 0) {
+                    const hasAbsence = state.absentStudents.length > 0;
+                    
+                    exportAbsentImgBtn.disabled = !hasAbsence;
+                    exportAbsentPdfBtn.disabled = !hasAbsence;
+                    exportAbsentWordBtn.disabled = !hasAbsence;
+
+                    if (!hasAbsence) {
                         absentListContainer.innerHTML = `<p class="text-slate-400 text-center mt-8">لم يتم تسجيل أي غياب بعد.</p>`;
                         return;
                     }
@@ -1600,7 +1625,41 @@
                         }).catch(err => console.error("Failed to stop QR scanner.", err));
                     }
                 });
-                exportAbsentPdfBtn.addEventListener('click', async () => {
+
+                // --- ABSENCE EXPORT FUNCTIONS ---
+                const getAbsenceDataForExport = () => {
+                    const data = state.absentStudents.map(student => {
+                        // Find sector info if possible
+                        let sectorName = "";
+                        const studentSeat = [...state.seatingChart.entries()].find(([key, val]) => val === student.uid);
+                        if(studentSeat) {
+                             const [hallId, coords] = studentSeat[0].split(':');
+                             const [r, c] = coords.split('-').map(Number);
+                             const hall = state.halls.find(h => h.id === parseInt(hallId));
+                             if(hall) {
+                                 sectorName = c < hall.sector1Cols ? hall.sector1Name : hall.sector2Name;
+                             }
+                        }
+                        
+                        // Format date
+                        const today = new Date();
+                        const dateStr = today.toLocaleDateString('ar-EG');
+                        const dayName = today.toLocaleDateString('ar-EG', { weekday: 'long' });
+
+                        return {
+                            classDate: `${student.class}\n${dayName}\n${dateStr}`,
+                            name: student.name,
+                            section: student.section,
+                            id: student.id,
+                            sector: sectorName
+                        };
+                    });
+                     // Sort by name
+                    return data.sort((a,b) => a.name.localeCompare(b.name, 'ar'));
+                };
+
+                // 1. Export Image (Existing logic modified)
+                exportAbsentImgBtn.addEventListener('click', async () => {
                     const statusDiv = document.getElementById('scan-feedback');
                     statusDiv.innerHTML = `<span class="success">جاري تحضير الصورة...</span>`;
 
@@ -1612,43 +1671,24 @@
                     reportContainer.style.left = '-9999px';
                     reportContainer.style.direction = 'rtl';
 
-                    let tableHtml = `<h1 class="text-2xl font-bold text-center mb-6">تقرير غياب الطلبة</h1>
+                    let tableHtml = `<h1 class="text-2xl font-bold text-center mb-6">قائمة غيابات الطلبة</h1>
                                      <table class="w-full text-base text-right" style="border-collapse: collapse;">
-                                            <thead class="text-gray-700 uppercase bg-gray-200">
+                                        <thead class="text-gray-700 uppercase bg-gray-200">
                                             <tr>
-                                                <th scope="col" class="px-4 py-3 border border-gray-400">اسم الطالب</th>
-                                                <th scope="col" class="px-4 py-3 border border-gray-400">الرقم الامتحاني</th>
-                                                <th scope="col" class="px-4 py-3 border border-gray-400">الصف</th>
-                                                <th scope="col" class="px-4 py-3 border border-gray-400">القاعة</th>
-                                                <th scope="col" class="px-4 py-3 border border-gray-400">القطاع</th>
+                                                <th class="px-4 py-3 border border-gray-400">اسم الطالب</th>
+                                                <th class="px-4 py-3 border border-gray-400">الرقم الامتحاني</th>
+                                                <th class="px-4 py-3 border border-gray-400">الصف</th>
+                                                <th class="px-4 py-3 border border-gray-400">الشعبة</th>
                                             </tr>
-                                          </thead>
+                                        </thead>
                                         <tbody>`;
-                    const tableRows = [];
-                    state.absentStudents.forEach(student => {
-                        const studentSeat = [...state.seatingChart.entries()].find(([key, val]) => val === student.uid);
-                        let hallName = 'N/A', sectorName = 'N/A';
-                        if(studentSeat) {
-                            const [hallId, coords] = studentSeat[0].split(':');
-                            const [r, c] = coords.split('-').map(Number);
-                            const hall = state.halls.find(h => h.id === parseInt(hallId));
-                            if(hall) {
-                                hallName = hall.name;
-                                sectorName = c < hall.sector1Cols ? hall.sector1Name : hall.sector2Name;
-                            }
-                        }
-                        tableRows.push({ name: student.name, id: student.id, class: student.class, hall: hallName, sector: sectorName });
-                    });
                     
-                    tableRows.sort((a,b) => a.name.localeCompare(b.name, 'ar'));
-
-                    tableRows.forEach(row => {
+                    state.absentStudents.forEach(student => {
                         tableHtml += `<tr class="bg-white border-b">
-                                        <td class="px-4 py-2 font-medium text-gray-900 border border-gray-300">${row.name}</td>
-                                        <td class="px-4 py-2 border border-gray-300">${row.id}</td>
-                                        <td class="px-4 py-2 border border-gray-300">${row.class}</td>
-                                        <td class="px-4 py-2 border border-gray-300">${row.hall}</td>
-                                        <td class="px-4 py-2 border border-gray-300">${row.sector}</td>
+                                        <td class="px-4 py-2 font-medium text-gray-900 border border-gray-300">${student.name}</td>
+                                        <td class="px-4 py-2 border border-gray-300">${student.id}</td>
+                                        <td class="px-4 py-2 border border-gray-300">${student.class}</td>
+                                        <td class="px-4 py-2 border border-gray-300">${student.section}</td>
                                       </tr>`;
                     });
                     tableHtml += `</tbody></table>`;
@@ -1658,7 +1698,6 @@
                     try {
                         const canvas = await html2canvas(reportContainer, { scale: 2, useCORS: true });
                         const imgData = canvas.toDataURL('image/png');
-
                         const link = document.createElement('a');
                         link.href = imgData;
                         link.download = 'تقرير_الغياب.png';
@@ -1666,16 +1705,121 @@
                         link.click();
                         document.body.removeChild(link);
                         statusDiv.innerHTML = `<span class="success">تم تصدير الصورة بنجاح!</span>`;
-
                     } catch(err) {
                         console.error("Error exporting image:", err);
                         showAlert("فشل تصدير الصورة.");
-                        statusDiv.innerHTML = `<span class="fail">فشل تصدير الصورة.</span>`;
                     } finally {
                         document.body.removeChild(reportContainer);
                         setTimeout(() => { statusDiv.innerHTML = ''; }, 3000);
                     }
                 });
+
+                // 2. Export Word (New)
+                exportAbsentWordBtn.addEventListener('click', () => {
+                     const { Document, Packer, Paragraph, Table, TableRow, TableCell, WidthType, TextRun, AlignmentType, Header } = docx;
+                     const absenceData = getAbsenceDataForExport();
+
+                     // Table Header
+                     const tableHeaderRow = new TableRow({
+                         children: [
+                             new TableCell({ children: [new Paragraph({text: "التوقيع", alignment: AlignmentType.CENTER})], width: { size: 15, type: WidthType.PERCENTAGE } }),
+                             new TableCell({ children: [new Paragraph({text: "المراقب", alignment: AlignmentType.CENTER})], width: { size: 15, type: WidthType.PERCENTAGE } }),
+                             new TableCell({ children: [new Paragraph({text: "رقمه", alignment: AlignmentType.CENTER})], width: { size: 10, type: WidthType.PERCENTAGE } }),
+                             new TableCell({ children: [new Paragraph({text: "الشعبة", alignment: AlignmentType.CENTER})], width: { size: 10, type: WidthType.PERCENTAGE } }),
+                             new TableCell({ children: [new Paragraph({text: "اسم الطالب الغائب", alignment: AlignmentType.CENTER})], width: { size: 30, type: WidthType.PERCENTAGE } }),
+                             new TableCell({ children: [new Paragraph({text: "الصف واليوم والتاريخ", alignment: AlignmentType.CENTER})], width: { size: 20, type: WidthType.PERCENTAGE } }),
+                         ]
+                     });
+
+                     // Table Rows
+                     const tableRows = absenceData.map(d => {
+                         return new TableRow({
+                             children: [
+                                 new TableCell({ children: [new Paragraph("")] }), // Signature
+                                 new TableCell({ children: [new Paragraph("")] }), // Monitor
+                                 new TableCell({ children: [new Paragraph({text: String(d.id), alignment: AlignmentType.CENTER})] }),
+                                 new TableCell({ children: [new Paragraph({text: d.section, alignment: AlignmentType.CENTER})] }),
+                                 new TableCell({ children: [new Paragraph({text: d.name, alignment: AlignmentType.RIGHT})] }),
+                                 new TableCell({ children: [new Paragraph({text: d.classDate, alignment: AlignmentType.CENTER})] }),
+                             ]
+                         });
+                     });
+
+                     const doc = new Document({
+                         sections: [{
+                             properties: {},
+                             children: [
+                                 new Paragraph({
+                                     text: "قائمة غيابات الطلبة // قطاع رقم ( )",
+                                     heading: "Heading1",
+                                     alignment: AlignmentType.CENTER,
+                                     bidirectional: true
+                                 }),
+                                 new Paragraph({ text: "" }), // Spacer
+                                 new Table({
+                                     columnWidths: [1500, 1500, 1000, 1000, 3000, 2000],
+                                     rows: [tableHeaderRow, ...tableRows],
+                                     width: { size: 100, type: WidthType.PERCENTAGE }
+                                 })
+                             ]
+                         }]
+                     });
+
+                     Packer.toBlob(doc).then(blob => {
+                         saveAs(blob, "قائمة_الغيابات.docx");
+                     });
+                });
+
+                // 3. Export PDF (New - Matching Template)
+                exportAbsentPdfBtn.addEventListener('click', async () => {
+                     const amiriFont = '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ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAAAAIAAgAAAAAFAAEAAAAAAAAAAQIDBAEFAAcACgAAAAAAAAABAAEAAgABAAEAAQAAAAEAAAAAAAAAAQAAAAAAAQAAAAIAAQAAAAAAAAAAAAMAAAAAAAAAAQAAAAACAAEAAgABAAEAAwAAAAAABAACAAAAAQAJ//8ABwABAAAAAAAAAAEAAAABAAAAAAAAAAEAAAAAAAAAAgAAAAEAAAAAAAAAAQAAAAQAAQAFAAAABQAGAAcACAADAAQABQAHAAMABAAFAAcAAwAEAAsADgAPABAABQAIAAkACgALAAgACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAk.m';
+                     const { jsPDF } = window.jspdf;
+                     const doc = new jsPDF();
+                     doc.addFileToVFS('Amiri-Regular.ttf', amiriFont);
+                     doc.addFont('Amiri-Regular.ttf', 'Amiri', 'normal');
+                     doc.setFont('Amiri');
+                     doc.setR2L(true);
+
+                     const absenceData = getAbsenceDataForExport();
+                     const head = [['التوقيع', 'المراقب', 'رقمه', 'الشعبة', 'اسم الطالب الغائب', 'الصف واليوم والتاريخ']];
+                     const body = absenceData.map(d => [
+                         '', // Signature
+                         '', // Monitor
+                         d.id,
+                         d.section,
+                         d.name,
+                         d.classDate
+                     ]);
+
+                     doc.text("قائمة غيابات الطلبة // قطاع رقم ( )", doc.internal.pageSize.getWidth() / 2, 20, { align: 'center' });
+                     
+                     doc.autoTable({
+                        head: head,
+                        body: body,
+                        startY: 30,
+                        theme: 'grid',
+                        styles: {
+                            font: 'Amiri',
+                            halign: 'center',
+                            valign: 'middle',
+                            lineWidth: 0.1,
+                            lineColor: [0, 0, 0]
+                        },
+                        headStyles: {
+                            fillColor: [240, 240, 240],
+                            textColor: [0, 0, 0],
+                            fontStyle: 'bold',
+                            lineWidth: 0.1
+                        },
+                        columnStyles: {
+                            5: { cellWidth: 50 }, // Class/Date
+                            4: { cellWidth: 60 }, // Name
+                        }
+                     });
+
+                     doc.save("قائمة_الغيابات.pdf");
+                });
+
                 const navigate = (direction) => {
                     if (direction === 'next' && state.currentStep === 1 && state.selectedHallIds.size === 0) {
                         showAlert('الرجاء تحديد قاعة واحدة على الأقل للمتابعة.');
