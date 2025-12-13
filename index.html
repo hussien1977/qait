@@ -1,1854 +1,378 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام إدارة مخططات الجلوس الامتحانية الذكي</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
-    
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
-    
-    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-    
-    <script src="https://unpkg.com/docx@7.1.0/build/index.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-    <script src="https://apis.google.com/js/api.js"></script>
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
-
-    <style>
-        body { font-family: 'Cairo', sans-serif; }
-        .step-section { display: none; }
-        .step-section.active { display: block; animation: fadeIn 0.5s; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+// --- ABSENCE EXPORT FUNCTIONS ---
+const getAbsenceDataForExport = () => {
+    const data = state.absentStudents.map(student => {
+        // الحصول على معلومات القاعة والقطاع
+        let hallInfo = "";
+        let sectorInfo = "";
+        const studentSeat = [...state.seatingChart.entries()].find(([key, val]) => val === student.uid);
         
-        .seat { transition: all 0.2s ease-in-out; }
-        .seat.disabled { background-color: #4b5563 !important; border-color: #1f2937 !important; cursor: not-allowed; }
-        .seat.disabled::after { content: '✕'; color: white; font-size: 1.5rem; display: flex; justify-content: center; align-items: center; height: 100%; }
-        .seat.occupied { background-color: #e0f2fe; border-color: #0284c7; }
-        .seat.conflict { border: 3px solid #ef4444 !important; animation: shake 0.5s; }
-        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
-        
-        .student-card { cursor: grab; }
-        .student-card:active { cursor: grabbing; }
-        .droppable-hover { background-color: #d1fae5 !important; }
-        
-        #hall-modal-backdrop, #preview-modal-backdrop { background-color: rgba(0,0,0,0.5); }
-        
-        .pdf-page-container {
-            background: white; width: 210mm; min-height: 297mm; padding: 1cm;
-            position: absolute; left: -9999px; top: 0;
-            font-family: 'Cairo', sans-serif; display: flex; flex-direction: column;
-        }
-        .pdf-header {
-            background-size: cover; background-position: center; background-repeat: no-repeat;
-            padding: 20px; border: 2px solid black; border-radius: 10px;
-            text-align: center; position: relative; overflow: hidden;
-        }
-        .pdf-body {
-            flex-grow: 1; background-size: cover; background-position: center; background-repeat: no-repeat;
-            padding-top: 20px; position: relative; overflow: hidden;
-        }
-        .pdf-bg-image {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0;
-        }
-        .pdf-content { position: relative; z-index: 1; }
-        
-        #reader { width: 100%; max-width: 500px; margin: 20px auto; border: 2px solid #d1d5db; border-radius: 8px; overflow: hidden; }
-        #scan-feedback .success { color: #16a34a; }
-        #scan-feedback .fail { color: #dc2626; }
-
-        /* Custom Button Styles */
-        .action-btn {
-            display: flex; align-items: center; justify-content: center; gap: 8px;
-            padding: 8px 16px; border-radius: 8px; font-weight: 600; font-size: 0.9rem;
-            transition: all 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .action-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 6px rgba(0,0,0,0.15); }
-        .action-btn:active { transform: translateY(0); }
-        .action-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
-        
-        .btn-icon { width: 18px; height: 18px; fill: currentColor; }
-    </style>
-</head>
-<body class="bg-stone-50 text-slate-800">
-
-    <div id="login-screen" class="fixed inset-0 bg-stone-100 z-50 flex flex-col items-center justify-center">
-        <div class="text-center p-8 bg-white rounded-xl shadow-lg border border-slate-200">
-            <h1 class="text-3xl font-bold text-sky-700 mb-2">نظام إدارة مخططات الجلوس</h1>
-            <p class="text-slate-500 mb-6">الرجاء تسجيل الدخول للمتابعة</p>
-            <button id="login-btn" class="bg-white text-slate-700 border border-slate-300 font-bold py-3 px-8 rounded-lg hover:bg-slate-50 transition flex items-center gap-3 shadow-sm">
-                <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"></path><path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"></path><path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"></path><path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.574l6.19-5.238C42.022,35.244,44,30.036,44,24C44,22.659,43.862,21.35,43.611,20.083z"></path></svg>
-                <span>تسجيل الدخول باستخدام Google</span>
-            </button>
-        </div>
-    </div>
-
-    <div id="app-container" class="hidden">
-        <div class="container mx-auto p-4 md:p-8">
-            
-            <header class="text-center mb-8 border-b pb-4 relative">
-                <div id="auth-info" class="w-full flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
-                    <div id="welcome-message" class="text-sm font-bold text-sky-800 bg-sky-50 px-4 py-2 rounded-lg border border-sky-100"></div>
-                    
-                    <div class="flex flex-wrap items-center justify-center gap-3">
-                        <button id="sync-to-drive-btn" class="action-btn bg-emerald-600 text-white hover:bg-emerald-700">
-                            <svg class="btn-icon" viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/></svg>
-                            حفظ في Drive
-                        </button>
-                        
-                        <button id="load-from-drive-btn" class="action-btn bg-indigo-600 text-white hover:bg-indigo-700">
-                            <svg class="btn-icon" viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg>
-                            تحميل من Drive
-                        </button>
-                        
-                        <button id="clear-data-btn" class="action-btn bg-rose-600 text-white hover:bg-rose-700">
-                            <svg class="btn-icon" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
-                            مسح البيانات
-                        </button>
-
-                        <button id="logout-btn" class="action-btn bg-slate-600 text-white hover:bg-slate-700">
-                            <svg class="btn-icon" viewBox="0 0 24 24"><path d="M10.09 15.59L11.5 17l5-5-5-5-1.41 1.41L12.67 11H3v2h9.67l-2.58 2.59zM19 3H5c-1.11 0-2 .9-2 2v4h2V5h14v14H5v-4H3v4c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z"/></svg>
-                            خروج
-                        </button>
-                    </div>
-                </div>
+        if (studentSeat) {
+            const [hallId, coords] = studentSeat[0].split(':');
+            const hall = state.halls.find(h => h.id === parseInt(hallId));
+            if (hall) {
+                hallInfo = hall.name;
                 
-                <span id="drive-sync-status" class="block text-xs font-semibold text-emerald-600 h-4 mb-2"></span>
-
-                <h1 class="text-3xl md:text-4xl font-bold text-sky-700">نظام إدارة مخططات الجلوس الامتحانية</h1>
-                <p class="text-slate-500 mt-2">أداة ذكية لتوزيع الطلاب في القاعات الامتحانية بسهولة وكفاءة</p>
-                <div class="mt-4 flex flex-col items-center">
-                    <p class="text-xl font-bold text-red-600">اعداد الاستاذ : حسين جهاد رضا</p>
-                    <p class="text-xl font-bold text-purple-600">اشراف الاستاذ : تحسين هارون مهدي</p>
-                </div>
-            </header>
-
-            <div id="stepper" class="flex justify-center items-center mb-10 space-x-4 md:space-x-8 rtl:space-x-reverse"></div>
-
-            <main class="bg-white rounded-xl shadow-lg p-6 md:p-8 min-h-[500px]">
+                // إضافة رقم المقعد
+                const [r, c] = coords.split('-').map(Number);
                 
-                <section id="step-1" class="step-section active">
-                     <div class="text-center mb-8">
-                        <h2 class="text-2xl font-bold">الخطوة 1: إدارة القاعات الامتحانية</h2>
-                        <p class="text-slate-500 mt-1">قم بإنشاء قاعة جديدة أو حدد قاعة أو أكثر من القائمة للعمل عليها.</p>
-                     </div>
-                    <div class="mb-6 text-center">
-                        <button id="show-hall-modal-btn" class="bg-sky-600 text-white font-bold py-2 px-6 rounded-md hover:bg-sky-700 transition shadow-md">
-                             + إنشاء قاعة جديدة
-                         </button>
-                    </div>
-                    <div id="halls-list-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
-                </section>
-
-                <section id="step-2" class="step-section">
-                    <div class="text-center mb-8">
-                        <h2 class="text-2xl font-bold">الخطوة 2: إدارة بيانات الطلاب</h2>
-                        <p class="text-slate-500 mt-1">قم باستيراد بيانات الطلاب من ملف Excel أو قم بلصقها كنص.</p>
-                    </div>
-                     <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div>
-                            <div class="flex border-b mb-4">
-                                <button data-tab="paste-tab" class="tab-btn flex-1 py-2 font-semibold border-b-4 border-sky-600 text-sky-600">لصق نص</button>
-                                <button data-tab="upload-tab" class="tab-btn flex-1 py-2 font-semibold text-gray-500">رفع ملف Excel</button>
-                             </div>
-
-                            <div id="paste-tab" class="tab-content">
-                                <h3 class="font-bold mb-2">لصق قائمة الطلاب:</h3>
-                                <p class="text-sm text-slate-500 mb-2">الصق البيانات هنا. يجب أن يكون كل طالب في سطر جديد بالتنسيق: <br><code class="bg-gray-200 p-1 rounded">الاسم، الرقم الامتحاني، الصف، الشعبة</code></p>
-                                <textarea id="students-text" rows="8" class="w-full p-2 border rounded-md" placeholder="مثال:&#10;أحمد علي، 1201، العاشر، أ&#10;فاطمة محمد، 1202، العاشر، ب"></textarea>
-                                <button id="import-text-btn" class="mt-2 w-full bg-sky-600 text-white font-bold py-2 px-4 rounded-md hover:bg-sky-700 transition">استيراد من النص</button>
-                            </div>
-
-                            <div id="upload-tab" class="tab-content hidden">
-                                 <h3 class="font-bold mb-2">رفع ملف Excel (.xlsx):</h3>
-                                 <p class="text-sm text-slate-500 mb-2">يجب أن يحتوي الملف على أعمدة بالترتيب: <br><code class="bg-gray-200 p-1 rounded">الاسم، الرقم الامتحاني، الصف، الشعبة</code></p>
-                                 <input type="file" id="excel-file" accept=".xlsx, .xls" class="w-full p-2 border rounded-md file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-sky-50 file:text-sky-700 hover:file:bg-sky-100"/>
-                            </div>
-                        </div>
-                        
-                        <div class="bg-gray-50 p-4 rounded-lg border">
-                            <h3 class="font-bold text-lg mb-4">قائمة الطلاب (<span id="student-count">0</span>)</h3>
-                            <div id="student-list" class="h-64 overflow-y-auto space-y-2 pr-2">
-                                <p class="text-slate-400 text-center mt-8">لم يتم إضافة أي طلاب بعد.</p>
-                            </div>
-                        </div>
-                    </div>
-                 </section>
-
-                <section id="step-3" class="step-section">
-                    <div id="distribution-header" class="text-center mb-8">
-                         <h2 class="text-2xl font-bold">الخطوة 3: التوزيع والمراجعة</h2>
-                        <p class="text-slate-500 mt-1">انقر على المقاعد الفارغة لتعطيلها. ثم قم بالتوزيع التلقائي أو اليدوي.</p>
-                    </div>
-                    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                        <div class="lg:col-span-1 bg-gray-50 p-4 rounded-lg border">
-                             <h3 class="font-bold text-lg mb-4">الطلاب غير الموزعين</h3>
-                            <div id="unassigned-students" class="h-96 overflow-y-auto space-y-2 p-1"></div>
-                            <button id="auto-distribute-btn" class="mt-4 w-full bg-emerald-600 text-white font-bold py-2 px-4 rounded-md hover:bg-emerald-700 transition">توزيع تلقائي</button>
-                             <button id="reset-distribution-btn" class="mt-2 w-full bg-red-600 text-white font-bold py-2 px-4 rounded-md hover:bg-red-700 transition">إعادة تعيين التوزيع</button>
-                        </div>
-
-                        <div id="multi-hall-distribution-container" class="lg:col-span-3 space-y-8"></div>
-                    </div>
-                </section>
-
-                <section id="step-4" class="step-section">
-                    <div id="export-header" class="text-center mb-8">
-                        <h2 class="text-2xl font-bold">الخطوة 4: التصدير والطباعة</h2>
-                        <p class="text-slate-500 mt-1">اختر إعدادات التصدير ثم قم بمعاينة أو تصدير الملفات.</p>
-                    </div>
-                    <div class="max-w-4xl mx-auto">
-                        <div class="bg-gray-50 p-6 rounded-lg border mb-6 space-y-4">
-                            <label class="flex items-center justify-center cursor-pointer">
-                                <span class="font-semibold ml-4">استخدام خلفيات مخصصة:</span>
-                                <div class="relative">
-                                    <input type="checkbox" id="use-backgrounds-toggle" class="sr-only peer">
-                                    <div class="block bg-gray-300 w-14 h-8 rounded-full peer-checked:bg-sky-600"></div>
-                                    <div class="dot absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition-transform transform peer-checked:translate-x-full"></div>
-                                </div>
-                            </label>
-                            <div id="background-inputs" class="hidden grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t">
-                                <div class="flex-1">
-                                    <label for="header-bg-input" class="block font-semibold mb-1">خلفية العنوان:</label>
-                                    <input type="file" id="header-bg-input" accept="image/*" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-sky-50 file:text-sky-700 hover:file:bg-sky-100"/>
-                                </div>
-                                <div class="flex-1">
-                                    <label for="body-bg-input" class="block font-semibold mb-1">خلفية الجدول:</label>
-                                    <input type="file" id="body-bg-input" accept="image/*" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-sky-50 file:text-sky-700 hover:file:bg-sky-100"/>
-                                </div>
-                                <div class="md:col-span-2 space-y-2">
-                                    <div>
-                                        <label for="header-opacity-slider" class="block font-semibold mb-1">شفافية خلفية العنوان: <span id="header-opacity-value">100</span>%</label>
-                                        <input type="range" id="header-opacity-slider" min="0" max="1" step="0.05" value="1" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
-                                    </div>
-                                    <div>
-                                        <label for="body-opacity-slider" class="block font-semibold mb-1">شفافية خلفية الجدول: <span id="body-opacity-value">100</span>%</label>
-                                        <input type="range" id="body-opacity-slider" min="0" max="1" step="0.05" value="1" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
-                                    </div>
-                                </div>
-                            </div>
-                         </div>
-                        <div class="flex flex-col md:flex-row justify-center gap-4">
-                            <button id="preview-pdf-btn" class="bg-indigo-600 text-white font-bold py-3 px-6 rounded-md hover:bg-indigo-700 transition flex items-center justify-center gap-2">
-                                <span>👁️</span> معاينة المخطط
-                            </button>
-                            <button id="export-chart-pdf-btn" class="bg-sky-600 text-white font-bold py-3 px-6 rounded-md hover:bg-sky-700 transition flex items-center justify-center gap-2">
-                                 <span>📄</span> تصدير مخطط القاعات (PDF)
-                            </button>
-                            <button id="export-list-pdf-btn" class="bg-green-600 text-white font-bold py-3 px-6 rounded-md hover:bg-green-700 transition flex items-center justify-center gap-2">
-                                <span>📋</span> تصدير قائمة الحضور (PDF)
-                            </button>
-                        </div>
-                    </div>
-                 </section>
-
-                <section id="step-5" class="step-section">
-                    <div class="text-center mb-8">
-                        <h2 class="text-2xl font-bold">الخطوة 5: تسجيل الغياب وتصدير القوائم</h2>
-                        <p class="text-slate-500 mt-1">امسح رموز QR لتسجيل الغياب، ثم قم بتصدير القوائم بالصيغة المطلوبة.</p>
-                    </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div>
-                            <h3 class="font-bold text-lg mb-4 text-center">لوحة التحكم بالماسح</h3>
-                            <div class="flex justify-center gap-4 mb-4">
-                                <button id="start-scan-btn" class="bg-green-600 text-white font-bold py-2 px-6 rounded-md hover:bg-green-700 transition">بدء المسح</button>
-                                <button id="stop-scan-btn" class="bg-red-600 text-white font-bold py-2 px-6 rounded-md hover:bg-red-700 transition hidden">إيقاف المسح</button>
-                            </div>
-                            <div id="reader"></div>
-                            <div id="scan-feedback" class="text-center font-semibold mt-2 h-6"></div>
-                        </div>
-                        <div class="bg-gray-50 p-4 rounded-lg border">
-                             <h3 class="font-bold text-lg mb-4">قائمة الطلاب الغائبين (<span id="absent-count">0</span>)</h3>
-                            <div id="absent-list" class="h-64 overflow-y-auto space-y-2 pr-2">
-                                <p class="text-slate-400 text-center mt-8">لم يتم إضافة أي غياب بعد.</p>
-                            </div>
-                            
-                            <h4 class="font-bold mt-4 mb-2 text-gray-700 border-t pt-2">خيارات التصدير:</h4>
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
-                                <button id="export-absent-pdf-img-btn" class="bg-orange-500 text-white font-bold py-2 px-2 rounded-md hover:bg-orange-600 transition text-sm flex justify-center items-center gap-1" disabled>
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                                    صورة
-                                </button>
-                                <button id="export-absent-file-pdf-btn" class="bg-red-600 text-white font-bold py-2 px-2 rounded-md hover:bg-red-700 transition text-sm flex justify-center items-center gap-1" disabled>
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
-                                    ملف PDF
-                                </button>
-                                <button id="export-absent-word-btn" class="bg-blue-600 text-white font-bold py-2 px-2 rounded-md hover:bg-blue-700 transition text-sm flex justify-center items-center gap-1" disabled>
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                                    ملف Word
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                <div id="navigation-btns" class="mt-10 flex justify-between border-t pt-6">
-                    <button id="prev-btn" class="bg-gray-200 text-gray-800 font-bold py-2 px-6 rounded-md hover:bg-gray-300 transition" disabled>السابق</button>
-                    <button id="next-btn" class="bg-sky-600 text-white font-bold py-2 px-6 rounded-md hover:bg-sky-700 transition">التالي</button>
-                </div>
-            </main>
-        </div>
-    </div>
-
-    <div id="hall-modal-backdrop" class="fixed inset-0 z-40 hidden">
-        <div id="hall-modal" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 bg-white p-8 rounded-xl shadow-2xl w-full max-w-lg">
-            <h2 id="hall-modal-title" class="text-2xl font-bold mb-6">إنشاء قاعة جديدة</h2>
-            <form id="hall-form" class="space-y-4">
-                <input type="hidden" id="hall-id-input">
-                <div>
-                    <label for="hall-name" class="block font-semibold mb-1">اسم القاعة:</label>
-                    <input type="text" id="hall-name" placeholder="مثال: قاعة 101" class="w-full p-2 border rounded-md focus:ring-2 focus:ring-sky-500" required>
-                </div>
-                <div>
-                    <label for="hall-location" class="block font-semibold mb-1">موقع القاعة:</label>
-                    <input type="text" id="hall-location" placeholder="مثال: المبنى الرئيسي - الطابق الثاني" class="w-full p-2 border rounded-md focus:ring-2 focus:ring-sky-500">
-                </div>
-                <div>
-                    <label for="hall-rows" class="block font-semibold mb-1">عدد الصفوف:</label>
-                    <input type="number" id="hall-rows" min="1" max="30" value="5" class="w-full p-2 border rounded-md focus:ring-2 focus:ring-sky-500" required>
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label for="hall-sector1-cols" class="block font-semibold mb-1">أعمدة قطاع 1:</label>
-                        <input type="number" id="hall-sector1-cols" min="1" max="15" value="3" class="w-full p-2 border rounded-md focus:ring-2 focus:ring-sky-500" required>
-                    </div>
-                    <div>
-                        <label for="hall-sector2-cols" class="block font-semibold mb-1">أعمدة قطاع 2:</label>
-                        <input type="number" id="hall-sector2-cols" min="1" max="15" value="3" class="w-full p-2 border rounded-md focus:ring-2 focus:ring-sky-500" required>
-                    </div>
-                </div>
-                <div class="flex justify-end gap-4 pt-4 border-t">
-                    <button type="button" id="cancel-hall-modal-btn" class="bg-gray-200 text-gray-800 font-bold py-2 px-6 rounded-md hover:bg-gray-300 transition">إلغاء</button>
-                    <button type="submit" class="bg-sky-600 text-white font-bold py-2 px-6 rounded-md hover:bg-sky-700 transition">حفظ القاعة</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <div id="preview-modal-backdrop" class="fixed inset-0 z-40 hidden items-center justify-center">
-        <div id="preview-modal" class="bg-white p-4 rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-            <div class="flex justify-between items-center border-b pb-2 mb-4">
-                <h2 class="text-xl font-bold">معاينة الملف</h2>
-                <button id="close-preview-modal-btn" class="text-2xl font-bold">&times;</button>
-            </div>
-            <div id="preview-content" class="flex justify-center"></div>
-        </div>
-     </div>
-    
-    <div id="custom-alert" class="hidden fixed top-5 right-5 bg-red-500 text-white py-3 px-5 rounded-lg shadow-xl z-50 animate-bounce">
-        <p id="alert-message"></p>
-    </div>
-
-    <div id="progress-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-        <div class="bg-white p-8 rounded-lg shadow-xl text-center w-11/12 md:w-1/3">
-            <h3 id="progress-title" class="text-lg font-bold mb-4">جاري تحضير الملف...</h3>
-            <div class="w-full bg-gray-200 rounded-full h-4">
-                <div id="progress-bar" class="bg-blue-600 h-4 rounded-full transition-all duration-300" style="width: 0%;"></div>
-            </div>
-            <p id="progress-text" class="mt-2 text-sm text-gray-600">0%</p>
-        </div>
-    </div>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-
-            // --- Firebase and Google API Config ---
-            const firebaseConfig = {
-                apiKey: "AIzaSyDqGTfHTuj1cu2a6eTPYR29l7H65Q-x810",
-                authDomain: "murasil-al-moalem.firebaseapp.com",
-                projectId: "murasil-al-moalem",
-                storageBucket: "murasil-al-moalem.appspot.com",
-                messagingSenderId: "314929620446",
-                appId: "1:314929620446:web:fb7abd1cee260d85dca94f"
-            };
-            const GOOGLE_API_KEY = 'AIzaSyDqGTfHTuj1cu2a6eTPYR29l7H65Q-x810';
-            const GOOGLE_CLIENT_ID = '314929620446-8pjqlrmgkgl9bhppkejvucfpqnamjmqu.apps.googleusercontent.com';
-            const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.file';
-            const DRIVE_DISCOVERY_DOCS = ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"];
-            const APP_DATA_FILENAME = 'seating-chart-app-data.json';
-
-            // --- Firebase Authentication ---
-            const loginScreen = document.getElementById('login-screen');
-            const appContainer = document.getElementById('app-container');
-            const loginBtn = document.getElementById('login-btn');
-            const logoutBtn = document.getElementById('logout-btn');
-
-            firebase.initializeApp(firebaseConfig);
-            const auth = firebase.auth();
-            const provider = new firebase.auth.GoogleAuthProvider();
-
-            let appInitialized = false;
-            let gapiInited = false;
-            let tokenClient;
-
-            loginBtn.addEventListener('click', () => {
-                auth.signInWithPopup(provider).catch((error) => {
-                    console.error("Authentication failed:", error);
-                    showAlert("فشل تسجيل الدخول. الرجاء المحاولة مرة أخرى.");
-                });
-            });
-
-            logoutBtn.addEventListener('click', () => {
-                auth.signOut();
-            });
-
-            auth.onAuthStateChanged(user => {
-                if (user) {
-                    if (!appInitialized) {
-                        appInitialized = true;
-                        loginScreen.classList.add('hidden');
-                        appContainer.classList.remove('hidden');
-                        
-                        const welcomeMsg = document.getElementById('welcome-message');
-                        welcomeMsg.textContent = `مرحباً، ${user.displayName}`;
-                        
-                        initializeAppLogic(user);
-                        gapi.load('client', initializeGapiClient);
-                    }
+                // تحديد القطاع بناءً على عمود المقعد
+                if (c < hall.sector1Cols) {
+                    sectorInfo = hall.sector1Name;
                 } else {
-                    appInitialized = false;
-                    gapiInited = false;
-                    loginScreen.classList.remove('hidden');
-                    appContainer.classList.add('hidden');
+                    sectorInfo = hall.sector2Name;
                 }
-            });
-
-            async function initializeGapiClient() {
-                try {
-                    await gapi.client.init({
-                        apiKey: GOOGLE_API_KEY,
-                        discoveryDocs: DRIVE_DISCOVERY_DOCS,
-                    });
-                    gapiInited = true;
-                } catch(e) {
-                    console.error("Error initializing GAPI client:", e);
-                    showAlert("فشل تهيئة واجهة Google Drive. تأكد من صحة API Key.");
-                }
-
-                tokenClient = google.accounts.oauth2.initTokenClient({
-                    client_id: GOOGLE_CLIENT_ID,
-                    scope: DRIVE_SCOPE,
-                    callback: (tokenResponse) => {
-                        if (tokenResponse && tokenResponse.access_token) {
-                            gapi.client.setToken(tokenResponse);
-                        } else {
-                            console.error("Provided token response was invalid", tokenResponse);
-                            showAlert("فشل الحصول على رمز الوصول من Google.");
-                        }
-                    },
-                });
+                
+                // إضافة معلومات المقعد
+                hallInfo += ` (ص${r + 1}، ع${c + 1})`;
             }
-
-
-            function initializeAppLogic(user) {
-                // --- State Management ---
-                let state = {
-                    currentStep: 1,
-                    halls: [],
-                    selectedHallIds: new Set(),
-                    students: [],
-                    seatingChart: new Map(),
-                    columnClassAssignments: new Map(),
-                    backgrounds: { header: null, body: null, use: false, headerOpacity: 1, bodyOpacity: 1 },
-                    absentStudents: [],
-                };
-                let html5QrCode;
-                let fileId = null; 
-
-                // --- DOM Elements ---
-                const stepperContainer = document.getElementById('stepper');
-                const sections = document.querySelectorAll('.step-section');
-                const nextBtn = document.getElementById('next-btn');
-                const prevBtn = document.getElementById('prev-btn');
-                const hallsListContainer = document.getElementById('halls-list-container');
-                const showHallModalBtn = document.getElementById('show-hall-modal-btn');
-                const hallModalBackdrop = document.getElementById('hall-modal-backdrop');
-                const hallModal = document.getElementById('hall-modal');
-                const hallModalTitle = document.getElementById('hall-modal-title');
-                const cancelHallModalBtn = document.getElementById('cancel-hall-modal-btn');
-                const hallForm = document.getElementById('hall-form');
-                const hallIdInput = document.getElementById('hall-id-input');
-                const hallNameInput = document.getElementById('hall-name');
-                const hallLocationInput = document.getElementById('hall-location');
-                const hallRowsInput = document.getElementById('hall-rows');
-                const hallSector1ColsInput = document.getElementById('hall-sector1-cols');
-                const hallSector2ColsInput = document.getElementById('hall-sector2-cols');
-                const studentsTextInput = document.getElementById('students-text');
-                const importTextBtn = document.getElementById('import-text-btn');
-                const studentListContainer = document.getElementById('student-list');
-                const studentCountSpan = document.getElementById('student-count');
-                const excelFileInput = document.getElementById('excel-file');
-                const tabBtns = document.querySelectorAll('.tab-btn');
-                const tabContents = document.querySelectorAll('.tab-content');
-                const multiHallDistributionContainer = document.getElementById('multi-hall-distribution-container');
-                const autoDistributeBtn = document.getElementById('auto-distribute-btn');
-                const resetDistributionBtn = document.getElementById('reset-distribution-btn');
-                const unassignedStudentsContainer = document.getElementById('unassigned-students');
-                const exportHeader = document.getElementById('export-header');
-                const exportChartPdfBtn = document.getElementById('export-chart-pdf-btn');
-                const exportListPdfBtn = document.getElementById('export-list-pdf-btn');
-                const useBackgroundsToggle = document.getElementById('use-backgrounds-toggle');
-                const backgroundInputs = document.getElementById('background-inputs');
-                const headerBgInput = document.getElementById('header-bg-input');
-                const bodyBgInput = document.getElementById('body-bg-input');
-                const headerOpacitySlider = document.getElementById('header-opacity-slider');
-                const bodyOpacitySlider = document.getElementById('body-opacity-slider');
-                const headerOpacityValue = document.getElementById('header-opacity-value');
-                const bodyOpacityValue = document.getElementById('body-opacity-value');
-                const previewPdfBtn = document.getElementById('preview-pdf-btn');
-                const previewModalBackdrop = document.getElementById('preview-modal-backdrop');
-                const previewContent = document.getElementById('preview-content');
-                const closePreviewModalBtn = document.getElementById('close-preview-modal-btn');
-                const clearDataBtn = document.getElementById('clear-data-btn');
-                const syncToDriveBtn = document.getElementById('sync-to-drive-btn');
-                const loadFromDriveBtn = document.getElementById('load-from-drive-btn');
-                const driveSyncStatus = document.getElementById('drive-sync-status');
-                const startScanBtn = document.getElementById('start-scan-btn');
-                const stopScanBtn = document.getElementById('stop-scan-btn');
-                const readerDiv = document.getElementById('reader');
-                const scanFeedbackDiv = document.getElementById('scan-feedback');
-                const absentListContainer = document.getElementById('absent-list');
-                const absentCountSpan = document.getElementById('absent-count');
-                
-                // New Buttons
-                const exportAbsentImgBtn = document.getElementById('export-absent-pdf-img-btn');
-                const exportAbsentPdfBtn = document.getElementById('export-absent-file-pdf-btn');
-                const exportAbsentWordBtn = document.getElementById('export-absent-word-btn');
-                
-                const progressModal = document.getElementById('progress-modal');
-                const progressBar = document.getElementById('progress-bar');
-                const progressText = document.getElementById('progress-text');
-                const progressTitle = document.getElementById('progress-title');
-
-                const steps = [
-                    { id: 1, name: 'إدارة القاعات' }, { id: 2, name: 'بيانات الطلاب' }, { id: 3, name: 'التوزيع' },
-                    { id: 4, name: 'التصدير' }, { id: 5, name: 'تسجيل الغياب' }
-                ];
-
-                // --- Persistence Logic ---
-                const saveStateToLocalStorage = () => {
-                    try {
-                        const stateToSave = {
-                            ...state,
-                            selectedHallIds: [...state.selectedHallIds],
-                            seatingChart: [...state.seatingChart],
-                            columnClassAssignments: [...state.columnClassAssignments],
-                            halls: state.halls.map(h => ({ ...h, disabledSeats: [...h.disabledSeats] })),
-                            backgrounds: { ...state.backgrounds, header: null, body: null }
-                        };
-                        localStorage.setItem(`seatingChartState_${user.uid}`, JSON.stringify(stateToSave));
-                    } catch (e) {
-                        console.error("Failed to save state:", e);
-                        showAlert("خطأ: لم يتم حفظ البيانات. قد تكون سعة التخزين ممتلئة.");
-                    }
-                };
-
-                const loadStateFromLocalStorage = () => {
-                    const savedStateJSON = localStorage.getItem(`seatingChartState_${user.uid}`);
-                    if (savedStateJSON) {
-                        try {
-                            const savedState = JSON.parse(savedStateJSON);
-                            state = {
-                                ...state,
-                                ...savedState,
-                                selectedHallIds: new Set(savedState.selectedHallIds || []),
-                                seatingChart: new Map(savedState.seatingChart || []),
-                                columnClassAssignments: new Map(savedState.columnClassAssignments || []),
-                                halls: savedState.halls.map(h => ({ ...h, disabledSeats: new Set(h.disabledSeats || []) })),
-                            };
-                        } catch (e) {
-                            console.error("Failed to load state:", e);
-                            localStorage.removeItem(`seatingChartState_${user.uid}`);
-                        }
-                    }
-                };
-
-                clearDataBtn.addEventListener('click', () => {
-                    if (confirm("هل أنت متأكد من رغبتك في مسح جميع البيانات المحلية؟ لن يتم حذف البيانات من Google Drive.")) {
-                        localStorage.removeItem(`seatingChartState_${user.uid}`);
-                        window.location.reload();
-                    }
-                });
-
-                // --- Google Drive Logic ---
-                function handleDriveAction(actionCallback) {
-                    if (!gapiInited || !tokenClient) {
-                        showAlert('واجهة Google API لم تُهيأ بعد. الرجاء الانتظار.');
-                        return;
-                    }
-
-                    tokenClient.callback = async (resp) => {
-                        if (resp.error !== undefined) {
-                            showAlert('فشل الحصول على إذن الوصول إلى Google Drive.');
-                            throw (resp);
-                        }
-                        await actionCallback();
-                    };
-
-                    if (gapi.client.getToken() === null) {
-                        tokenClient.requestAccessToken({prompt: 'consent'});
-                    } else {
-                        tokenClient.requestAccessToken({prompt: ''});
-                    }
-                }
-
-                async function findAppFile() {
-                    try {
-                        const response = await gapi.client.drive.files.list({
-                            q: `name='${APP_DATA_FILENAME}' and 'root' in parents and trashed=false`,
-                            spaces: 'drive',
-                            fields: 'files(id, name)'
-                        });
-                        if (response.result.files && response.result.files.length > 0) {
-                            return response.result.files[0].id;
-                        }
-                        return null;
-                    } catch (err) {
-                        console.error("Error finding file:", err);
-                        return null;
-                    }
-                }
-
-                async function saveToDrive() {
-                    driveSyncStatus.textContent = 'جاري الحفظ...';
-                    const stateToSave = {
-                        ...state,
-                        selectedHallIds: [...state.selectedHallIds],
-                        seatingChart: [...state.seatingChart],
-                        columnClassAssignments: [...state.columnClassAssignments],
-                        halls: state.halls.map(h => ({ ...h, disabledSeats: [...h.disabledSeats] })),
-                    };
-                    const content = JSON.stringify(stateToSave);
-                    
-                    if (!fileId) {
-                        fileId = await findAppFile();
-                    }
-
-                    const metadata = {
-                        'name': APP_DATA_FILENAME,
-                        'mimeType': 'application/json',
-                    };
-                    let path;
-                    let method;
-                    let requestBody;
-                    let headers = {};
-
-                    if (fileId) {
-                        path = `/upload/drive/v3/files/${fileId}?uploadType=media`;
-                        method = 'PATCH';
-                        requestBody = content;
-                        headers = {'Content-Type': 'application/json'};
-                    } else {
-                        path = `/upload/drive/v3/files?uploadType=multipart`;
-                        method = 'POST';
-                        metadata.parents = ['root'];
-
-                        const boundary = '-------314159265358979323846';
-                        const delimiter = "\r\n--" + boundary + "\r\n";
-                        const close_delim = "\r\n--" + boundary + "--";
-
-                        const multipartRequestBody =
-                            delimiter +
-                            'Content-Type: application/json; charset=UTF-8\r\n\r\n' +
-                            JSON.stringify(metadata) +
-                            delimiter +
-                            'Content-Type: application/json\r\n\r\n' +
-                            content +
-                            close_delim;
-                        requestBody = multipartRequestBody;
-                        headers = {'Content-Type': 'multipart/related; boundary="' + boundary + '"'};
-                    }
-
-                    try {
-                        const response = await gapi.client.request({
-                            path: path,
-                            method: method,
-                            headers: headers,
-                            body: requestBody
-                        });
-                        fileId = response.result.id;
-                        driveSyncStatus.textContent = 'تم الحفظ بنجاح!';
-                    } catch (err) {
-                        console.error("Error saving to drive:", err);
-                        driveSyncStatus.textContent = 'فشل الحفظ!';
-                    }
-                    setTimeout(() => driveSyncStatus.textContent = '', 3000);
-                }
-                
-                async function loadFromDrive() {
-                    driveSyncStatus.textContent = 'جاري التحميل...';
-                    if (!fileId) {
-                        fileId = await findAppFile();
-                    }
-
-                    if (fileId) {
-                        try {
-                            const response = await gapi.client.drive.files.get({
-                                fileId: fileId,
-                                alt: 'media'
-                            });
-                            const savedState = JSON.parse(response.body);
-                            state = {
-                                ...state,
-                                ...savedState,
-                                selectedHallIds: new Set(savedState.selectedHallIds || []),
-                                seatingChart: new Map(savedState.seatingChart || []),
-                                columnClassAssignments: new Map(savedState.columnClassAssignments || []),
-                                halls: savedState.halls.map(h => ({ ...h, disabledSeats: new Set(h.disabledSeats || []) })),
-                            };
-                            saveStateToLocalStorage();
-                            updateUI(); 
-                            driveSyncStatus.textContent = 'تم التحميل بنجاح!';
-
-                            if (state.seatingChart.size > 0) {
-                                state.currentStep = 5;
-                                updateUI();
-                                showAlert('تم تحميل البيانات بنجاح. تم نقلك إلى خطوة تسجيل الغياب.');
-                            }
-
-                        } catch (err) {
-                            console.error("Error loading from drive:", err);
-                            driveSyncStatus.textContent = 'فشل التحميل!';
-                        }
-                    } else {
-                        driveSyncStatus.textContent = 'لا توجد بيانات محفوظة.';
-                    }
-                    setTimeout(() => driveSyncStatus.textContent = '', 3000);
-                }
-
-                syncToDriveBtn.addEventListener('click', () => handleDriveAction(saveToDrive));
-                loadFromDriveBtn.addEventListener('click', () => handleDriveAction(loadFromDrive));
-
-                function updateProgress(current, total, title = "جاري تحضير الملف...") {
-                    if (current === 0 && total > 0) {
-                        progressTitle.textContent = title;
-                        progressBar.style.width = '0%';
-                        progressText.textContent = '0%';
-                        progressModal.classList.remove('hidden');
-                        return;
-                    }
-
-                    const percentage = Math.round((current / total) * 100);
-                    progressBar.style.width = percentage + '%';
-                    progressText.textContent = percentage + '%';
-                    if (current >= total) {
-                        setTimeout(() => {
-                            progressModal.classList.add('hidden');
-                        }, 500);
-                    }
-                }
-
-                const updateUI = () => {
-                    renderStepper();
-                    sections.forEach(s => s.classList.remove('active'));
-                    document.getElementById(`step-${state.currentStep}`).classList.add('active');
-                    prevBtn.disabled = state.currentStep === 1;
-                    nextBtn.disabled = (state.currentStep === 1 && state.selectedHallIds.size === 0) || (state.currentStep === steps.length);
-                    nextBtn.textContent = 'التالي';
-                    nextBtn.classList.toggle('hidden', state.currentStep === steps.length);
-
-                    if (state.currentStep === 1) renderHallsList();
-                    if (state.currentStep === 2) renderStudentList();
-                    if (state.currentStep === 3) renderDistributionView();
-                    if (state.currentStep === 4) renderExportView();
-                    if (state.currentStep === 5) renderAbsenceView();
-                };
-
-                const renderStepper = () => {
-                    stepperContainer.innerHTML = steps.map(step => {
-                        const isActive = state.currentStep === step.id;
-                        const isDone = state.currentStep > step.id;
-                        const baseClasses = 'flex items-center gap-2 transition-all';
-                        const activeClasses = 'text-sky-600 font-bold';
-                        const doneClasses = 'text-green-600';
-                        let html = `<div class="${baseClasses} ${isActive ? activeClasses : (isDone ? doneClasses : 'text-gray-400')}">
-                            <div class="w-8 h-8 rounded-full flex items-center justify-center border-2 ${isActive ? 'border-sky-600 bg-sky-100' : (isDone ? 'border-green-600 bg-green-100' : 'border-gray-300')}">
-                                ${isDone ? '✓' : step.id}
-                            </div>
-                            <span class="hidden md:block">${step.name}</span>
-                        </div>`;
-                        if (step.id < steps.length) {
-                            html += `<div class="flex-1 h-0.5 ${(isDone || (isActive && state.selectedHallIds.size > 0)) ? 'bg-green-600' : 'bg-gray-300'}"></div>`;
-                        }
-                        return html;
-                    }).join('');
-                };
-
-                const checkIfSeatingChartExists = (hallId) => {
-                    for (const key of state.seatingChart.keys()) {
-                        if (key.startsWith(hallId + ':')) { return true; }
-                    }
-                    return false;
-                };
-
-                const renderHallsList = () => {
-                    if(state.halls.length === 0) {
-                        hallsListContainer.innerHTML = `<p class="text-slate-400 text-center col-span-full mt-8">لم يتم إنشاء أي قاعات بعد. انقر على "إنشاء قاعة جديدة" للبدء.</p>`;
-                    } else {
-                        hallsListContainer.innerHTML = state.halls.map(hall => {
-                            const isSelected = state.selectedHallIds.has(hall.id);
-                            const hasChart = checkIfSeatingChartExists(hall.id);
-                            return `
-                            <div class="border rounded-lg p-4 shadow transition flex flex-col ${isSelected ? 'border-sky-500 ring-2 ring-sky-200' : 'bg-white'}">
-                                <div class="flex-grow">
-                                    <h3 class="font-bold text-lg">${hall.name}</h3>
-                                    <p class="text-sm text-slate-600">${hall.location || 'لم يحدد الموقع'}</p>
-                                    <p class="text-sm text-slate-500">الصفوف: ${hall.rows} | القطاعات: ${hall.sector1Name}, ${hall.sector2Name}</p>
-                                    <p class="text-sm text-slate-500">إجمالي المقاعد: ${hall.rows * (hall.sector1Cols + hall.sector2Cols)}</p>
-                                </div>
-                                <div class="flex gap-2 mt-4 pt-4 border-t">
-                                    <button onclick="window.toggleHallSelection(${hall.id})" class="flex-1 text-sm ${isSelected ? 'bg-red-500' : 'bg-green-500'} text-white font-semibold py-1 px-2 rounded hover:bg-green-600">
-                                        ${isSelected ? 'إلغاء التحديد' : 'تحديد'}
-                                    </button>
-                                    <button onclick="window.editHall(${hall.id})" class="text-sm bg-yellow-400 text-white font-semibold py-1 px-2 rounded hover:bg-yellow-500">تعديل</button>
-                                    <button onclick="window.copyHall(${hall.id})" class="text-sm bg-blue-400 text-white font-semibold py-1 px-2 rounded hover:bg-blue-500">نسخ</button>
-                                    <button onclick="window.deleteHall(${hall.id})" class="text-sm bg-red-500 text-white font-semibold py-1 px-2 rounded hover:bg-red-600">حذف</button>
-                                </div>
-                                ${hasChart ? `
-                                    <div class="mt-2 pt-2 border-t border-dashed">
-                                    <button onclick="window.goToAbsenceScanning(${hall.id})" class="w-full text-sm bg-teal-500 text-white font-bold py-2 px-2 rounded hover:bg-teal-600 transition">
-                                        تسجيل الغياب
-                                    </button>
-                                </div>
-                                ` : ''}
-                            </div>`;
-                        }).join('');
-                    }
-                    nextBtn.disabled = state.selectedHallIds.size === 0;
-                };
-
-                const toggleHallModal = (show, hall = null) => {
-                    hallModalBackdrop.classList.toggle('hidden', !show);
-                    if (show) {
-                        hallForm.reset();
-                        if (hall) {
-                            hallModalTitle.textContent = 'تعديل القاعة';
-                            hallIdInput.value = hall.id;
-                            hallNameInput.value = hall.name;
-                            hallLocationInput.value = hall.location || '';
-                            hallRowsInput.value = hall.rows;
-                            hallSector1ColsInput.value = hall.sector1Cols;
-                            hallSector2ColsInput.value = hall.sector2Cols;
-                        } else {
-                            hallModalTitle.textContent = 'إنشاء قاعة جديدة';
-                            hallIdInput.value = '';
-                        }
-                    }
-                };
-                showHallModalBtn.addEventListener('click', () => toggleHallModal(true));
-                cancelHallModalBtn.addEventListener('click', () => toggleHallModal(false));
-
-                hallForm.addEventListener('submit', (e) => {
-                    e.preventDefault();
-                    const hallId = hallIdInput.value ? parseInt(hallIdInput.value) : Date.now();
-                    const isEditing = !!hallIdInput.value;
-                    const hallData = {
-                        id: hallId, name: hallNameInput.value, location: hallLocationInput.value,
-                        rows: parseInt(hallRowsInput.value), sector1Cols: parseInt(hallSector1ColsInput.value),
-                        sector2Cols: parseInt(hallSector2ColsInput.value), disabledSeats: new Set()
-                    };
-                    const existingIndex = state.halls.findIndex(h => h.id === hallData.id);
-                    if (isEditing) {
-                        const oldHall = state.halls[existingIndex];
-                        hallData.sector1Name = oldHall.sector1Name;
-                        hallData.sector2Name = oldHall.sector2Name;
-                        hallData.disabledSeats = oldHall.disabledSeats;
-                        state.halls[existingIndex] = hallData;
-                    } else {
-                        let maxSectorNum = 0;
-                        state.halls.forEach(h => {
-                            [h.sector1Name, h.sector2Name].forEach(sectorName => {
-                                if (sectorName) {
-                                    const sectorMatch = sectorName.match(/(\d+)/);
-                                    if (sectorMatch) {
-                                        const num = parseInt(sectorMatch[1], 10);
-                                        if (num > maxSectorNum) maxSectorNum = num;
-                                    }
-                                }
-                            });
-                        });
-                        hallData.sector1Name = `قطاع (${maxSectorNum + 1})`;
-                        hallData.sector2Name = `قطاع (${maxSectorNum + 2})`;
-                        state.halls.push(hallData);
-                    }
-                    toggleHallModal(false);
-                    saveStateToLocalStorage();
-                    updateUI();
-                });
-
-                window.toggleHallSelection = (id) => {
-                    if (state.selectedHallIds.has(id)) { state.selectedHallIds.delete(id); } else { state.selectedHallIds.add(id); }
-                    updateUI();
-                };
-                window.editHall = (id) => { const hall = state.halls.find(h => h.id === id); if(hall) toggleHallModal(true, hall); };
-                window.copyHall = (id) => {
-                    const hallToCopy = state.halls.find(h => h.id === id);
-                    if (!hallToCopy) return;
-                    let newHallName = `${hallToCopy.name} (نسخة)`;
-                    const nameMatch = hallToCopy.name.match(/^(.*?)[\s(]*(\d+)\)?$/);
-                    let baseName = hallToCopy.name;
-                    if (nameMatch) { baseName = nameMatch[1].trim(); }
-                    let maxNum = 0;
-                    const regex = new RegExp(`^${baseName.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')}[\\s(]*(\\d+)\\)?$`);
-                    state.halls.forEach(h => {
-                        const match = h.name.match(regex);
-                        if (match) {
-                            const num = parseInt(match[1], 10);
-                            if (num > maxNum) { maxNum = num; }
-                        }
-                    });
-                    newHallName = `${baseName} (${maxNum + 1})`;
-                    let maxSectorNum = 0;
-                    state.halls.forEach(h => {
-                        [h.sector1Name, h.sector2Name].forEach(sectorName => {
-                            if (sectorName) {
-                                const sectorMatch = sectorName.match(/(\d+)/);
-                                if (sectorMatch) {
-                                    const num = parseInt(sectorMatch[1], 10);
-                                    if (num > maxSectorNum) maxSectorNum = num;
-                                }
-                            }
-                        });
-                    });
-                    const newHall = {
-                        ...hallToCopy, id: Date.now(), name: newHallName,
-                        sector1Name: `قطاع (${maxSectorNum + 1})`, sector2Name: `قطاع (${maxSectorNum + 2})`,
-                        disabledSeats: new Set(hallToCopy.disabledSeats), 
-                    };
-                    state.halls.push(newHall);
-                    saveStateToLocalStorage();
-                    updateUI();
-                };
-                window.deleteHall = (id) => {
-                    if (confirm('هل أنت متأكد من حذف هذه القاعة؟ سيتم حذف مخطط الجلوس المرتبط بها أيضًا.')) {
-                        state.halls = state.halls.filter(h => h.id !== id);
-                        state.selectedHallIds.delete(id);
-                        const newSeatingChart = new Map();
-                        state.seatingChart.forEach((value, key) => {
-                            if (!key.startsWith(id + ':')) { newSeatingChart.set(key, value); }
-                        });
-                        state.seatingChart = newSeatingChart;
-                        saveStateToLocalStorage();
-                        updateUI();
-                    }
-                };
-                window.goToAbsenceScanning = (hallId) => {
-                    state.selectedHallIds.clear();
-                    state.selectedHallIds.add(hallId);
-                    state.currentStep = 5;
-                    updateUI();
-                };
-
-                const renderStudentList = () => {
-                    studentCountSpan.textContent = state.students.length;
-                    if (state.students.length === 0) {
-                        studentListContainer.innerHTML = `<p class="text-slate-400 text-center mt-8">لم يتم إضافة أي طلاب بعد.</p>`;
-                        return;
-                    }
-                    studentListContainer.innerHTML = state.students.map(s => `
-                        <div class="p-2 border rounded-md bg-white flex justify-between items-center text-sm">
-                            <div><p class="font-bold">${s.name} (${s.id})</p><p class="text-slate-500">${s.class} - ${s.section}</p></div>
-                            <button class="text-red-500 hover:text-red-700 font-bold p-1" onclick="window.removeStudent(${s.uid})">✕</button>
-                        </div>`).join('');
-                };
-                window.removeStudent = (uid) => { 
-                    state.students = state.students.filter(s => s.uid !== uid);
-                    const newSeatingChart = new Map();
-                    state.seatingChart.forEach((value, key) => {
-                        if (value !== uid) { newSeatingChart.set(key, value); }
-                    });
-                    state.seatingChart = newSeatingChart;
-                    saveStateToLocalStorage();
-                    renderStudentList(); 
-                };
-                const processNewStudents = (newStudents) => {
-                    const uniqueNewStudents = newStudents.filter(ns => !state.students.some(s => s.id === ns.id));
-                    state.students = [...state.students, ...uniqueNewStudents];
-                    state.students.sort((a,b) => a.name.localeCompare(b.name));
-                    saveStateToLocalStorage();
-                    renderStudentList();
-                };
-                importTextBtn.addEventListener('click', () => {
-                    const lines = studentsTextInput.value.trim().split('\n');
-                    const newStudents = lines.map((line, index) => {
-                        const parts = line.split(',').map(p => p.trim());
-                        if (parts.length < 4) return null;
-                        return { uid: Date.now() + index, name: parts[0], id: parts[1], class: parts[2], section: parts[3] };
-                    }).filter(Boolean);
-                    processNewStudents(newStudents);
-                    studentsTextInput.value = '';
-                });
-                excelFileInput.addEventListener('change', (e) => {
-                    const file = e.target.files[0];
-                    const reader = new FileReader();
-                    reader.onload = (event) => {
-                        const data = new Uint8Array(event.target.result);
-                        const workbook = XLSX.read(data, { type: 'array' });
-                        const sheetName = workbook.SheetNames[0];
-                        const worksheet = workbook.Sheets[sheetName];
-                        const json = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-                        const newStudents = json.slice(1).map((row, index) => {
-                            if(row.length < 4) return null;
-                            return { uid: Date.now() + index, name: String(row[0]), id: String(row[1]), class: String(row[2]), section: String(row[3]) };
-                        }).filter(Boolean);
-                        processNewStudents(newStudents);
-                    };
-                    reader.readAsArrayBuffer(file);
-                });
-                tabBtns.forEach(btn => {
-                    btn.addEventListener('click', () => {
-                        tabBtns.forEach(b => { b.classList.remove('border-sky-600', 'text-sky-600'); b.classList.add('text-gray-500'); });
-                        btn.classList.add('border-sky-600', 'text-sky-600');
-                        btn.classList.remove('text-gray-500');
-                        const tabId = btn.getAttribute('data-tab');
-                        tabContents.forEach(content => content.classList.toggle('hidden', content.id !== tabId));
-                    });
-                });
-
-                const renderDistributionView = () => {
-                    const assignedStudentUids = new Set([...state.seatingChart.values()]);
-                    const unassignedStudents = state.students.filter(s => !assignedStudentUids.has(s.uid));
-                    unassignedStudentsContainer.innerHTML = unassignedStudents.map(s => `
-                        <div id="student-card-${s.uid}" class="student-card p-2 border rounded-md bg-white flex justify-between items-center text-sm" draggable="true" data-uid="${s.uid}">
-                             <div><p class="font-bold">${s.name}</p><p class="text-slate-500">${s.id} - ${s.class} / ${s.section}</p></div>
-                        </div>`).join('') || `<p class="text-slate-400 text-center mt-8">تم توزيع جميع الطلاب.</p>`;
-                    multiHallDistributionContainer.innerHTML = '';
-                    state.selectedHallIds.forEach(hallId => {
-                        const hall = state.halls.find(h => h.id === hallId);
-                        if (hall) {
-                            const hallContainer = document.createElement('div');
-                            hallContainer.className = 'p-4 border rounded-lg bg-gray-50 overflow-x-auto';
-                            hallContainer.innerHTML = `
-                                <h3 class="font-bold text-xl mb-4 text-center">${hall.name}</h3>
-                                <div class="flex gap-8 justify-center">
-                                    <div class="text-center">
-                                        <h4 class="font-bold text-lg mb-2">${hall.sector1Name}</h4>
-                                        <div id="selector-container-${hall.id}-1" class="flex gap-2 justify-center mb-2"></div>
-                                        <div id="dist-grid-${hall.id}-1" class="grid gap-2"></div>
-                                    </div>
-                                    <div class="text-center">
-                                        <h4 class="font-bold text-lg mb-2">${hall.sector2Name}</h4>
-                                        <div id="selector-container-${hall.id}-2" class="flex gap-2 justify-center mb-2"></div>
-                                        <div id="dist-grid-${hall.id}-2" class="grid gap-2"></div>
-                                    </div>
-                                </div>`;
-                            multiHallDistributionContainer.appendChild(hallContainer);
-                            renderSectorGrid(document.getElementById(`dist-grid-${hall.id}-1`), hall, 1);
-                            renderSectorGrid(document.getElementById(`dist-grid-${hall.id}-2`), hall, 2);
-                            renderColumnSelectors(document.getElementById(`selector-container-${hall.id}-1`), hall, 1);
-                            renderColumnSelectors(document.getElementById(`selector-container-${hall.id}-2`), hall, 2);
-                        }
-                    });
-                    addDragAndDropListeners();
-                };
-
-                const renderColumnSelectors = (container, hall, sector) => {
-                    const uniqueClasses = [...new Set(state.students.map(s => s.class))];
-                    const cols = sector === 1 ? hall.sector1Cols : hall.sector2Cols;
-                    const colOffset = sector === 1 ? 0 : hall.sector1Cols;
-                    container.style.gridTemplateColumns = `repeat(${cols}, minmax(0, 1fr))`;
-                    for (let c = 0; c < cols; c++) {
-                        const actualCol = c + colOffset;
-                        const columnId = `${hall.id}:${actualCol}`;
-                        const select = document.createElement('select');
-                        select.className = 'text-xs border rounded-md p-1';
-                        select.dataset.columnId = columnId;
-                        select.innerHTML = `<option value="">أي صف</option>` + uniqueClasses.map(cls => `<option value="${cls}" ${state.columnClassAssignments.get(columnId) === cls ? 'selected' : ''}>${cls}</option>`).join('');
-                        select.addEventListener('change', (e) => {
-                            const selectedClass = e.target.value;
-                            if (selectedClass) { state.columnClassAssignments.set(columnId, selectedClass); } else { state.columnClassAssignments.delete(columnId); }
-                            saveStateToLocalStorage();
-                        });
-                        container.appendChild(select);
-                    }
-                };
-                const renderSectorGrid = (gridContainer, hall, sector) => {
-                    gridContainer.innerHTML = '';
-                    const cols = sector === 1 ? hall.sector1Cols : hall.sector2Cols;
-                    const colOffset = sector === 1 ? 0 : hall.sector1Cols;
-                    gridContainer.style.gridTemplateColumns = `repeat(${cols}, minmax(0, 1fr))`;
-                    for (let r = 0; r < hall.rows; r++) {
-                        for (let c = 0; c < cols; c++) {
-                            const actualCol = c + colOffset;
-                            const seatId = `${hall.id}:${r}-${actualCol}`;
-                            const seat = document.createElement('div');
-                            seat.className = 'seat droppable-seat aspect-square border-2 border-dashed border-gray-300 rounded-md p-1 bg-gray-100 overflow-hidden min-w-[80px] cursor-pointer';
-                            seat.dataset.seatId = seatId;
-                            const studentUid = getStudentUidBySeatId(seatId);
-                            if (hall.disabledSeats.has(seatId)) {
-                                seat.classList.add('disabled');
-                            } else if (studentUid) {
-                                const student = state.students.find(s => s.uid === studentUid);
-                                seat.classList.add('occupied');
-                                seat.innerHTML = `<div class="student-card w-full h-full flex flex-col justify-center items-center text-center" draggable="true" data-uid="${student.uid}" data-from-seat-id="${seatId}">
-                                        <p class="font-bold text-xs leading-tight">${student.name}</p>
-                                        <p class="text-slate-600 text-[10px]">${student.id}</p>
-                                        <p class="text-sky-700 font-semibold text-[10px] mt-1">${student.class} / ${student.section}</p>
-                                        <div class="flex justify-center mt-1" id="qrcode-${seatId.replace(/:/g, '-')}"></div>
-                                    </div>`;
-                                if(hasConflict(seatId)) seat.classList.add('conflict');
-                            }
-                            seat.addEventListener('click', () => { if (!getStudentUidBySeatId(seatId)) { toggleSeatDisabled(seatId); } });
-                            gridContainer.appendChild(seat);
-                            if (studentUid) {
-                                const student = state.students.find(s => s.uid === studentUid);
-                                new QRCode(document.getElementById(`qrcode-${seatId.replace(/:/g, '-')}`), {
-                                    text: student.id.toString(), width: 40, height: 40,
-                                    colorDark : "#000000", colorLight : "#ffffff", correctLevel : QRCode.CorrectLevel.H
-                                });
-                            }
-                        }
-                    }
-                };
-                const toggleSeatDisabled = (seatId) => {
-                    const [hallIdStr] = seatId.split(':');
-                    const hallId = parseInt(hallIdStr);
-                    const hall = state.halls.find(h => h.id === hallId);
-                    if (!hall) return;
-                    if (hall.disabledSeats.has(seatId)) { hall.disabledSeats.delete(seatId); } else { hall.disabledSeats.add(seatId); }
-                    saveStateToLocalStorage();
-                    renderDistributionView();
-                };
-
-                const addDragAndDropListeners = () => {
-                    document.querySelectorAll('.student-card').forEach(card => {
-                        card.addEventListener('dragstart', e => {
-                            e.dataTransfer.setData('text/plain', e.target.closest('.student-card').dataset.uid);
-                            e.dataTransfer.setData('fromSeatId', e.target.closest('.student-card').dataset.fromSeatId || '');
-                            setTimeout(() => e.target.classList.add('opacity-50'), 0);
-                        });
-                        card.addEventListener('dragend', e => e.target.classList.remove('opacity-50'));
-                    });
-                    document.querySelectorAll('.droppable-seat').forEach(seat => {
-                        seat.addEventListener('dragover', e => {
-                            e.preventDefault();
-                            if(!seat.classList.contains('disabled') && !seat.querySelector('.student-card')) seat.classList.add('droppable-hover');
-                        });
-                        seat.addEventListener('dragleave', e => e.target.closest('.droppable-seat').classList.remove('droppable-hover'));
-                        seat.addEventListener('drop', e => {
-                            e.preventDefault();
-                            const seatEl = e.target.closest('.droppable-seat');
-                            seatEl.classList.remove('droppable-hover');
-                            const studentUid = parseInt(e.dataTransfer.getData('text/plain'), 10);
-                            const fromSeatId = e.dataTransfer.getData('fromSeatId');
-                            const toSeatId = seatEl.dataset.seatId;
-                            const [hallIdStr] = toSeatId.split(':');
-                            const hall = state.halls.find(h => h.id === parseInt(hallIdStr));
-                            if (hall.disabledSeats.has(toSeatId) && !getStudentUidBySeatId(toSeatId)) { hall.disabledSeats.delete(toSeatId); }
-                            if (fromSeatId) state.seatingChart.delete(fromSeatId);
-                            state.seatingChart.set(toSeatId, studentUid);
-                            saveStateToLocalStorage();
-                            renderDistributionView();
-                        });
-                    });
-                };
-
-                const getStudentUidBySeatId = (seatId) => state.seatingChart.get(seatId);
-                const hasConflict = (seatId) => {
-                    const studentUid = getStudentUidBySeatId(seatId);
-                    if (!studentUid) return false;
-                    const student = state.students.find(s => s.uid === studentUid);
-                    if (!student) return false;
-                    const [hallId, coords] = seatId.split(':');
-                    const [r, c] = coords.split('-').map(Number);
-                    const neighbors = [ [r, c - 1], [r, c + 1] ];
-                    for (const [nr, nc] of neighbors) {
-                        const neighborSeatId = `${hallId}:${nr}-${nc}`;
-                        const neighborUid = getStudentUidBySeatId(neighborSeatId);
-                        if (neighborUid) {
-                            const neighbor = state.students.find(s => s.uid === neighborUid);
-                            if (neighbor && neighbor.class === student.class) return true;
-                        }
-                    }
-                    return false;
-                };
-                
-                resetDistributionBtn.addEventListener('click', () => { 
-                    state.seatingChart.clear();
-                    state.columnClassAssignments.clear();
-                    saveStateToLocalStorage();
-                    renderDistributionView(); 
-                });
-
-                autoDistributeBtn.addEventListener('click', () => {
-                    state.seatingChart.clear();
-                    const allColumns = [];
-                    const sortedHallIds = Array.from(state.selectedHallIds).sort((a, b) => a - b);
-                    sortedHallIds.forEach(hallId => {
-                        const hall = state.halls.find(h => h.id === hallId);
-                        if (hall) {
-                            for (let c = 0; c < (hall.sector1Cols + hall.sector2Cols); c++) {
-                                const column = [];
-                                for (let r = 0; r < hall.rows; r++) {
-                                    const seatId = `${hall.id}:${r}-${c}`;
-                                    if (!hall.disabledSeats.has(seatId)) { column.push(seatId); }
-                                }
-                                if (column.length > 0) allColumns.push({ id: `${hall.id}:${c}`, seats: column });
-                            }
-                        }
-                    });
-                    const studentsByClass = state.students.reduce((acc, student) => {
-                        if (!acc[student.class]) acc[student.class] = [];
-                        acc[student.class].push(student);
-                        return acc;
-                    }, {});
-                    const sortedClasses = Object.keys(studentsByClass).sort((a, b) => a.localeCompare(b, undefined, {numeric: true}));
-                    sortedClasses.forEach(className => {
-                        studentsByClass[className].sort((a, b) => parseInt(a.id, 10) - parseInt(b.id, 10));
-                    });
-                    const placementCounters = sortedClasses.reduce((acc, val) => ({...acc, [val]: 0}), {});
-                    allColumns.forEach(column => {
-                        const assignedClass = state.columnClassAssignments.get(column.id);
-                        if (assignedClass && studentsByClass[assignedClass]) {
-                            for (const seatId of column.seats) {
-                                const studentIndex = placementCounters[assignedClass];
-                                if (studentIndex < studentsByClass[assignedClass].length) {
-                                    const student = studentsByClass[assignedClass][studentIndex];
-                                    state.seatingChart.set(seatId, student.uid);
-                                    placementCounters[assignedClass]++;
-                                } else { break; }
-                            }
-                        }
-                    });
-                    const unassignedColumns = allColumns.filter(c => !state.columnClassAssignments.has(c.id));
-                    const remainingStudents = state.students.filter(s => !Array.from(state.seatingChart.values()).includes(s.uid));
-                    const remainingStudentsByClass = remainingStudents.reduce((acc, student) => {
-                        if (!acc[student.class]) acc[student.class] = [];
-                        acc[student.class].push(student);
-                        return acc;
-                    }, {});
-                    const remainingSortedClasses = Object.keys(remainingStudentsByClass).sort((a, b) => a.localeCompare(b, undefined, {numeric: true}));
-                    remainingSortedClasses.forEach(className => {
-                        remainingStudentsByClass[className].sort((a, b) => parseInt(a.id, 10) - parseInt(b.id, 10));
-                    });
-                    let colIndex = 0;
-                    let classIndex = 0;
-                    const remainingPlacementCounters = remainingSortedClasses.reduce((acc, val) => ({...acc, [val]: 0}), {});
-                    while(colIndex < unassignedColumns.length) {
-                        const currentColumn = unassignedColumns[colIndex];
-                        const currentClassName = remainingSortedClasses[classIndex];
-                        if (currentClassName && remainingStudentsByClass[currentClassName]) {
-                            const studentsInClass = remainingStudentsByClass[currentClassName];
-                            if (remainingPlacementCounters[currentClassName] < studentsInClass.length) {
-                                for (const seatId of currentColumn.seats) {
-                                    const studentIndex = remainingPlacementCounters[currentClassName];
-                                    if (studentIndex < studentsInClass.length) {
-                                        const student = studentsInClass[studentIndex];
-                                        if (!state.seatingChart.has(seatId)) {
-                                             state.seatingChart.set(seatId, student.uid);
-                                            remainingPlacementCounters[currentClassName]++;
-                                        }
-                                    } else { break; }
-                                }
-                            }
-                        }
-                        colIndex++;
-                        classIndex = (classIndex + 1) % remainingSortedClasses.length;
-                        if (state.seatingChart.size >= state.students.length) { break; }
-                    }
-                    saveStateToLocalStorage();
-                    renderDistributionView();
-                });
-
-                const renderExportView = () => {
-                    exportHeader.querySelector('h2').textContent = `الخطوة 4: تصدير (${state.selectedHallIds.size} قاعات محددة)`;
-                };
-
-                const createPageForPdf = (hall, sector) => {
-                    const pageContainer = document.createElement('div');
-                    pageContainer.className = 'pdf-page-container';
-                    pageContainer.style.fontFamily = "'Cairo', sans-serif";
-                    const colOffset = sector === 1 ? 0 : hall.sector1Cols;
-                    const cols = sector === 1 ? hall.sector1Cols : hall.sector2Cols;
-                    const sectorStudents = [];
-                    state.seatingChart.forEach((uid, seatId) => {
-                        const [sidHall, sidCoords] = seatId.split(':');
-                        if (parseInt(sidHall) === hall.id) {
-                            const [r, c] = sidCoords.split('-').map(Number);
-                            if (c >= colOffset && c < colOffset + cols) {
-                                const student = state.students.find(s => s.uid === uid);
-                                if(student) sectorStudents.push(student);
-                            }
-                        }
-                    });
-                    const classCounts = sectorStudents.reduce((acc, student) => {
-                        acc[student.class] = (acc[student.class] || 0) + 1;
-                        return acc;
-                    }, {});
-                    const headerDiv = document.createElement('div');
-                    headerDiv.className = 'pdf-header';
-                    const bodyDiv = document.createElement('div');
-                    bodyDiv.className = 'pdf-body';
-                    if(state.backgrounds.use) {
-                        if(state.backgrounds.header) {
-                            const headerImg = document.createElement('img');
-                            headerImg.src = state.backgrounds.header;
-                            headerImg.className = 'pdf-bg-image';
-                            headerImg.style.opacity = state.backgrounds.headerOpacity;
-                            headerDiv.appendChild(headerImg);
-                        }
-                        if(state.backgrounds.body) {
-                            const bodyImg = document.createElement('img');
-                            bodyImg.src = state.backgrounds.body;
-                            bodyImg.className = 'pdf-bg-image';
-                            bodyImg.style.opacity = state.backgrounds.bodyOpacity;
-                            bodyDiv.appendChild(bodyImg);
-                        }
-                    }
-                    const headerContent = document.createElement('div');
-                    headerContent.className = 'pdf-content flex justify-between items-start mb-6';
-                    const leftDiv = document.createElement('div');
-                    leftDiv.className = 'w-1/4';
-                    const centerDiv = document.createElement('div');
-                    centerDiv.className = 'w-1/2 text-center';
-                    centerDiv.innerHTML = `<h1 class="text-2xl font-bold">قاعة (${hall.name}) - ${hall.location || ''}</h1><h2 class="text-xl font-bold mt-2">${sector === 1 ? hall.sector1Name : hall.sector2Name}</h2>`;
-                    const rightDiv = document.createElement('div');
-                    rightDiv.className = 'w-1/4 text-right space-y-1';
-                    Object.entries(classCounts).forEach(([className, count]) => {
-                        const p = document.createElement('p');
-                        p.className = 'text-lg font-bold';
-                        const toArabicNumerals = (num) => String(num).replace(/[0-9]/g, d => '٠١٢٣٤٥٦٧٨٩'[d]);
-                        p.textContent = `${className}: ( ${toArabicNumerals(count)} )`;
-                        rightDiv.appendChild(p);
-                    });
-                    headerContent.appendChild(leftDiv);
-                    headerContent.appendChild(centerDiv);
-                    headerContent.appendChild(rightDiv);
-                    headerDiv.appendChild(headerContent);
-                    pageContainer.appendChild(headerDiv);
-                    const sectorGrid = document.createElement('div');
-                    sectorGrid.className = 'grid gap-2 pdf-content';
-                    sectorGrid.style.gridTemplateColumns = `repeat(${cols}, minmax(0, 1fr))`;
-                    for (let r = 0; r < hall.rows; r++) {
-                        for (let c = 0; c < cols; c++) {
-                            const actualCol = c + colOffset;
-                            const seatId = `${hall.id}:${r}-${actualCol}`;
-                            const seat = document.createElement('div');
-                            seat.className = 'relative aspect-square border-2 border-black rounded-md p-1 bg-transparent overflow-hidden flex flex-col justify-between items-center text-center';
-                            if (hall.disabledSeats.has(seatId)) {
-                                seat.innerHTML = `<div class="w-full h-full flex justify-center items-center text-3xl text-gray-400">✕</div>`;
-                                seat.style.backgroundColor = '#f3f4f6';
-                            } else {
-                                const studentUid = getStudentUidBySeatId(seatId);
-                                if (studentUid) {
-                                    const student = state.students.find(s => s.uid === studentUid);
-                                    const safeSeatId = seatId.replace(/:/g, '-');
-                                    seat.innerHTML = `<div class="w-full flex-grow flex flex-col justify-start items-center">
-                                                     <p class="font-black text-lg leading-tight">${student.name}</p>
-                                                     <p class="font-bold text-slate-800 text-sm">${student.id}</p>
-                                                     <p class="font-bold text-slate-800 text-xs mt-1">${student.class} (${student.section})</p>
-                                                    </div>
-                                                    <div style="width: 64px; height: 64px;" id="pdf-qrcode-${safeSeatId}"></div>`;
-                                }
-                            }
-                            sectorGrid.appendChild(seat);
-                        }
-                    }
-                    bodyDiv.appendChild(sectorGrid);
-                    pageContainer.appendChild(bodyDiv);
-                    for (let r = 0; r < hall.rows; r++) {
-                        for (let c = 0; c < cols; c++) {
-                            const actualCol = c + colOffset;
-                            const seatId = `${hall.id}:${r}-${actualCol}`;
-                            const studentUid = getStudentUidBySeatId(seatId);
-                            if (studentUid) {
-                                const student = state.students.find(s => s.uid === studentUid);
-                                const safeSeatId = seatId.replace(/:/g, '-');
-                                const qrElement = pageContainer.querySelector(`#pdf-qrcode-${safeSeatId}`);
-                                if(qrElement && student) {
-                                     new QRCode(qrElement, {
-                                        text: student.id.toString(), width: 64, height: 64,
-                                        colorDark : "#000000", colorLight : "#ffffff", correctLevel : QRCode.CorrectLevel.M
-                                    });
-                                }
-                            }
-                        }
-                    }
-                    return pageContainer;
-                };
-
-                const handleBgUpload = (e, type) => {
-                    const file = e.target.files[0];
-                    if (!file) return;
-                    const reader = new FileReader();
-                    reader.onload = (event) => { state.backgrounds[type] = event.target.result; };
-                    reader.readAsDataURL(file);
-                };
-                useBackgroundsToggle.addEventListener('change', (e) => {
-                    state.backgrounds.use = e.target.checked;
-                    backgroundInputs.classList.toggle('hidden', !e.target.checked);
-                });
-                headerBgInput.addEventListener('change', (e) => handleBgUpload(e, 'header'));
-                bodyBgInput.addEventListener('change', (e) => handleBgUpload(e, 'body'));
-                headerOpacitySlider.addEventListener('input', (e) => {
-                    state.backgrounds.headerOpacity = e.target.value;
-                    headerOpacityValue.textContent = Math.round(e.target.value * 100);
-                });
-                bodyOpacitySlider.addEventListener('input', (e) => {
-                    state.backgrounds.bodyOpacity = e.target.value;
-                    bodyOpacityValue.textContent = Math.round(e.target.value * 100);
-                });
-                previewPdfBtn.addEventListener('click', async () => {
-                    if (state.selectedHallIds.size === 0) { showAlert('الرجاء تحديد قاعة واحدة على الأقل للمعاينة.'); return; }
-                    const firstHallId = Array.from(state.selectedHallIds)[0];
-                    const hall = state.halls.find(h => h.id === firstHallId);
-                    previewContent.innerHTML = '';
-                    const pageContent = createPageForPdf(hall, 1);
-                    document.body.appendChild(pageContent);
-                    const canvas = await html2canvas(pageContent, { scale: 1, useCORS: true });
-                    canvas.style.width = '100%';
-                    canvas.style.height = 'auto';
-                    previewContent.appendChild(canvas);
-                    document.body.removeChild(pageContent);
-                    previewModalBackdrop.classList.remove('hidden');
-                    previewModalBackdrop.classList.add('flex');
-                });
-                closePreviewModalBtn.addEventListener('click', () => {
-                    previewModalBackdrop.classList.add('hidden');
-                    previewModalBackdrop.classList.remove('flex');
-                });
-                const triggerPdfDownload = (pdf, filename) => {
-                    try {
-                        const blob = pdf.output('blob');
-                        const url = URL.createObjectURL(blob);
-                        const link = document.createElement('a');
-                        link.href = url;
-                        link.download = filename;
-                        document.body.appendChild(link);
-                        link.click();
-                        setTimeout(() => {
-                            document.body.removeChild(link);
-                            window.URL.revokeObjectURL(url);
-                        }, 100);
-                    } catch (e) {
-                        console.error("Error triggering PDF download:", e);
-                        showAlert("حدث خطأ أثناء محاولة تصدير الملف.");
-                    }
-                };
-                exportChartPdfBtn.addEventListener('click', async () => {
-                    if (state.selectedHallIds.size === 0) { showAlert('الرجاء تحديد قاعة واحدة على الأقل.'); return; }
-                    
-                    const sortedHallIds = Array.from(state.selectedHallIds).sort((a,b) => a - b);
-                    const totalPages = sortedHallIds.length * 2;
-                    let pagesProcessed = 0;
-
-                    updateProgress(0, totalPages, 'جاري تصدير مخططات القاعات...');
-                    await new Promise(resolve => setTimeout(resolve, 50));
-
-                    const { jsPDF } = window.jspdf;
-                    const pdf = new jsPDF({ orientation: 'p', unit: 'pt', format: 'a4' });
-                    let isFirstPage = true;
-
-                    for (const hallId of sortedHallIds) {
-                        const hall = state.halls.find(h => h.id === hallId);
-                        if (!hall) continue;
-                        for (const sector of [1, 2]) {
-                            if (!isFirstPage) { pdf.addPage(); }
-                            const pageContent = createPageForPdf(hall, sector);
-                            document.body.appendChild(pageContent);
-                            const canvas = await html2canvas(pageContent, { scale: 1.2, useCORS: true });
-                            const imgData = canvas.toDataURL('image/png');
-                            const pdfWidth = pdf.internal.pageSize.getWidth();
-                            const pdfHeight = pdf.internal.pageSize.getHeight();
-                            pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-                            document.body.removeChild(pageContent);
-                            isFirstPage = false;
-
-                            pagesProcessed++;
-                            updateProgress(pagesProcessed, totalPages, 'جاري تصدير مخططات القاعات...');
-                            await new Promise(resolve => setTimeout(resolve, 20));
-                        }
-                    }
-                    triggerPdfDownload(pdf, `مخططات الجلوس المجمعة.pdf`);
-                    updateProgress(totalPages, totalPages);
-                });
-
-                exportListPdfBtn.addEventListener('click', async () => {
-                    updateProgress(0, 100, 'جاري تصدير قائمة الحضور...');
-                    await new Promise(resolve => setTimeout(resolve, 50));
-
-                    try {
-                        const amiriFont = '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ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAAAAIAAgAAAAAFAAEAAAAAAAAAAQIDBAEFAAcACgAAAAAAAAABAAEAAgABAAEAAQAAAAEAAAAAAAAAAQAAAAAAAQAAAAIAAQAAAAAAAAAAAAMAAAAAAAAAAQAAAAACAAEAAgABAAEAAwAAAAAABAACAAAAAQAJ//8ABwABAAAAAAAAAAEAAAABAAAAAAAAAAEAAAAAAAAAAgAAAAEAAAAAAAAAAQAAAAQAAQAFAAAABQAGAAcACAADAAQABQAHAAMABAAFAAcAAwAEAAsADgAPABAABQAIAAkACgALAAgACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAk.m';
-                        const { jsPDF } = window.jspdf;
-                        const doc = new jsPDF();
-
-                        doc.addFileToVFS('Amiri-Regular.ttf', amiriFont);
-                        doc.addFont('Amiri-Regular.ttf', 'Amiri', 'normal');
-                        doc.setFont('Amiri');
-                        doc.setR2L(true);
-                        updateProgress(20, 100, 'جاري تجميع البيانات...');
-                        await new Promise(resolve => setTimeout(resolve, 50));
-                        
-                        const tableData = [];
-                        state.seatingChart.forEach((studentUid, seatId) => {
-                            const student = state.students.find(s => s.uid === studentUid);
-                            if (student) {
-                                const [hallId, coords] = seatId.split(':');
-                                const hall = state.halls.find(h => h.id === parseInt(hallId));
-                                const [r, c] = coords.split('-').map(Number);
-                                tableData.push({
-                                    seat: `${hall ? hall.name : 'N/A'} | R${r+1}-C${c+1}`,
-                                    name: student.name,
-                                    id: student.id,
-                                    class: student.class,
-                                    section: student.section
-                                });
-                            }
-                        });
-                        tableData.sort((a, b) => a.name.localeCompare(b.name, 'ar'));
-
-                        const head = [['', 'الشعبة', 'الصف', 'الرقم الامتحاني', 'اسم الطالب', 'المقعد والقاعة']];
-                        const body = tableData.map(row => [
-                            '',
-                            row.section,
-                            row.class,
-                            row.id,
-                            row.name,
-                            row.seat
-                        ]);
-                        updateProgress(60, 100, 'جاري إنشاء الجدول...');
-                        await new Promise(resolve => setTimeout(resolve, 50));
-                        doc.text("قائمة الحضور المجمعة", doc.internal.pageSize.getWidth() / 2, 15, { align: 'center' });
-                        doc.autoTable({
-                            head: head,
-                            body: body,
-                            startY: 25,
-                            styles: {
-                                font: 'Amiri',
-                                halign: 'right',
-                                cellPadding: 2,
-                                fontSize: 10,
-                            },
-                            headStyles: {
-                                halign: 'center',
-                                fillColor: [41, 128, 185],
-                                textColor: 255,
-                                fontStyle: 'bold'
-                            },
-                            columnStyles: {
-                                0: {cellWidth: 40}, 
-                            }
-                        });
-                        updateProgress(90, 100, 'جاري الحفظ...');
-                        await new Promise(resolve => setTimeout(resolve, 50));
-
-                        triggerPdfDownload(doc, `قائمة_الحضور.pdf`);
-                        updateProgress(100, 100);
-                    } catch (e) {
-                        console.error("Failed to export attendance list:", e);
-                        showAlert("حدث خطأ فني أثناء تصدير قائمة الحضور.");
-                        updateProgress(100, 100);
-                    }
-                });
-
-                const renderAbsenceView = () => {
-                    absentCountSpan.textContent = state.absentStudents.length;
-                    const hasAbsence = state.absentStudents.length > 0;
-                    
-                    exportAbsentImgBtn.disabled = !hasAbsence;
-                    exportAbsentPdfBtn.disabled = !hasAbsence;
-                    exportAbsentWordBtn.disabled = !hasAbsence;
-
-                    if (!hasAbsence) {
-                        absentListContainer.innerHTML = `<p class="text-slate-400 text-center mt-8">لم يتم تسجيل أي غياب بعد.</p>`;
-                        return;
-                    }
-                    absentListContainer.innerHTML = state.absentStudents.map(s => {
-                        const studentSeat = [...state.seatingChart.entries()].find(([key, val]) => val === s.uid);
-                        let seatInfo = 'غير موزّع';
-                        if(studentSeat) {
-                            const [hallId, coords] = studentSeat[0].split(':');
-                            const hall = state.halls.find(h => h.id === parseInt(hallId));
-                            seatInfo = `${hall ? hall.name : ''} (${coords})`;
-                        }
-                        return `<div class="p-2 border rounded-md bg-white flex justify-between items-center text-sm">
-                            <div><p class="font-bold">${s.name} (${s.id})</p><p class="text-slate-500">${s.class} - ${seatInfo}</p></div>
-                            <button class="text-red-500 hover:text-red-700 font-bold p-1" onclick="window.removeAbsentStudent(${s.uid})">✕</button>
-                        </div>`;
-                    }).join('');
-                };
-                
-                window.removeAbsentStudent = (uid) => {
-                    state.absentStudents = state.absentStudents.filter(s => s.uid !== uid);
-                    renderAbsenceView();
-                };
-
-                const onScanSuccess = (decodedText, decodedResult) => {
-                    const examNumber = decodedText;
-                    if (state.absentStudents.some(s => s.id === examNumber)) {
-                        showScanFeedback(`الطالب بالرقم ${examNumber} مسجل كغائب بالفعل.`, 'fail');
-                        return;
-                    }
-                    const student = state.students.find(s => s.id === examNumber);
-                    if (student) {
-                        state.absentStudents.push(student);
-                        renderAbsenceView();
-                        showScanFeedback(`تم تسجيل غياب: ${student.name} (${student.id})`, 'success');
-                    } else {
-                        showScanFeedback(`الرقم الامتحاني ${examNumber} غير موجود في قوائم الطلاب.`, 'fail');
-                    }
-                };
-                const onScanFailure = (error) => { /* Ignore */ };
-                const showScanFeedback = (message, type) => {
-                    scanFeedbackDiv.innerHTML = `<span class="${type}">${message}</span>`;
-                    setTimeout(() => { scanFeedbackDiv.innerHTML = ''; }, 3000);
-                };
-
-                startScanBtn.addEventListener('click', () => {
-                    html5QrCode = new Html5Qrcode("reader");
-                    startScanBtn.classList.add('hidden');
-                    stopScanBtn.classList.remove('hidden');
-                    scanFeedbackDiv.innerHTML = '';
-                    const config = { fps: 10, qrbox: { width: 250, height: 250 } };
-                    html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess, onScanFailure)
-                    .catch(err => {
-                        showAlert(`خطأ في تشغيل الكاميرا: ${err}`);
-                        stopScanBtn.click();
-                    });
-                });
-                stopScanBtn.addEventListener('click', () => {
-                    if (html5QrCode && html5QrCode.isScanning) {
-                        html5QrCode.stop().then(() => {
-                            startScanBtn.classList.remove('hidden');
-                            stopScanBtn.classList.add('hidden');
-                        }).catch(err => console.error("Failed to stop QR scanner.", err));
-                    }
-                });
-
-                // --- ABSENCE EXPORT FUNCTIONS ---
-                const getAbsenceDataForExport = () => {
-                    const data = state.absentStudents.map(student => {
-                        // Find sector info if possible
-                        let sectorName = "";
-                        const studentSeat = [...state.seatingChart.entries()].find(([key, val]) => val === student.uid);
-                        if(studentSeat) {
-                             const [hallId, coords] = studentSeat[0].split(':');
-                             const [r, c] = coords.split('-').map(Number);
-                             const hall = state.halls.find(h => h.id === parseInt(hallId));
-                             if(hall) {
-                                 sectorName = c < hall.sector1Cols ? hall.sector1Name : hall.sector2Name;
-                             }
-                        }
-                        
-                        // Format date
-                        const today = new Date();
-                        const dateStr = today.toLocaleDateString('ar-EG');
-                        const dayName = today.toLocaleDateString('ar-EG', { weekday: 'long' });
-
-                        return {
-                            classDate: `${student.class}\n${dayName}\n${dateStr}`,
-                            name: student.name,
-                            section: student.section,
-                            id: student.id,
-                            sector: sectorName
-                        };
-                    });
-                     // Sort by name
-                    return data.sort((a,b) => a.name.localeCompare(b.name, 'ar'));
-                };
-
-                // 1. Export Image (Existing logic modified)
-                exportAbsentImgBtn.addEventListener('click', async () => {
-                    const statusDiv = document.getElementById('scan-feedback');
-                    statusDiv.innerHTML = `<span class="success">جاري تحضير الصورة...</span>`;
-
-                    const reportContainer = document.createElement('div');
-                    reportContainer.className = 'p-10 bg-white';
-                    reportContainer.style.fontFamily = "'Cairo', sans-serif";
-                    reportContainer.style.width = '800px';
-                    reportContainer.style.position = 'absolute';
-                    reportContainer.style.left = '-9999px';
-                    reportContainer.style.direction = 'rtl';
-
-                    let tableHtml = `<h1 class="text-2xl font-bold text-center mb-6">قائمة غيابات الطلبة</h1>
-                                     <table class="w-full text-base text-right" style="border-collapse: collapse;">
-                                        <thead class="text-gray-700 uppercase bg-gray-200">
-                                            <tr>
-                                                <th class="px-4 py-3 border border-gray-400">اسم الطالب</th>
-                                                <th class="px-4 py-3 border border-gray-400">الرقم الامتحاني</th>
-                                                <th class="px-4 py-3 border border-gray-400">الصف</th>
-                                                <th class="px-4 py-3 border border-gray-400">الشعبة</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>`;
-                    
-                    state.absentStudents.forEach(student => {
-                        tableHtml += `<tr class="bg-white border-b">
-                                        <td class="px-4 py-2 font-medium text-gray-900 border border-gray-300">${student.name}</td>
-                                        <td class="px-4 py-2 border border-gray-300">${student.id}</td>
-                                        <td class="px-4 py-2 border border-gray-300">${student.class}</td>
-                                        <td class="px-4 py-2 border border-gray-300">${student.section}</td>
-                                      </tr>`;
-                    });
-                    tableHtml += `</tbody></table>`;
-                    reportContainer.innerHTML = tableHtml;
-                    document.body.appendChild(reportContainer);
-
-                    try {
-                        const canvas = await html2canvas(reportContainer, { scale: 2, useCORS: true });
-                        const imgData = canvas.toDataURL('image/png');
-                        const link = document.createElement('a');
-                        link.href = imgData;
-                        link.download = 'تقرير_الغياب.png';
-                        document.body.appendChild(link);
-                        link.click();
-                        document.body.removeChild(link);
-                        statusDiv.innerHTML = `<span class="success">تم تصدير الصورة بنجاح!</span>`;
-                    } catch(err) {
-                        console.error("Error exporting image:", err);
-                        showAlert("فشل تصدير الصورة.");
-                    } finally {
-                        document.body.removeChild(reportContainer);
-                        setTimeout(() => { statusDiv.innerHTML = ''; }, 3000);
-                    }
-                });
-
-                // 2. Export Word (New)
-                exportAbsentWordBtn.addEventListener('click', () => {
-                     const { Document, Packer, Paragraph, Table, TableRow, TableCell, WidthType, TextRun, AlignmentType, Header } = docx;
-                     const absenceData = getAbsenceDataForExport();
-
-                     // Table Header
-                     const tableHeaderRow = new TableRow({
-                         children: [
-                             new TableCell({ children: [new Paragraph({text: "التوقيع", alignment: AlignmentType.CENTER})], width: { size: 15, type: WidthType.PERCENTAGE } }),
-                             new TableCell({ children: [new Paragraph({text: "المراقب", alignment: AlignmentType.CENTER})], width: { size: 15, type: WidthType.PERCENTAGE } }),
-                             new TableCell({ children: [new Paragraph({text: "رقمه", alignment: AlignmentType.CENTER})], width: { size: 10, type: WidthType.PERCENTAGE } }),
-                             new TableCell({ children: [new Paragraph({text: "الشعبة", alignment: AlignmentType.CENTER})], width: { size: 10, type: WidthType.PERCENTAGE } }),
-                             new TableCell({ children: [new Paragraph({text: "اسم الطالب الغائب", alignment: AlignmentType.CENTER})], width: { size: 30, type: WidthType.PERCENTAGE } }),
-                             new TableCell({ children: [new Paragraph({text: "الصف واليوم والتاريخ", alignment: AlignmentType.CENTER})], width: { size: 20, type: WidthType.PERCENTAGE } }),
-                         ]
-                     });
-
-                     // Table Rows
-                     const tableRows = absenceData.map(d => {
-                         return new TableRow({
-                             children: [
-                                 new TableCell({ children: [new Paragraph("")] }), // Signature
-                                 new TableCell({ children: [new Paragraph("")] }), // Monitor
-                                 new TableCell({ children: [new Paragraph({text: String(d.id), alignment: AlignmentType.CENTER})] }),
-                                 new TableCell({ children: [new Paragraph({text: d.section, alignment: AlignmentType.CENTER})] }),
-                                 new TableCell({ children: [new Paragraph({text: d.name, alignment: AlignmentType.RIGHT})] }),
-                                 new TableCell({ children: [new Paragraph({text: d.classDate, alignment: AlignmentType.CENTER})] }),
-                             ]
-                         });
-                     });
-
-                     const doc = new Document({
-                         sections: [{
-                             properties: {},
-                             children: [
-                                 new Paragraph({
-                                     text: "قائمة غيابات الطلبة // قطاع رقم ( )",
-                                     heading: "Heading1",
-                                     alignment: AlignmentType.CENTER,
-                                     bidirectional: true
-                                 }),
-                                 new Paragraph({ text: "" }), // Spacer
-                                 new Table({
-                                     columnWidths: [1500, 1500, 1000, 1000, 3000, 2000],
-                                     rows: [tableHeaderRow, ...tableRows],
-                                     width: { size: 100, type: WidthType.PERCENTAGE }
-                                 })
-                             ]
-                         }]
-                     });
-
-                     Packer.toBlob(doc).then(blob => {
-                         saveAs(blob, "قائمة_الغيابات.docx");
-                     });
-                });
-
-                // 3. Export PDF (New - Matching Template)
-                exportAbsentPdfBtn.addEventListener('click', async () => {
-                     const amiriFont = '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ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAAAAIAAgAAAAAFAAEAAAAAAAAAAQIDBAEFAAcACgAAAAAAAAABAAEAAgABAAEAAQAAAAEAAAAAAAAAAQAAAAAAAQAAAAIAAQAAAAAAAAAAAAMAAAAAAAAAAQAAAAACAAEAAgABAAEAAwAAAAAABAACAAAAAQAJ//8ABwABAAAAAAAAAAEAAAABAAAAAAAAAAEAAAAAAAAAAgAAAAEAAAAAAAAAAQAAAAQAAQAFAAAABQAGAAcACAADAAQABQAHAAMABAAFAAcAAwAEAAsADgAPABAABQAIAAkACgALAAgACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAk.m';
-                     const { jsPDF } = window.jspdf;
-                     const doc = new jsPDF();
-                     doc.addFileToVFS('Amiri-Regular.ttf', amiriFont);
-                     doc.addFont('Amiri-Regular.ttf', 'Amiri', 'normal');
-                     doc.setFont('Amiri');
-                     doc.setR2L(true);
-
-                     const absenceData = getAbsenceDataForExport();
-                     const head = [['التوقيع', 'المراقب', 'رقمه', 'الشعبة', 'اسم الطالب الغائب', 'الصف واليوم والتاريخ']];
-                     const body = absenceData.map(d => [
-                         '', // Signature
-                         '', // Monitor
-                         d.id,
-                         d.section,
-                         d.name,
-                         d.classDate
-                     ]);
-
-                     doc.text("قائمة غيابات الطلبة // قطاع رقم ( )", doc.internal.pageSize.getWidth() / 2, 20, { align: 'center' });
-                     
-                     doc.autoTable({
-                        head: head,
-                        body: body,
-                        startY: 30,
-                        theme: 'grid',
-                        styles: {
-                            font: 'Amiri',
-                            halign: 'center',
-                            valign: 'middle',
-                            lineWidth: 0.1,
-                            lineColor: [0, 0, 0]
-                        },
-                        headStyles: {
-                            fillColor: [240, 240, 240],
-                            textColor: [0, 0, 0],
-                            fontStyle: 'bold',
-                            lineWidth: 0.1
-                        },
-                        columnStyles: {
-                            5: { cellWidth: 50 }, // Class/Date
-                            4: { cellWidth: 60 }, // Name
-                        }
-                     });
-
-                     doc.save("قائمة_الغيابات.pdf");
-                });
-
-                const navigate = (direction) => {
-                    if (direction === 'next' && state.currentStep === 1 && state.selectedHallIds.size === 0) {
-                        showAlert('الرجاء تحديد قاعة واحدة على الأقل للمتابعة.');
-                        return;
-                    }
-                    const newStep = state.currentStep + (direction === 'next' ? 1 : -1);
-                    if (newStep > 0 && newStep <= steps.length) {
-                        if(state.currentStep === 5 && html5QrCode && html5QrCode.isScanning) {
-                            stopScanBtn.click();
-                        }
-                        state.currentStep = newStep;
-                        updateUI();
-                    }
-                };
-                const showAlert = (message) => {
-                    const alertBox = document.getElementById('custom-alert');
-                    const alertMessage = document.getElementById('alert-message');
-                    alertMessage.textContent = message;
-                    alertBox.classList.remove('hidden');
-                    setTimeout(() => alertBox.classList.add('hidden'), 3000);
-                };
-
-                nextBtn.addEventListener('click', () => navigate('next'));
-                prevBtn.addEventListener('click', () => navigate('prev'));
-
-                loadStateFromLocalStorage();
-                updateUI();
-            }
+        }
+        
+        // فصل التاريخ والتاريخ اليوم
+        const today = new Date();
+        const dateStr = today.toLocaleDateString('ar-EG', { 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
         });
-    </script>
-</body>
-</html>
+        const dayName = today.toLocaleDateString('ar-EG', { weekday: 'long' });
+        
+        return {
+            uid: student.uid,
+            name: student.name,
+            section: student.section,
+            id: student.id,
+            class: student.class,
+            hall: hallInfo,
+            sector: sectorInfo,
+            dayName: dayName,
+            date: dateStr,
+            classDate: `${student.class}\n${dayName}\n${dateStr}`
+        };
+    });
+    
+    // ترتيب حسب اسم الطالب
+    return data.sort((a, b) => a.name.localeCompare(b.name, 'ar'));
+};
+
+// 1. Export Image (Existing logic modified)
+exportAbsentImgBtn.addEventListener('click', async () => {
+    const statusDiv = document.getElementById('scan-feedback');
+    statusDiv.innerHTML = `<span class="success">جاري تحضير الصورة...</span>`;
+
+    const reportContainer = document.createElement('div');
+    reportContainer.className = 'p-10 bg-white';
+    reportContainer.style.fontFamily = "'Cairo', sans-serif";
+    reportContainer.style.width = '800px';
+    reportContainer.style.position = 'absolute';
+    reportContainer.style.left = '-9999px';
+    reportContainer.style.direction = 'rtl';
+
+    let tableHtml = `<h1 class="text-2xl font-bold text-center mb-6">قائمة غيابات الطلبة</h1>
+                     <table class="w-full text-base text-right" style="border-collapse: collapse;">
+                        <thead class="text-gray-700 uppercase bg-gray-200">
+                            <tr>
+                                <th class="px-4 py-3 border border-gray-400">اسم الطالب</th>
+                                <th class="px-4 py-3 border border-gray-400">الرقم الامتحاني</th>
+                                <th class="px-4 py-3 border border-gray-400">الصف</th>
+                                <th class="px-4 py-3 border border-gray-400">الشعبة</th>
+                            </tr>
+                        </thead>
+                        <tbody>`;
+    
+    state.absentStudents.forEach(student => {
+        tableHtml += `<tr class="bg-white border-b">
+                        <td class="px-4 py-2 font-medium text-gray-900 border border-gray-300">${student.name}</td>
+                        <td class="px-4 py-2 border border-gray-300">${student.id}</td>
+                        <td class="px-4 py-2 border border-gray-300">${student.class}</td>
+                        <td class="px-4 py-2 border border-gray-300">${student.section}</td>
+                      </tr>`;
+    });
+    tableHtml += `</tbody></table>`;
+    reportContainer.innerHTML = tableHtml;
+    document.body.appendChild(reportContainer);
+
+    try {
+        const canvas = await html2canvas(reportContainer, { scale: 2, useCORS: true });
+        const imgData = canvas.toDataURL('image/png');
+        const link = document.createElement('a');
+        link.href = imgData;
+        link.download = 'تقرير_الغياب.png';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        statusDiv.innerHTML = `<span class="success">تم تصدير الصورة بنجاح!</span>`;
+    } catch(err) {
+        console.error("Error exporting image:", err);
+        showAlert("فشل تصدير الصورة.");
+    } finally {
+        document.body.removeChild(reportContainer);
+        setTimeout(() => { statusDiv.innerHTML = ''; }, 3000);
+    }
+});
+
+// 2. Export Word (Modified - Separated Class and Date, Added Hall)
+exportAbsentWordBtn.addEventListener('click', () => {
+    const { Document, Packer, Paragraph, Table, TableRow, TableCell, WidthType, TextRun, AlignmentType } = docx;
+    const absenceData = getAbsenceDataForExport();
+
+    // Table Header - فصل الصف والتاريخ وإضافة القاعة
+    const tableHeaderRow = new TableRow({
+        children: [
+            new TableCell({ 
+                children: [new Paragraph({
+                    text: "التوقيع", 
+                    alignment: AlignmentType.CENTER,
+                    bidirectional: true
+                })], 
+                width: { size: 8, type: WidthType.PERCENTAGE } 
+            }),
+            new TableCell({ 
+                children: [new Paragraph({
+                    text: "المراقب", 
+                    alignment: AlignmentType.CENTER,
+                    bidirectional: true
+                })], 
+                width: { size: 10, type: WidthType.PERCENTAGE } 
+            }),
+            new TableCell({ 
+                children: [new Paragraph({
+                    text: "رقمه", 
+                    alignment: AlignmentType.CENTER,
+                    bidirectional: true
+                })], 
+                width: { size: 8, type: WidthType.PERCENTAGE } 
+            }),
+            new TableCell({ 
+                children: [new Paragraph({
+                    text: "القاعة الامتحانية", 
+                    alignment: AlignmentType.CENTER,
+                    bidirectional: true
+                })], 
+                width: { size: 12, type: WidthType.PERCENTAGE } 
+            }),
+            new TableCell({ 
+                children: [new Paragraph({
+                    text: "الشعبة", 
+                    alignment: AlignmentType.CENTER,
+                    bidirectional: true
+                })], 
+                width: { size: 8, type: WidthType.PERCENTAGE } 
+            }),
+            new TableCell({ 
+                children: [new Paragraph({
+                    text: "الصف", 
+                    alignment: AlignmentType.CENTER,
+                    bidirectional: true
+                })], 
+                width: { size: 8, type: WidthType.PERCENTAGE } 
+            }),
+            new TableCell({ 
+                children: [new Paragraph({
+                    text: "التاريخ", 
+                    alignment: AlignmentType.CENTER,
+                    bidirectional: true
+                })], 
+                width: { size: 10, type: WidthType.PERCENTAGE } 
+            }),
+            new TableCell({ 
+                children: [new Paragraph({
+                    text: "اسم الطالب الغائب", 
+                    alignment: AlignmentType.CENTER,
+                    bidirectional: true
+                })], 
+                width: { size: 36, type: WidthType.PERCENTAGE } 
+            }),
+        ]
+    });
+
+    // Table Rows
+    const tableRows = absenceData.map(d => {
+        return new TableRow({
+            children: [
+                new TableCell({ 
+                    children: [new Paragraph("")] 
+                }), // التوقيع - فارغ للملء
+                new TableCell({ 
+                    children: [new Paragraph("")] 
+                }), // المراقب - فارغ للملء
+                new TableCell({ 
+                    children: [new Paragraph({
+                        text: String(d.id), 
+                        alignment: AlignmentType.CENTER,
+                        bidirectional: true
+                    })] 
+                }), // رقم الطالب
+                new TableCell({ 
+                    children: [new Paragraph({
+                        text: d.hall || "غير موزع", 
+                        alignment: AlignmentType.CENTER,
+                        bidirectional: true
+                    })] 
+                }), // القاعة الامتحانية
+                new TableCell({ 
+                    children: [new Paragraph({
+                        text: d.section, 
+                        alignment: AlignmentType.CENTER,
+                        bidirectional: true
+                    })] 
+                }), // الشعبة
+                new TableCell({ 
+                    children: [new Paragraph({
+                        text: d.class, 
+                        alignment: AlignmentType.CENTER,
+                        bidirectional: true
+                    })] 
+                }), // الصف (منفصل)
+                new TableCell({ 
+                    children: [new Paragraph({
+                        text: d.date, 
+                        alignment: AlignmentType.CENTER,
+                        bidirectional: true
+                    })] 
+                }), // التاريخ (منفصل)
+                new TableCell({ 
+                    children: [new Paragraph({
+                        text: d.name, 
+                        alignment: AlignmentType.RIGHT,
+                        bidirectional: true
+                    })] 
+                }), // اسم الطالب
+            ]
+        });
+    });
+
+    const doc = new Document({
+        sections: [{
+            properties: {
+                page: {
+                    margin: {
+                        top: 1000,
+                        right: 1000,
+                        bottom: 1000,
+                        left: 1000,
+                    }
+                }
+            },
+            children: [
+                new Paragraph({
+                    text: "قائمة غيابات الطلبة",
+                    heading: "Heading1",
+                    alignment: AlignmentType.CENTER,
+                    bidirectional: true,
+                    spacing: { after: 400 }
+                }),
+                new Paragraph({ 
+                    text: `قطاع رقم (${absenceData[0]?.sector || ""})`,
+                    alignment: AlignmentType.CENTER,
+                    bidirectional: true,
+                    spacing: { after: 400 }
+                }),
+                new Table({
+                    rows: [tableHeaderRow, ...tableRows],
+                    width: { size: 100, type: WidthType.PERCENTAGE },
+                    margins: {
+                        top: 100,
+                        bottom: 100,
+                        left: 100,
+                        right: 100,
+                    }
+                })
+            ]
+        }]
+    });
+
+    Packer.toBlob(doc).then(blob => {
+        saveAs(blob, `قائمة_الغيابات_${new Date().toISOString().split('T')[0]}.docx`);
+    });
+});
+
+// 3. Export PDF (Modified - Separated Class and Date, Added Hall)
+exportAbsentPdfBtn.addEventListener('click', async () => {
+    const amiriFont = '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QIfAiECIwIlAicCKQIrAi0CLwIxAjMCNQI3AjkCOwI9Aj8CQQJDAkUCRwJJAksCTQJPAlECUwJVAlcCWQJbAl0CXwJhAmMCZQJnAmkCawJtAm8CcQJzAnUCdwJ5AnsCfQJ/AoECgwKFAocCiQKLAo0CjwKRApMClQKXApkCmwKdAp8CoQKjAqUCpwKpAqsCrQKvArECswK1ArcCuQK7Ar0CvwLBAsMCxQLHAskCzALOAtAC0gLUAtYC2ALaAtwC3gLgAuIC5ALmAugC6gLsAu4C8ALyAvQC9gL4AvoC/AL+AwADAgMEAwYDCAMKAwwDDgMQAxIDFAMWAxgDGgMcAx4DIAMiAyQDJgMoAyoDLAMuAzADMgM0AzYDOAM6AzwDPgNAA0IDRANGA0gDSgNMA04DUANWA1gDWgNcA14DYANlA2cDaQNrA20DbwNxA3MDdQN3A3kDewN9A38DgQODA4UDhwOJA4sDjQOPA5EDkwOVA5cDmQObA50DnwOhA6MDpQOnA6kDqwOtA68DsQOzA7UDtwO5A7sDvQO/A8EDwwPFA8cDyQPLA80DzwPRA9MD1QPXA9kD2wPdA98D4QPjA+UD5wPpA+sD7QPvA/ED8wP1A/cD+QP7A/0D/wQBBAIEBAQHBAkECwQNBA8EEQQTBBUEFwQZBBsEHQQfBCEEIwQlBCcEKQQrBC0ELwQxBDMENQQ3BDkEOwQ9BD8EQQRDBEUERwRJBEwETgRQBFIEVARWBFgEWgRcBF4EYARiBGQEZgRoBGoEbARuBHAEcgR0BHYEeAR6BHwEfgSABIIEhASGBIgEigSMBI4EkASSBJQElgSYBJoEnASeBKAEogSkBKYEqASqBKwErgSwBLIEtAS2BLgEugS8BL4EwATCBMSAAQABAAAABQADAAQABQAGAAcACAAJAAoACwAMAA0ADgAPABAAEQASABMAFAAVABYAFwAYABkAGgAbABwAHQAeAB8AIAAhACIAIwAkACUAJgAnACgAKQAqACsALAAtAC4ALwAwADEAMgAzADQANQA2ADcAOAA5ADoAOwA8AD0APgA/AEAAQQBCAEMARABFAEYARwBIAEkASgBLAEwATQBOAE8AUABRAFIAUwBUAFUAVgBXAFgAWQBaAFsAXABdAF4AXwBgAGEAYgBjAGQAZQBmAGcAaABpAGoAawBsAG0AbgBvAHAAcQByAHMAdAB1AHYAdwB4AHkAegB7AHwAfQB+AH8AgACBAIIAgwCEAIUAhgCHAIgAiQCKAIsAjACNAI4AjwCQAJEAkgCTAJQAlQCWAJcAmACZAJoAmwCcAJ0AngCfAKAAoQCiAKMApAClAKYApwCoAKkAqgCrAKwArQCuAK8AsACxALIAswC0ALUAtgC3ALgAuQC6ALsAvAC9AL4AvwDAAMEAwgDDAMQAxQDGAMcAyADJAMoAywDMAM0AzgDPANAA0QDSANMA1ADVANYA1wDYANkA2gDbANwA3QDeAN8A4ADhAOIA4wDkAOUA5gDnAOgA6QDqAOsA7ADtAO4A7wDwAPEA8gDzAPQA9QD2APcA+AD5APoA+wD8AP0A/gD/AQABAQECAQMBBAEFAQYBBwEIAQkBCgELAQwBDQEOAQ8BEAERARIBEwEUARUBFgEXARgBGQEaARsBHAEdAR4BHwEgASEBIgEjASQBJQEmAScBKAEpASoBKwEsAS0BLgEvATABMQEyATMBNAE1ATYBNwE4ATkBOgE7ATwBPQE+AT8BQAFBAUIBQwFEAUUBRgFHAUgBSQFKAUsBTAFNAU4BTwFQAVEBUgFTAVQBVQFVAVYBWAFaAVwBXgFgAWIBZAFmAWgBagFsAW4BcAFyAXQBdgF4AXoBfAF+AYABggGEAYYBiAGKAYwBjgGQAZIBlAGWAZgBmgGcAZ4BoAGiAaQBpgGoAaoBrAGuAbABsgG0AbYBuAG6AbwBvgHAAcIBxAHGAcgBygHMAc4B0AHSAdQB1gHYAdoB3AHeAeAB4gHkAeYB6AHqAewB7gHwAfIB9AH2AfgB+gH8Af4CAAICAgQCBgIIAgoCDAIOAhACEgIUAhYCGAIfAiMCJwIrAi8CMwI3AjsCPwJDAkcCSwJPAlMCVwJbAl8CYwJnAmsCbwJzAncCewJ/AoMChwKLAo8CkwKXApsCnwKjAqcCqwKvArMCtwK7Ar8CwwLHAssCzwLTAtsC4wLnAusC7wLzAvcC+wL/AwMDBwMLAw8DEwMfAycDLwM3Az8DRwNPA1cDXwNnA28DdwN/A4cDjwOXA58DpwOvA7cDvwPHA88D1wPfA+cD7wP3A/8EBwQPBBcEHwQnBC8ENwQ/BEcETwRXBF8EZwRvBHcEfwSHBI8ElwSfBKcErwS3BL8ExwTPBNcE3wTnBO8E9wT/BQcFDwUXBR8FJwUvBTcFPwVHBU8FVwVfBWcFbwV3BX8FhwWPBZcFnwWnBa8FtwW/BccFzwXXBd8F5wXvBfcF/wYHBg8GFwYfBicGLwY3Bj8GRwZPBlcGXwZnBm8GdwZ/BocGjwaXBp8GpwavBrcGvwbHBs8G1wbfBucG7wb3Bv8HBwcPBxcHHwcnBy8HNwc/B0cHTwdXB18HZwdvB3cHfweHB48HlwefB6cHrwe3B78HxwfPB9cH3wfnB+8H9wf/CAcIDwgXCB8IJwgvCDcIPwhHCE8IVwhfCGcIbwh3CH8IhwiPCJcInwinCK8Itwi/CMcIzwjXCN8I5wjvCPcI/wkHCRcJHwknCS8JNwk/CUcJTwlXCV8JZwlwCXcJgAmJCZAJlwmeCakJtQm+CcUJzgnVCeIJ5wn2CgUKDgoZCiYKMQo2Cj8KSgpVCloKZQpuCnkKhAqRCqAKrwq+CtIK4ArvCv4LDQsbCyoLOwtJC1YLaAtyC38LjwuZC6cLtAvBC88L3AvpC/UL/gwLDBYMIwwpDDIMPgxMDFkMbAx4DIkMlgyjDLEMvgzJDNIM3AzqDPMM/g0KDRQNJQ0xDTsNSA1VDWQNbw16DYUNjg2WDaMNrg26DcYNzg3cDeQN7A3yDfoOAA4GDgwOEg4YDh4OIA4iDiQOKA4sDjQOOA5ADkQOSA5MDlAOVA5YDlwOYA5kDmgObA5wDnQOeA58DoAOhA6IDowOkA6UDpgOnA6gDqQOqA6sDrAOtA64DrwOwA7EDsgOzA7QDtQO2A7cDuAO5A7oDuwO8A70DvgO/A8ADwQPCA8MDxAPFA8YDxwPIA8kDygPLA8wDzQPOBF4='; // نفس الخط الموجود في الكود
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    doc.addFileToVFS('Amiri-Regular.ttf', amiriFont);
+    doc.addFont('Amiri-Regular.ttf', 'Amiri', 'normal');
+    doc.setFont('Amiri');
+    doc.setR2L(true);
+
+    const absenceData = getAbsenceDataForExport();
+    
+    // نغير رأس الجدول ليشمل الأعمدة الجديدة
+    const head = [[
+        'التوقيع', 
+        'المراقب', 
+        'رقمه', 
+        'القاعة الامتحانية', 
+        'الشعبة', 
+        'الصف', 
+        'التاريخ', 
+        'اسم الطالب الغائب'
+    ]];
+    
+    const body = absenceData.map(d => [
+        '', // التوقيع
+        '', // المراقب
+        d.id,
+        d.hall || "غير موزع", // القاعة الامتحانية
+        d.section,
+        d.class, // الصف (منفصل)
+        d.date, // التاريخ (منفصل)
+        d.name
+    ]);
+
+    // عنوان التقرير
+    doc.setFontSize(16);
+    doc.text("قائمة غيابات الطلبة", doc.internal.pageSize.getWidth() / 2, 15, { align: 'center' });
+    
+    doc.setFontSize(12);
+    doc.text(`قطاع رقم (${absenceData[0]?.sector || ""})`, doc.internal.pageSize.getWidth() / 2, 25, { align: 'center' });
+    
+    doc.autoTable({
+        head: head,
+        body: body,
+        startY: 35,
+        theme: 'grid',
+        styles: {
+            font: 'Amiri',
+            fontSize: 10,
+            halign: 'center',
+            valign: 'middle',
+            lineWidth: 0.1,
+            lineColor: [0, 0, 0],
+            cellPadding: 3
+        },
+        headStyles: {
+            fillColor: [240, 240, 240],
+            textColor: [0, 0, 0],
+            fontStyle: 'bold',
+            lineWidth: 0.1
+        },
+        columnStyles: {
+            0: { cellWidth: 15 }, // التوقيع
+            1: { cellWidth: 15 }, // المراقب
+            2: { cellWidth: 12 }, // الرقم
+            3: { cellWidth: 25 }, // القاعة الامتحانية
+            4: { cellWidth: 12 }, // الشعبة
+            5: { cellWidth: 12 }, // الصف
+            6: { cellWidth: 20 }, // التاريخ
+            7: { cellWidth: 30 }  // اسم الطالب
+        },
+        margin: { top: 35, right: 10, bottom: 10, left: 10 }
+    });
+
+    // إضافة تاريخ التصدير في أسفل الصفحة
+    const pageCount = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setFontSize(8);
+        doc.text(
+            `تم التصدير بتاريخ: ${new Date().toLocaleDateString('ar-EG')}`,
+            doc.internal.pageSize.getWidth() - 10,
+            doc.internal.pageSize.getHeight() - 10,
+            { align: 'left' }
+        );
+    }
+
+    doc.save(`قائمة_الغيابات_${new Date().toISOString().split('T')[0]}.pdf`);
+});
