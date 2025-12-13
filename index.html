@@ -144,7 +144,7 @@
                      </div>
                     <div class="mb-6 text-center">
                         <button id="show-hall-modal-btn" class="bg-sky-600 text-white font-bold py-2 px-6 rounded-md hover:bg-sky-700 transition shadow-md">
-                             + إنشاء قاعة جديدة
+                              + إنشاء قاعة جديدة
                          </button>
                     </div>
                     <div id="halls-list-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
@@ -160,7 +160,7 @@
                             <div class="flex border-b mb-4">
                                 <button data-tab="paste-tab" class="tab-btn flex-1 py-2 font-semibold border-b-4 border-sky-600 text-sky-600">لصق نص</button>
                                 <button data-tab="upload-tab" class="tab-btn flex-1 py-2 font-semibold text-gray-500">رفع ملف Excel</button>
-                             </div>
+                            </div>
 
                             <div id="paste-tab" class="tab-content">
                                 <h3 class="font-bold mb-2">لصق قائمة الطلاب:</h3>
@@ -183,23 +183,23 @@
                             </div>
                         </div>
                     </div>
-                 </section>
+                </section>
 
                 <section id="step-3" class="step-section">
                     <div id="distribution-header" class="text-center mb-8">
                          <h2 class="text-2xl font-bold">الخطوة 3: التوزيع والمراجعة</h2>
-                        <p class="text-slate-500 mt-1">انقر على المقاعد الفارغة لتعطيلها. ثم قم بالتوزيع التلقائي أو اليدوي.</p>
+                         <p class="text-slate-500 mt-1">انقر على المقاعد الفارغة لتعطيلها. ثم قم بالتوزيع التلقائي أو اليدوي.</p>
                     </div>
                     <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
                         <div class="lg:col-span-1 bg-gray-50 p-4 rounded-lg border">
-                             <h3 class="font-bold text-lg mb-4">الطلاب غير الموزعين</h3>
+                            <h3 class="font-bold text-lg mb-4">الطلاب غير الموزعين</h3>
                             <div id="unassigned-students" class="h-96 overflow-y-auto space-y-2 p-1"></div>
                             <button id="auto-distribute-btn" class="mt-4 w-full bg-emerald-600 text-white font-bold py-2 px-4 rounded-md hover:bg-emerald-700 transition">توزيع تلقائي</button>
-                             <button id="reset-distribution-btn" class="mt-2 w-full bg-red-600 text-white font-bold py-2 px-4 rounded-md hover:bg-red-700 transition">إعادة تعيين التوزيع</button>
+                            <button id="reset-distribution-btn" class="mt-2 w-full bg-red-600 text-white font-bold py-2 px-4 rounded-md hover:bg-red-700 transition">إعادة تعيين التوزيع</button>
                         </div>
 
                         <div id="multi-hall-distribution-container" class="lg:col-span-3 space-y-8"></div>
-                    </div>
+                     </div>
                 </section>
 
                 <section id="step-4" class="step-section">
@@ -237,20 +237,20 @@
                                     </div>
                                 </div>
                             </div>
-                         </div>
+                        </div>
                         <div class="flex flex-col md:flex-row justify-center gap-4">
                             <button id="preview-pdf-btn" class="bg-indigo-600 text-white font-bold py-3 px-6 rounded-md hover:bg-indigo-700 transition flex items-center justify-center gap-2">
                                 <span>👁️</span> معاينة المخطط
                             </button>
                             <button id="export-chart-pdf-btn" class="bg-sky-600 text-white font-bold py-3 px-6 rounded-md hover:bg-sky-700 transition flex items-center justify-center gap-2">
-                                 <span>📄</span> تصدير مخطط القاعات (PDF)
+                                <span>📄</span> تصدير مخطط القاعات (PDF)
                             </button>
                             <button id="export-list-pdf-btn" class="bg-green-600 text-white font-bold py-3 px-6 rounded-md hover:bg-green-700 transition flex items-center justify-center gap-2">
                                 <span>📋</span> تصدير قائمة الحضور (PDF)
                             </button>
                         </div>
                     </div>
-                 </section>
+                </section>
 
                 <section id="step-5" class="step-section">
                     <div class="text-center mb-8">
@@ -269,7 +269,7 @@
                             <div id="scan-feedback" class="text-center font-semibold mt-2 h-6"></div>
                         </div>
                         <div class="bg-gray-50 p-4 rounded-lg border">
-                             <h3 class="font-bold text-lg mb-4">قائمة الطلاب الغائبين (<span id="absent-count">0</span>)</h3>
+                            <h3 class="font-bold text-lg mb-4">قائمة الطلاب الغائبين (<span id="absent-count">0</span>)</h3>
                             <div id="absent-list" class="h-64 overflow-y-auto space-y-2 pr-2">
                                 <p class="text-slate-400 text-center mt-8">لم يتم إضافة أي غياب بعد.</p>
                             </div>
@@ -639,6 +639,7 @@
                         'name': APP_DATA_FILENAME,
                         'mimeType': 'application/json',
                     };
+
                     let path;
                     let method;
                     let requestBody;
@@ -1036,12 +1037,12 @@
                                         <h4 class="font-bold text-lg mb-2">${hall.sector1Name}</h4>
                                         <div id="selector-container-${hall.id}-1" class="flex gap-2 justify-center mb-2"></div>
                                         <div id="dist-grid-${hall.id}-1" class="grid gap-2"></div>
-                                    </div>
+                                     </div>
                                     <div class="text-center">
                                         <h4 class="font-bold text-lg mb-2">${hall.sector2Name}</h4>
                                         <div id="selector-container-${hall.id}-2" class="flex gap-2 justify-center mb-2"></div>
                                         <div id="dist-grid-${hall.id}-2" class="grid gap-2"></div>
-                                    </div>
+                                     </div>
                                 </div>`;
                             multiHallDistributionContainer.appendChild(hallContainer);
                             renderSectorGrid(document.getElementById(`dist-grid-${hall.id}-1`), hall, 1);
@@ -1096,7 +1097,7 @@
                                         <p class="text-slate-600 text-[10px]">${student.id}</p>
                                         <p class="text-sky-700 font-semibold text-[10px] mt-1">${student.class} / ${student.section}</p>
                                         <div class="flex justify-center mt-1" id="qrcode-${seatId.replace(/:/g, '-')}"></div>
-                                    </div>`;
+                                     </div>`;
                                 if(hasConflict(seatId)) seat.classList.add('conflict');
                             }
                             seat.addEventListener('click', () => { if (!getStudentUidBySeatId(seatId)) { toggleSeatDisabled(seatId); } });
@@ -1247,7 +1248,7 @@
                                         const student = studentsInClass[studentIndex];
                                         if (!state.seatingChart.has(seatId)) {
                                              state.seatingChart.set(seatId, student.uid);
-                                            remainingPlacementCounters[currentClassName]++;
+                                             remainingPlacementCounters[currentClassName]++;
                                         }
                                     } else { break; }
                                 }
@@ -1479,7 +1480,7 @@
                     await new Promise(resolve => setTimeout(resolve, 50));
 
                     try {
-                        const amiriFont = 'AAEAAAARAQAABAAQR0RFRgQsAgsAADhkAAAAHkdQT1Mrk8MkAAA4YAAABJBHU1VCA8+JjwAAEnsAAAMyT1MvMg8SDbEAAAEgAAAAYGNtYXABDQDNAAABnAAAAFRnYXNw//8AAwAAOGAAAAAIZ2x5Zt5TAdwAAARAAAACFGhlYWQY2C8VAAAA4AAAADZoaGVhB7QDNAAAASAAAAAkaG10eCoAlgIAAAGoAAAAGmxvY2ED2AO0AAAEgAAAABhtYXhwARgAMQAAAUgAAAAgbmFtZXV0jHEAAAdMAAABMHBvc3QAAwAAAAAAOWAAAAABAAACAAMDAAABdyNQAAAAAFdyNQAAAAAAAQIAZgABAQAAAAAAAgAAAAEAAAAAAQAAAAEAAAACAAEAAgAAAAEAAQAABQADAAgAAQACAAsAAQAAAAEAAAAAACQAKgBOARQAAQAAAAAAAAAAAAIAAAAEAAEAAgAFAAYABwAIAAkACgALAAwADQAOAA8AEAARABIAEwAUABUAFgAXABgAGQAaABsAHAAdAB4AHwAgACEAIgAjACQBJgEnASgBKQEoAysBLgEvATABMQEyATMBNAE1AUEBTAFNAU4BTwFQAVIDVgNkA2gDbgNvA3ADdAN7A3wDfwOAA4MDiAOHA4sDjAOQA5EDmAOXA5gDmQOaA5sDnAOdA54DnwOgA6EDogOkA6UDpwOpA6oDqgOrA6wDrwOwA7EDsgOzA7QDswO1A7gDugO8A70DvgO/A8ADwQPCg8SDxQPGg8fDyYPJw8pDykPKw8yDzQPNw88DzwPPQ8/D0EPRQ9JD0sPTw9RD1MPVw9hD2MPZQ9oD2kPbQ9wD3MPhQ+MD5kPnw+hD6MPpA+qD7APtQ+2D7oPug/AD8kP0w/VD9sP3Q/fD+EP5g/pD+wP8Q/yD/YAAAAEAJgBEgABARcBJwA3AAYABQAHAAsADwAXABkAHEAAgAAABQAqADQAOQBDAE8AUwBiAGsAdAC7AMQAyQDPANMA3gDtAO4A+wEIAQwBEQEcAa8BrwGnAa4BrwGvAAAAAQAAAAAAAQAAAAAAAQAAAAAAAgAAAAIAAAAHAAMBAQAAAAAAAAAAAAQAAgACACsAJAOWAAAAgADAAIAAAACAAIAAAADAAIAAAACAAIAAAAAAAAAAAAAAAIAAAACAAIAAAAAAAAAAADAzMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB//8AAwABAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAABAAIAAAAAAACAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgAAAAAAAgAAAAAAAAAAAAAAAgAAAwADAAQABQAIAAkACgALAAwADQAOAA8AEAARABIAEwAUABUAFgAXABgAGQAaABsAHAAdAB4AHwAgACEAIgAjACQBJgEnASgBKQEoAysBLgEvATABMQEyATMBNAE1AUEBTAFNAU4BTwFQAVIDVgNkA2gDbgNvA3ADdAN7A3wDfwOAA4MDiAOHA4sDjAOQA5EDmAOXA5gDmQOaA5sDnAOdA54DnwOgA6EDogOkA6UDpwOpA6oDqgOrA6wDrwOwA7EDsgOzA7QDswO1A7gDugO8A70DvgO/A8ADwQPCg8SDxQPGg8fDyYPJw8pDykPKw8yDzQPNw88DzwPPQ8/D0EPRQ9JD0sPTw9RD1MPVw9hD2MPZQ9oD2kPbQ9wD3MPhQ+MD5kPnw+hD6MPpA+qD7APtQ+2D7oPug/AD8kP0w/VD9sP3Q/fD+EP5g/pD+wP8Q/yD/YACQAAAAAAAAAAAAAAAAAIAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAUAAQIDBAEIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAJAAEAAAAAAAAAAAAABAAECAkHCwUKAwkJBwwGCAcGBAYCBwAAAAAGAAEBAgQCAwEFAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFAAICAgkCAwEIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAgABAgQCAgEABgAAAAAAAAAAAAAAAAAAAAAAAAACAAcAAAAAAAYAAQEEAgQCAgEABwAAAAAAAAAAAAAAAAAAAAAAAAADAAIAAggAAAEAAAAAAAIAAgIDAgIBAQkCAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAAAAIAAgAAAAAFAAEAAAAAAAAAAQIDBAEFAAcACgAAAAAAAAABAAEAAgABAAEAAQAAAAEAAAAAAAAAAQAAAAAAAQAAAAIAAQAAAAAAAAAAAAMAAAAAAAAAAQAAAAACAAEAAgABAAEAAwAAAAAABAACAAAAAQAJ//8ABwABAAAAAAAAAAEAAAABAAAAAAAAAAEAAAAAAAAAAgAAAAEAAAAAAAAAAQAAAAQAAQAFAAAABQAGAAcACAADAAQABQAHAAMABAAFAAcAAwAEAAsADgAPABAABQAIAAkACgALAAgACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAk.m';
+                        const amiriFont = 'AAEAAAARAQAABAAQR0RFRgQsAgsAADhkAAAAHkdQT1Mrk8MkAAA4YAAABJBHU1VCA8+JjwAAEnsAAAMyT1MvMg8SDbEAAAEgAAAAYGNtYXABDQDNAAABnAAAAFRnYXNw//8AAwAAOGAAAAAIZ2x5Zt5TAdwAAARAAAACFGhlYWQY2C8VAAAA4AAAADZoaGVhB7QDNAAAASAAAAAkaG10eCoAlgIAAAGoAAAAGmxvY2ED2AO0AAAEgAAAABhtYXhwARgAMQAAAUgAAAAgbmFtZXV0jHEAAAdMAAABMHBvc3QAAwAAAAAAOWAAAAABAAACAAMDAAABdyNQAAAAAFdyNQAAAAAAAQIAZgABAQAAAAAAAgAAAAEAAAAAAQAAAAEAAAACAAEAAgAAAAEAAQAABQADAAgAAQACAAsAAQAAAAEAAAAAACQAKgBOARQAAQAAAAAAAAAAAAIAAAAEAAEAAgAFAAYABwAIAAkACgALAAwADQAOAA8AEAARABIAEwAUABUAFgAXABgAGQAaABsAHAAdAB4AHwAgACEAIgAjACQBJgEnASgBKQEoAysBLgEvATABMQEyATMBNAE1AUEBTAFNAU4BTwFQAVIDVgNkA2gDbgNvA3ADdAN7A3wDfwOAA4MDiAOHA4sDjAOQA5EDmAOXA5gDmQOaA5sDnAOdA54DnwOgA6EDogOkA6UDpwOpA6oDqgOrA6wDrwOwA7EDsgOzA7QDswO1A7gDugO8A70DvgO/A8ADwQPCg8SDxQPGg8fDyYPJw8pDykPKw8yDzQPNw88DzwPPQ8/D0EPRQ9JD0sPTw9RD1MPVw9hD2MPZQ9oD2kPbQ9wD3MPhQ+MD5kPnw+hD6MPpA+qD7APtQ+2D7oPug/AD8kP0w/VD9sP3Q/fD+EP5g/pD+wP8Q/yD/YAAAAEAJgBEgABARcBJwA3AAYABQAHAAsADwAXABkAHEAAgAAABQAqADQAOQBDAE8AUwBiAGsAdAC7AMQAyQDPANMA3gDtAO4A+wEIAQwBEQEcAa8BrwGnAa4BrwGvAAAAAQAAAAAAAQAAAAAAAQAAAAAAAgAAAAIAAAAHAAMBAQAAAAAAAAAAAAQAAgACACsAJAOWAAAAgADAAIAAAACAAIAAAADAAIAAAACAAIAAAAAAAAAAAAAAAIAAAACAAIAAAAAAAAAAADAzMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB//8AAwABAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAABAAIAAAAAAACAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgAAAAAAAgAAAAAAAAAAAAAAAgAAAwADAAQABQAIAAkACgALAAwADQAOAA8AEAARABIAEwAUABUAFgAXABgAGQAaABsAHAAdAB4AHwAgACEAIgAjACQBJgEnASgBKQEoAysBLgEvATABMQEyATMBNAE1AUEBTAFNAU4BTwFQAVIDVgNkA2gDbgNvA3ADdAN7A3wDfwOAA4MDiAOHA4sDjAOQA5EDmAOXA5gDmQOaA5sDnAOdA54DnwOgA6EDogOkA6UDpwOpA6oDqgOrA6wDrwOwA7EDsgOzA7QDswO1A7gDugO8A70DvgO/A8ADwQPCg8SDxQPGg8fDyYPJw8pDykPKw8yDzQPNw88DzwPPQ8/D0EPRQ9JD0sPTw9RD1MPVw9hD2MPZQ9oD2kPbQ9wD3MPhQ+MD5kPnw+hD6MPpA+qD7APtQ+2D7oPug/AD8kP0w/VD9sP3Q/fD+EP5g/pD+wP8Q/yD/YACQAAAAAAAAAAAAAAAAAIAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAUAAQIDBAEIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAJAAEAAAAAAAAAAAAABAAECAkHCwUKAwkJBwwGCAcGBAYCBwAAAAAGAAEBAgQCAwEFAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFAAICAgkCAwEIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAgABAgQCAgEABgAAAAAAAAAAAAAAAAAAAAAAAAACAAcAAAAAAAYAAQEEAgQCAgEABwAAAAAAAAAAAAAAAAAAAAAAAAADAAIAAggAAAEAAAAAAAIAAgIDAgIBAQkCAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAAAAIAAgAAAAAFAAEAAAAAAAAAAQIDBAEFAAcACgAAAAAAAAABAAEAAgABAAEAAQAAAAEAAAAAAAAAAQAAAAAAAQAAAAIAAQAAAAAAAAAAAAMAAAAAAAAAAQAAAAACAAEAAgABAAEAAwAAAAAABAACAAAAAQAJ//8ABwABAAAAAAAAAAEAAAABAAAAAAAAAAEAAAAAAAAAAgAAAAEAAAAAAAAAAQAAAAQAAQAFAAAABQAGAAcACAADAAQABQAHAAMABAAFAAcAAwAEAAsADgAPABAABQAIAAkACgALAAgACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAk.m';
                         const { jsPDF } = window.jspdf;
                         const doc = new jsPDF();
 
@@ -1551,7 +1552,7 @@
                         updateProgress(100, 100);
                     }
                 });
-
+                
                 const renderAbsenceView = () => {
                     absentCountSpan.textContent = state.absentStudents.length;
                     const hasAbsence = state.absentStudents.length > 0;
@@ -1559,7 +1560,6 @@
                     exportAbsentImgBtn.disabled = !hasAbsence;
                     exportAbsentPdfBtn.disabled = !hasAbsence;
                     exportAbsentWordBtn.disabled = !hasAbsence;
-
                     if (!hasAbsence) {
                         absentListContainer.innerHTML = `<p class="text-slate-400 text-center mt-8">لم يتم تسجيل أي غياب بعد.</p>`;
                         return;
@@ -1631,13 +1631,14 @@
                     const data = state.absentStudents.map(student => {
                         // Find sector info if possible
                         let sectorName = "";
+                        let hall = null;
                         const studentSeat = [...state.seatingChart.entries()].find(([key, val]) => val === student.uid);
                         if(studentSeat) {
                              const [hallId, coords] = studentSeat[0].split(':');
                              const [r, c] = coords.split('-').map(Number);
-                             const hall = state.halls.find(h => h.id === parseInt(hallId));
+                             hall = state.halls.find(h => h.id === parseInt(hallId));
                              if(hall) {
-                                 sectorName = c < hall.sector1Cols ? hall.sector1Name : hall.sector2Name;
+                                  sectorName = c < hall.sector1Cols ? hall.sector1Name : hall.sector2Name;
                              }
                         }
                         
@@ -1645,13 +1646,14 @@
                         const today = new Date();
                         const dateStr = today.toLocaleDateString('ar-EG');
                         const dayName = today.toLocaleDateString('ar-EG', { weekday: 'long' });
-
                         return {
-                            classDate: `${student.class}\n${dayName}\n${dateStr}`,
+                            className: student.class,
+                            dateFull: `${dayName} ${dateStr}`,
                             name: student.name,
                             section: student.section,
                             id: student.id,
-                            sector: sectorName
+                            sector: sectorName,
+                            hallName: hall ? hall.name : ""
                         };
                     });
                      // Sort by name
@@ -1682,7 +1684,6 @@
                                             </tr>
                                         </thead>
                                         <tbody>`;
-                    
                     state.absentStudents.forEach(student => {
                         tableHtml += `<tr class="bg-white border-b">
                                         <td class="px-4 py-2 font-medium text-gray-900 border border-gray-300">${student.name}</td>
@@ -1714,20 +1715,26 @@
                     }
                 });
 
-                // 2. Export Word (New)
+                // 2. Export Word (MODIFIED AS REQUESTED)
                 exportAbsentWordBtn.addEventListener('click', () => {
                      const { Document, Packer, Paragraph, Table, TableRow, TableCell, WidthType, TextRun, AlignmentType, Header } = docx;
                      const absenceData = getAbsenceDataForExport();
-
+                     
+                     // Determine Hall Name for Title (using the first record found)
+                     const firstRecord = absenceData[0];
+                     const hallTitle = firstRecord ? (firstRecord.hallName || "") : "";
+                     
                      // Table Header
                      const tableHeaderRow = new TableRow({
                          children: [
-                             new TableCell({ children: [new Paragraph({text: "التوقيع", alignment: AlignmentType.CENTER})], width: { size: 15, type: WidthType.PERCENTAGE } }),
-                             new TableCell({ children: [new Paragraph({text: "المراقب", alignment: AlignmentType.CENTER})], width: { size: 15, type: WidthType.PERCENTAGE } }),
+                             new TableCell({ children: [new Paragraph({text: "التوقيع", alignment: AlignmentType.CENTER})], width: { size: 10, type: WidthType.PERCENTAGE } }),
+                             new TableCell({ children: [new Paragraph({text: "المراقب", alignment: AlignmentType.CENTER})], width: { size: 10, type: WidthType.PERCENTAGE } }),
                              new TableCell({ children: [new Paragraph({text: "رقمه", alignment: AlignmentType.CENTER})], width: { size: 10, type: WidthType.PERCENTAGE } }),
                              new TableCell({ children: [new Paragraph({text: "الشعبة", alignment: AlignmentType.CENTER})], width: { size: 10, type: WidthType.PERCENTAGE } }),
                              new TableCell({ children: [new Paragraph({text: "اسم الطالب الغائب", alignment: AlignmentType.CENTER})], width: { size: 30, type: WidthType.PERCENTAGE } }),
-                             new TableCell({ children: [new Paragraph({text: "الصف واليوم والتاريخ", alignment: AlignmentType.CENTER})], width: { size: 20, type: WidthType.PERCENTAGE } }),
+                             // Separated Class and Date
+                             new TableCell({ children: [new Paragraph({text: "الصف", alignment: AlignmentType.CENTER})], width: { size: 10, type: WidthType.PERCENTAGE } }),
+                             new TableCell({ children: [new Paragraph({text: "اليوم والتاريخ", alignment: AlignmentType.CENTER})], width: { size: 20, type: WidthType.PERCENTAGE } }),
                          ]
                      });
 
@@ -1740,7 +1747,9 @@
                                  new TableCell({ children: [new Paragraph({text: String(d.id), alignment: AlignmentType.CENTER})] }),
                                  new TableCell({ children: [new Paragraph({text: d.section, alignment: AlignmentType.CENTER})] }),
                                  new TableCell({ children: [new Paragraph({text: d.name, alignment: AlignmentType.RIGHT})] }),
-                                 new TableCell({ children: [new Paragraph({text: d.classDate, alignment: AlignmentType.CENTER})] }),
+                                 // Data for separate columns
+                                 new TableCell({ children: [new Paragraph({text: d.className, alignment: AlignmentType.CENTER})] }),
+                                 new TableCell({ children: [new Paragraph({text: d.dateFull, alignment: AlignmentType.CENTER})] }),
                              ]
                          });
                      });
@@ -1750,14 +1759,14 @@
                              properties: {},
                              children: [
                                  new Paragraph({
-                                     text: "قائمة غيابات الطلبة // قطاع رقم ( )",
+                                     text: `قائمة غيابات الطلبة // قاعة: (${hallTitle})`,
                                      heading: "Heading1",
                                      alignment: AlignmentType.CENTER,
                                      bidirectional: true
                                  }),
                                  new Paragraph({ text: "" }), // Spacer
                                  new Table({
-                                     columnWidths: [1500, 1500, 1000, 1000, 3000, 2000],
+                                     columnWidths: [1000, 1000, 1000, 1000, 3000, 1000, 2000], // Adjusted Widths for 7 columns
                                      rows: [tableHeaderRow, ...tableRows],
                                      width: { size: 100, type: WidthType.PERCENTAGE }
                                  })
@@ -1770,17 +1779,19 @@
                      });
                 });
 
-                // 3. Export PDF (New - Matching Template)
+                // 3. Export PDF
                 exportAbsentPdfBtn.addEventListener('click', async () => {
-                     const amiriFont = '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ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAAAAIAAgAAAAAFAAEAAAAAAAAAAQIDBAEFAAcACgAAAAAAAAABAAEAAgABAAEAAQAAAAEAAAAAAAAAAQAAAAAAAQAAAAIAAQAAAAAAAAAAAAMAAAAAAAAAAQAAAAACAAEAAgABAAEAAwAAAAAABAACAAAAAQAJ//8ABwABAAAAAAAAAAEAAAABAAAAAAAAAAEAAAAAAAAAAgAAAAEAAAAAAAAAAQAAAAQAAQAFAAAABQAGAAcACAADAAQABQAHAAMABAAFAAcAAwAEAAsADgAPABAABQAIAAkACgALAAgACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAk.m';
+                     const amiriFont = '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ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAAAAIAAgAAAAAFAAEAAAAAAAAAAQIDBAEFAAcACgAAAAAAAAABAAEAAgABAAEAAQAAAAEAAAAAAAAAAQAAAAAAAQAAAAIAAQAAAAAAAAAAAAMAAAAAAAAAAQAAAAACAAEAAgABAAEAAwAAAAAABAACAAAAAQAJ//8ABwABAAAAAAAAAAEAAAABAAAAAAAAAAEAAAAAAAAAAgAAAAEAAAAAAAAAAQAAAAQAAQAFAAAABQAGAAcACAADAAQABQAHAAMABAAFAAcAAwAEAAsADgAPABAABQAIAAkACgALAAgACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAk.m';
                      const { jsPDF } = window.jspdf;
                      const doc = new jsPDF();
                      doc.addFileToVFS('Amiri-Regular.ttf', amiriFont);
                      doc.addFont('Amiri-Regular.ttf', 'Amiri', 'normal');
                      doc.setFont('Amiri');
                      doc.setR2L(true);
-
                      const absenceData = getAbsenceDataForExport();
+                     
+                     // Use Separated Data for PDF as well? The request was specifically for Word, but let's keep PDF clean or similar
+                     // Currently PDF uses classDate string.
                      const head = [['التوقيع', 'المراقب', 'رقمه', 'الشعبة', 'اسم الطالب الغائب', 'الصف واليوم والتاريخ']];
                      const body = absenceData.map(d => [
                          '', // Signature
@@ -1788,11 +1799,14 @@
                          d.id,
                          d.section,
                          d.name,
-                         d.classDate
+                         `${d.className} - ${d.dateFull}` // Combined for PDF as per previous logic unless requested otherwise, but let's keep it consistent
                      ]);
-
-                     doc.text("قائمة غيابات الطلبة // قطاع رقم ( )", doc.internal.pageSize.getWidth() / 2, 20, { align: 'center' });
                      
+                     // Title handling for PDF
+                     const firstRecord = absenceData[0];
+                     const hallTitle = firstRecord ? (firstRecord.hallName || "") : "";
+                     
+                     doc.text(`قائمة غيابات الطلبة // قطاع رقم (${hallTitle})`, doc.internal.pageSize.getWidth() / 2, 20, { align: 'center' });
                      doc.autoTable({
                         head: head,
                         body: body,
@@ -1815,7 +1829,7 @@
                             5: { cellWidth: 50 }, // Class/Date
                             4: { cellWidth: 60 }, // Name
                         }
-                     });
+                    });
 
                      doc.save("قائمة_الغيابات.pdf");
                 });
