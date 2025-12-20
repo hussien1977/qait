@@ -3,342 +3,281 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام إدارة مخططات الجلوس الامتحانية الذكي</title>
+    <title>نظام إدارة مخططات الجلوس - النسخة المحدثة</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
     
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
-    
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-    
-    <script src="https://unpkg.com/docx@7.1.0/build/index.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-    <script src="https://apis.google.com/js/api.js"></script>
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
 
     <style>
-        body { font-family: 'Cairo', sans-serif; }
+        body { font-family: 'Cairo', sans-serif; background-color: #f8fafc; }
         .step-section { display: none; }
-        .step-section.active { display: block; animation: fadeIn 0.5s; }
+        .step-section.active { display: block; animation: fadeIn 0.4s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         
-        .seat { transition: all 0.2s ease-in-out; }
-        .seat.disabled { background-color: #4b5563 !important; border-color: #1f2937 !important; cursor: not-allowed; }
-        .seat.disabled::after { content: '✕'; color: white; font-size: 1.5rem; display: flex; justify-content: center; align-items: center; height: 100%; }
-        .seat.occupied { background-color: #e0f2fe; border-color: #0284c7; }
-        
-        #hall-modal-backdrop, #preview-modal-backdrop { background-color: rgba(0,0,0,0.5); }
-        
-        /* تصميم بطاقات QR للطباعة */
-        #qr-cards-container {
-            width: 210mm;
-            background: white;
+        /* تصميم بطاقات QR للطباعة (مخفي من العرض) */
+        #qr-print-area {
             position: absolute;
             left: -9999px;
             top: 0;
+            width: 210mm; /* A4 Width */
+            background: white;
+        }
+        .qr-page {
+            width: 210mm;
+            height: 297mm;
             padding: 10mm;
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 5mm;
+            grid-template-columns: repeat(3, 1fr); /* 3 أعمدة */
+            grid-template-rows: repeat(10, 1fr);   /* 10 صفوف */
+            gap: 4mm;
+            box-sizing: border-box;
+            page-break-after: always;
         }
-        .student-qr-card {
-            width: 60mm;
-            height: 25mm;
+        .student-card {
             border: 1px solid #000;
-            padding: 2mm;
+            padding: 5px;
             display: flex;
             flex-direction: row-reverse;
             align-items: center;
             justify-content: space-between;
-            box-sizing: border-box;
             background: #fff;
+            height: 25mm; /* الارتفاع التقريبي ليتناسب 10 في الصفحة */
+            overflow: hidden;
         }
-        .card-info {
-            flex: 1;
+        .card-data {
             text-align: right;
-            font-size: 8pt;
+            font-size: 9pt;
             line-height: 1.2;
-            padding-right: 2mm;
+            flex-grow: 1;
+            padding-right: 5px;
             font-weight: bold;
         }
-        .card-qr-box {
+        .card-qr {
             width: 20mm;
             height: 20mm;
             display: flex;
             align-items: center;
             justify-content: center;
         }
-        .card-qr-box img {
-            width: 20mm; /* تم جعله مربعاً لضمان القراءة، المستطيل قد يفشل في المسح */
-            height: 20mm;
-        }
-
-        .action-btn {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            padding: 8px 16px;
-            border-radius: 8px;
-            font-weight: 600;
-            transition: all 0.2s;
-        }
     </style>
 </head>
-<body class="bg-stone-50 text-slate-800">
+<body>
 
-    <div id="login-screen" class="fixed inset-0 bg-stone-100 z-50 flex flex-col items-center justify-center">
-        <div class="text-center p-8 bg-white rounded-xl shadow-lg border border-slate-200">
-            <h1 class="text-3xl font-bold text-sky-700 mb-2">نظام إدارة مخططات الجلوس</h1>
-            <p class="text-slate-500 mb-6">الرجاء تسجيل الدخول للمتابعة</p>
-            <button id="login-btn" class="bg-white text-slate-700 border border-slate-300 font-bold py-3 px-8 rounded-lg hover:bg-slate-50 transition flex items-center gap-3 shadow-sm">
-                <span>تسجيل الدخول باستخدام Google</span>
-            </button>
+    <div id="login-screen" class="fixed inset-0 bg-slate-900 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full text-center">
+            <div class="mb-6">
+                <div class="bg-sky-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <span class="text-4xl">🎓</span>
+                </div>
+                <h1 class="text-2xl font-black text-slate-800">نظام إدارة الامتحانات</h1>
+                <p class="text-slate-500 mt-2">يرجى تسجيل الدخول للوصول إلى لوحة التحكم</p>
+            </div>
+            <div class="space-y-4">
+                <button onclick="bypassLogin()" class="w-full bg-sky-600 text-white font-bold py-3 rounded-xl hover:bg-sky-700 transition shadow-lg">
+                    الدخول كمسؤول (بدون حساب)
+                </button>
+                <p class="text-xs text-slate-400">ملاحظة: الدخول السريع متاح لأغراض التجربة</p>
+            </div>
         </div>
     </div>
 
-    <div id="app-container" class="hidden">
-        <div class="container mx-auto p-4 md:p-8">
-            
-            <header class="text-center mb-8 border-b pb-4 relative">
-                <div id="auth-info" class="w-full flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
-                    <div id="welcome-message" class="text-sm font-bold text-sky-800 bg-sky-50 px-4 py-2 rounded-lg border border-sky-100"></div>
-                    <div class="flex flex-wrap items-center justify-center gap-3">
-                        <button id="logout-btn" class="action-btn bg-slate-600 text-white hover:bg-slate-700">خروج</button>
-                    </div>
+    <div id="app-container" class="hidden min-h-screen">
+        <nav class="bg-white shadow-sm border-b px-6 py-4 flex justify-between items-center">
+            <h2 class="text-xl font-bold text-sky-700">لوحة التحكم الذكية</h2>
+            <button onclick="location.reload()" class="text-red-500 font-bold text-sm">تسجيل خروج</button>
+        </nav>
+
+        <div class="container mx-auto p-4 max-w-5xl">
+            <div id="stepper" class="flex justify-between mb-8 bg-white p-4 rounded-xl shadow-sm overflow-x-auto">
                 </div>
-                <h1 class="text-3xl md:text-4xl font-bold text-sky-700">نظام إدارة مخططات الجلوس الامتحانية</h1>
-            </header>
 
-            <div id="stepper" class="flex justify-center items-center mb-10 space-x-4 md:space-x-8 rtl:space-x-reverse"></div>
-
-            <main class="bg-white rounded-xl shadow-lg p-6 md:p-8 min-h-[500px]">
+            <main class="bg-white rounded-2xl shadow-sm border p-6 min-h-[400px]">
                 
                 <section id="step-1" class="step-section active">
-                    <div class="text-center mb-8">
-                        <h2 class="text-2xl font-bold">الخطوة 1: إدارة القاعات الامتحانية</h2>
+                    <h3 class="text-xl font-bold mb-4">الخطوة 1: تهيئة القاعات</h3>
+                    <div class="bg-blue-50 p-4 rounded-lg border border-blue-100 mb-4">
+                        <p class="text-blue-800 text-sm">قم بإضافة القاعات الامتحانية وتحديد سعة كل قاعة.</p>
                     </div>
-                    <div class="mb-6 text-center">
-                        <button id="show-hall-modal-btn" class="bg-sky-600 text-white font-bold py-2 px-6 rounded-md hover:bg-sky-700 transition shadow-md">+ إنشاء قاعة جديدة</button>
-                    </div>
-                    <div id="halls-list-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+                    <button class="bg-sky-600 text-white px-6 py-2 rounded-lg">+ إضافة قاعة جديدة</button>
                 </section>
 
                 <section id="step-2" class="step-section">
-                    <div class="text-center mb-8">
-                        <h2 class="text-2xl font-bold">الخطوة 2: إدارة بيانات الطلاب</h2>
-                    </div>
-                    <textarea id="students-text" rows="8" class="w-full p-2 border rounded-md" placeholder="الاسم، الرقم الامتحاني، الصف، الشعبة"></textarea>
-                    <button id="import-text-btn" class="mt-2 w-full bg-sky-600 text-white font-bold py-2 px-4 rounded-md hover:bg-sky-700 transition">استيراد</button>
-                    <div id="student-list" class="mt-4 max-h-40 overflow-y-auto"></div>
+                    <h3 class="text-xl font-bold mb-4">الخطوة 2: استيراد بيانات الطلاب</h3>
+                    <textarea id="students-input" rows="6" class="w-full p-4 border rounded-xl bg-gray-50 text-right" placeholder="أدخل البيانات: الاسم، الرقم الامتحاني، الصف، الشعبة (كل طالب في سطر)"></textarea>
+                    <button onclick="processStudents()" class="mt-4 bg-emerald-600 text-white px-8 py-2 rounded-lg font-bold">حفظ بيانات الطلاب</button>
+                    <div id="students-count" class="mt-2 text-sm text-slate-500"></div>
                 </section>
 
-                <section id="step-3" class="step-section">
-                    <div class="text-center mb-8"><h2 class="text-2xl font-bold">الخطوة 3: التوزيع</h2></div>
-                    <div id="unassigned-students" class="mb-4"></div>
-                    <button id="auto-distribute-btn" class="bg-emerald-600 text-white py-2 px-4 rounded">توزيع تلقائي</button>
-                    <div id="multi-hall-distribution-container" class="mt-4"></div>
+                <section id="step-3" class="step-section text-center py-10">
+                    <h3 class="text-xl font-bold mb-4">الخطوة 3: توزيع الطلاب على المقاعد</h3>
+                    <p class="mb-6 text-slate-500">سيتم توزيع الطلاب تلقائياً بناءً على سعة القاعات المضافة.</p>
+                    <button class="bg-violet-600 text-white px-10 py-3 rounded-xl font-bold shadow-lg">بدء التوزيع التلقائي</button>
                 </section>
 
                 <section id="step-4" class="step-section">
-                    <div class="text-center mb-8"><h2 class="text-2xl font-bold">الخطوة 4: التصدير</h2></div>
-                    <button id="export-chart-pdf-btn" class="bg-sky-600 text-white py-2 px-4 rounded">تصدير المخطط PDF</button>
+                    <h3 class="text-xl font-bold mb-4">الخطوة 4: تقارير القاعات</h3>
+                    <p>تحميل كشوفات الطلاب لكل قاعة بصيغة PDF.</p>
                 </section>
 
                 <section id="step-5" class="step-section">
-                    <div class="text-center mb-8"><h2 class="text-2xl font-bold">الخطوة 5: الغياب</h2></div>
-                    <div id="reader"></div>
-                    <div id="absent-list"></div>
+                    <h3 class="text-xl font-bold mb-4">الخطوة 5: نظام تسجيل الغياب (QR)</h3>
+                    <p>استخدام الكاميرا لمسح رموز الطلاب.</p>
                 </section>
 
                 <section id="step-6" class="step-section">
-                    <div class="text-center mb-8">
-                        <h2 class="text-2xl font-bold text-sky-700">الخطوة 6: تصدير بطاقات QR للطلاب</h2>
-                        <p class="text-slate-500 mt-1">توليد ملف يحتوي على بطاقات تعريفية لكل طالب (30 بطاقة في الصفحة).</p>
-                    </div>
-                    <div class="max-w-2xl mx-auto bg-blue-50 p-8 rounded-xl border border-blue-200 text-center">
-                        <div class="mb-6 text-sky-800">
-                            <ul class="text-right inline-block list-disc space-y-2">
-                                <li>توزيع تلقائي: 3 أعمدة × 10 صفوف.</li>
-                                <li>كل مستطيل يحتوي على معلومات الطالب والرمز.</li>
-                                <li>يتم إنشاء صفحة جديدة تلقائياً كل 30 طالباً.</li>
-                            </ul>
+                    <div class="text-center">
+                        <div class="bg-amber-50 text-amber-800 p-6 rounded-2xl border border-amber-200 mb-8">
+                            <h3 class="text-2xl font-black mb-2">تصدير بطاقات الطلاب (QR)</h3>
+                            <p>سيتم توليد ملف PDF يحتوي على 30 بطاقة في كل صفحة (3 أعمدة × 10 صفوف).</p>
                         </div>
-                        <button id="export-qr-cards-btn" class="bg-sky-600 text-white font-bold py-4 px-10 rounded-lg hover:bg-sky-700 transition shadow-lg flex items-center justify-center gap-3 mx-auto">
-                            <span>🖨️</span> تصدير بطاقات QR للطلاب (PDF)
+
+                        <button onclick="generateQRDocs()" class="bg-sky-600 hover:bg-sky-700 text-white text-xl font-bold py-6 px-12 rounded-2xl shadow-xl transition-all transform hover:scale-105 flex items-center gap-4 mx-auto">
+                            <span>🖨️</span>
+                            تصدير الجدول النهائي للرموز
                         </button>
                     </div>
                 </section>
 
-                <div id="navigation-btns" class="mt-10 flex justify-between border-t pt-6">
-                    <button id="prev-btn" class="bg-gray-200 text-gray-800 font-bold py-2 px-6 rounded-md hover:bg-gray-300 transition" disabled>السابق</button>
-                    <button id="next-btn" class="bg-sky-600 text-white font-bold py-2 px-6 rounded-md hover:bg-sky-700 transition">التالي</button>
+                <div class="flex justify-between mt-12 pt-6 border-t">
+                    <button id="prevBtn" onclick="changeStep(-1)" class="px-6 py-2 bg-slate-200 rounded-lg font-bold invisible">السابق</button>
+                    <button id="nextBtn" onclick="changeStep(1)" class="px-6 py-2 bg-sky-600 text-white rounded-lg font-bold">التالي</button>
                 </div>
             </main>
         </div>
     </div>
 
-    <div id="qr-cards-container"></div>
+    <div id="qr-print-area"></div>
 
-    <div id="progress-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-        <div class="bg-white p-8 rounded-lg shadow-xl text-center w-80">
-            <h3 id="progress-title" class="text-lg font-bold mb-4">جاري المعالجة...</h3>
-            <div class="w-full bg-gray-200 rounded-full h-4 mb-2">
-                <div id="progress-bar" class="bg-blue-600 h-4 rounded-full transition-all duration-300" style="width: 0%;"></div>
-            </div>
-            <p id="progress-text" class="text-sm">0%</p>
-        </div>
+    <div id="loader" class="hidden fixed inset-0 bg-white/80 z-[100] flex flex-col items-center justify-center">
+        <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-sky-600 mb-4"></div>
+        <p class="text-sky-900 font-bold" id="loader-text">جاري إعداد الملفات...</p>
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            // إعدادات Firebase مبسطة (للعرض فقط)
-            const firebaseConfig = { apiKey: "AIzaSy...", authDomain: "...", projectId: "..." };
-            firebase.initializeApp(firebaseConfig);
-            const auth = firebase.auth();
+        let currentStep = 1;
+        let students = [];
+        const steps = ["القاعات", "الطلاب", "التوزيع", "التقارير", "الغياب", "بطاقات QR"];
 
-            // الحالة العامة للنظام
-            let state = {
-                currentStep: 1,
-                halls: [],
-                students: [],
-                seatingChart: new Map(),
-            };
+        // وظيفة الدخول البديلة
+        function bypassLogin() {
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('app-container').classList.remove('hidden');
+            renderStepper();
+        }
 
-            // تعريف الخطوات بما فيها السادسة
-            const steps = [
-                { number: 1, label: 'القاعات', icon: 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16' },
-                { number: 2, label: 'الطلاب', icon: 'M12 4.354a4 4 0 110 5.292' },
-                { number: 3, label: 'التوزيع', icon: 'M4 6a2 2 0 012-2h2a2 2 0 012 2v2' },
-                { number: 4, label: 'التصدير', icon: 'M4 16v1a3 3 0 003 3h10' },
-                { number: 5, label: 'الغياب', icon: 'M9 5H7a2 2 0 00-2 2v12' },
-                { number: 6, label: 'بطاقات QR', icon: 'M12 4v1m6 11h2m-6 0h-2v4' }
-            ];
-
-            // وظيفة التنقل بين الخطوات
-            const updateUI = () => {
-                document.querySelectorAll('.step-section').forEach((s, i) => {
-                    s.classList.toggle('active', i + 1 === state.currentStep);
-                });
-                document.getElementById('prev-btn').disabled = state.currentStep === 1;
-                document.getElementById('next-btn').textContent = state.currentStep === steps.length ? 'إنهاء' : 'التالي';
-                renderStepper();
-            };
-
-            const renderStepper = () => {
-                const stepper = document.getElementById('stepper');
-                stepper.innerHTML = steps.map(s => `
-                    <div class="flex flex-col items-center">
-                        <div class="w-10 h-10 rounded-full flex items-center justify-center ${s.number <= state.currentStep ? 'bg-sky-600 text-white' : 'bg-gray-200 text-gray-500'}">
-                            ${s.number}
-                        </div>
-                        <span class="text-xs mt-1 font-bold">${s.label}</span>
+        function renderStepper() {
+            const stepper = document.getElementById('stepper');
+            stepper.innerHTML = steps.map((step, i) => `
+                <div class="flex flex-col items-center min-w-[80px]">
+                    <div class="w-8 h-8 rounded-full flex items-center justify-center font-bold ${i+1 <= currentStep ? 'bg-sky-600 text-white' : 'bg-slate-200 text-slate-500'}">
+                        ${i+1}
                     </div>
-                `).join('<div class="h-px w-8 bg-gray-300 mb-5"></div>');
-            };
+                    <span class="text-[10px] mt-1 font-bold ${i+1 === currentStep ? 'text-sky-600' : 'text-slate-400'}">${step}</span>
+                </div>
+            `).join('<div class="h-px bg-slate-200 w-full mt-4 mx-2"></div>');
+        }
 
-            // --- وظيفة تصدير بطاقات QR ---
-            const exportQRCards = async () => {
-                if (state.students.length === 0) {
-                    alert('لا يوجد طلاب مسجلين.');
-                    return;
-                }
+        function changeStep(dir) {
+            currentStep += dir;
+            if (currentStep < 1) currentStep = 1;
+            if (currentStep > 6) currentStep = 6;
 
-                const { jsPDF } = window.jspdf;
-                const pdf = new jsPDF('p', 'mm', 'a4');
-                const container = document.getElementById('qr-cards-container');
-                const progressBar = document.getElementById('progress-bar');
-                const progressText = document.getElementById('progress-text');
-                document.getElementById('progress-modal').classList.remove('hidden');
+            document.querySelectorAll('.step-section').forEach((s, i) => {
+                s.classList.toggle('active', i + 1 === currentStep);
+            });
 
-                const studentsPerPage = 30;
-                const totalPages = Math.ceil(state.students.length / studentsPerPage);
+            document.getElementById('prevBtn').style.visibility = currentStep === 1 ? 'hidden' : 'visible';
+            document.getElementById('nextBtn').style.visibility = currentStep === 6 ? 'hidden' : 'visible';
+            
+            renderStepper();
+        }
 
-                for (let p = 0; p < totalPages; p++) {
-                    container.innerHTML = '';
-                    const pageStudents = state.students.slice(p * studentsPerPage, (p + 1) * studentsPerPage);
+        function processStudents() {
+            const input = document.getElementById('students-input').value;
+            const lines = input.split('\n').filter(l => l.trim() !== "");
+            students = lines.map(line => {
+                const parts = line.split(/[،,]/);
+                return {
+                    name: parts[0]?.trim() || "غير مسمى",
+                    examId: parts[1]?.trim() || "0000",
+                    grade: parts[2]?.trim() || "-",
+                    section: parts[3]?.trim() || "-"
+                };
+            });
+            document.getElementById('students-count').textContent = `تم تسجيل ${students.length} طالب بنجاح.`;
+            alert('تم حفظ البيانات بنجاح!');
+        }
 
-                    // إنشاء البطاقات برمجياً في الحاوية المخفية
-                    for (const student of pageStudents) {
-                        const card = document.createElement('div');
-                        card.className = 'student-qr-card';
-                        
-                        const qrBox = document.createElement('div');
-                        qrBox.className = 'card-qr-box';
-                        new QRCode(qrBox, { text: student.examId, width: 80, height: 80 });
+        // --- محرك تصدير بطاقات QR (الخطوة 6) ---
+        async function generateQRDocs() {
+            if (students.length === 0) {
+                alert('الرجاء إضافة بيانات الطلاب في الخطوة 2 أولاً!');
+                changeStep(-4);
+                return;
+            }
 
-                        card.innerHTML = `
-                            <div class="card-info">
-                                <div>الاسم: ${student.name}</div>
-                                <div>الصف: ${student.grade}</div>
-                                <div>الشعبة: ${student.section}</div>
-                                <div>الرقم: ${student.examId}</div>
-                            </div>
-                        `;
-                        card.prepend(qrBox);
-                        container.appendChild(card);
-                    }
+            const loader = document.getElementById('loader');
+            loader.classList.remove('hidden');
+            const printArea = document.getElementById('qr-print-area');
+            printArea.innerHTML = '';
 
-                    // تحويل الحاوية إلى صورة لإضافتها للـ PDF لضمان جودة الخط العربي
-                    await new Promise(resolve => setTimeout(resolve, 500)); // وقت لتوليد الـ QR
-                    const canvas = await html2canvas(container, { scale: 2 });
-                    const imgData = canvas.toDataURL('image/jpeg', 0.8);
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            
+            const cardsPerPage = 30;
+            const totalPages = Math.ceil(students.length / cardsPerPage);
+
+            for (let p = 0; p < totalPages; p++) {
+                const pageDiv = document.createElement('div');
+                pageDiv.className = 'qr-page';
+                
+                const pageStudents = students.slice(p * cardsPerPage, (p + 1) * cardsPerPage);
+                
+                for (const student of pageStudents) {
+                    const card = document.createElement('div');
+                    card.className = 'student-card';
                     
-                    if (p > 0) pdf.addPage();
-                    pdf.addImage(imgData, 'JPEG', 0, 0, 210, 297);
+                    // توليد QR
+                    const qrContainer = document.createElement('div');
+                    qrContainer.className = 'card-qr';
+                    new QRCode(qrContainer, {
+                        text: student.examId,
+                        width: 70,
+                        height: 70,
+                        correctLevel: QRCode.CorrectLevel.H
+                    });
 
-                    const progress = Math.round(((p + 1) / totalPages) * 100);
-                    progressBar.style.width = progress + '%';
-                    progressText.textContent = progress + '%';
+                    card.innerHTML = `
+                        <div class="card-data">
+                            <div>الاسم: ${student.name}</div>
+                            <div>الصف: ${student.grade} - الشعبة: ${student.section}</div>
+                            <div>الرقم الامتحاني: ${student.examId}</div>
+                        </div>
+                    `;
+                    card.appendChild(qrContainer);
+                    pageDiv.appendChild(card);
                 }
+                
+                printArea.appendChild(pageDiv);
 
-                pdf.save('بطاقات_QR_الطلاب.pdf');
-                document.getElementById('progress-modal').classList.add('hidden');
-            };
+                // تحويل الصفحة إلى صورة لإدراجها في PDF (لحل مشكلة الخطوط العربية)
+                await new Promise(resolve => setTimeout(resolve, 300)); // انتظار توليد الرموز
+                const canvas = await html2canvas(pageDiv, { scale: 2 });
+                const imgData = canvas.toDataURL('image/jpeg', 0.95);
+                
+                if (p > 0) pdf.addPage();
+                pdf.addImage(imgData, 'JPEG', 0, 0, 210, 297);
+                
+                document.getElementById('loader-text').textContent = `جاري معالجة الصفحة ${p+1} من ${totalPages}...`;
+                printArea.innerHTML = ''; // تنظيف الذاكرة
+            }
 
-            // مستمعات الأحداث
-            document.getElementById('export-qr-cards-btn').addEventListener('click', exportQRCards);
-            document.getElementById('next-btn').addEventListener('click', () => {
-                if (state.currentStep < steps.length) { state.currentStep++; updateUI(); }
-            });
-            document.getElementById('prev-btn').addEventListener('click', () => {
-                if (state.currentStep > 1) { state.currentStep--; updateUI(); }
-            });
-
-            // استيراد بسيط للطلاب (للتجربة)
-            document.getElementById('import-text-btn').addEventListener('click', () => {
-                const text = document.getElementById('students-text').value;
-                state.students = text.split('\n').filter(l => l.trim()).map(l => {
-                    const [name, examId, grade, section] = l.split('،').map(s => s.trim());
-                    return { name, examId, grade, section };
-                });
-                alert(`تم استيراد ${state.students.length} طالب.`);
-            });
-
-            // بدء التشغيل
-            auth.onAuthStateChanged(user => {
-                if (user) {
-                    document.getElementById('login-screen').classList.add('hidden');
-                    document.getElementById('app-container').classList.remove('hidden');
-                    document.getElementById('welcome-message').textContent = `مرحباً، ${user.displayName}`;
-                    updateUI();
-                }
-            });
-
-            document.getElementById('login-btn').addEventListener('click', () => {
-                const provider = new firebase.auth.GoogleAuthProvider();
-                auth.signInWithPopup(provider);
-            });
-        });
+            pdf.save(`بطاقات_الطلاب_QR.pdf`);
+            loader.classList.add('hidden');
+        }
     </script>
 </body>
 </html>
