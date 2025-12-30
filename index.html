@@ -78,18 +78,88 @@
         .action-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
         
         .btn-icon { width: 18px; height: 18px; fill: currentColor; }
+        
+        /* QR Code Styles - Fixed Size */
+        .qr-code-container {
+            width: 60px !important;
+            height: 60px !important;
+            min-width: 60px !important;
+            min-height: 60px !important;
+            display: flex !important;
+            justify-content: center !important;
+            align-items: center !important;
+            margin: 2px auto !important;
+            overflow: hidden !important;
+        }
+        
+        .qr-code-container canvas,
+        .qr-code-container img {
+            width: 60px !important;
+            height: 60px !important;
+            max-width: 60px !important;
+            max-height: 60px !important;
+            object-fit: contain !important;
+        }
+        
+        .pdf-qr-code {
+            width: 80px !important;
+            height: 80px !important;
+            min-width: 80px !important;
+            min-height: 80px !important;
+            display: flex !important;
+            justify-content: center !important;
+            align-items: center !important;
+            margin: 5px auto !important;
+        }
+        
+        .pdf-qr-code canvas,
+        .pdf-qr-code img {
+            width: 80px !important;
+            height: 80px !important;
+            max-width: 80px !important;
+            max-height: 80px !important;
+            object-fit: contain !important;
+        }
     </style>
 </head>
 <body class="bg-stone-50 text-slate-800">
 
     <div id="login-screen" class="fixed inset-0 bg-stone-100 z-50 flex flex-col items-center justify-center">
-        <div class="text-center p-8 bg-white rounded-xl shadow-lg border border-slate-200">
+        <div class="text-center p-8 bg-white rounded-xl shadow-lg border border-slate-200 w-11/12 max-w-md">
             <h1 class="text-3xl font-bold text-sky-700 mb-2">نظام إدارة مخططات الجلوس</h1>
-            <p class="text-slate-500 mb-6">الرجاء تسجيل الدخول للمتابعة</p>
-            <button id="login-btn" class="bg-white text-slate-700 border border-slate-300 font-bold py-3 px-8 rounded-lg hover:bg-slate-50 transition flex items-center gap-3 shadow-sm">
-                <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"></path><path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"></path><path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"></path><path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.574l6.19-5.238C42.022,35.244,44,30.036,44,24C44,22.659,43.862,21.35,43.611,20.083z"></path></svg>
-                <span>تسجيل الدخول باستخدام Google</span>
-            </button>
+            <p class="text-slate-500 mb-6">اختر طريقة الدخول للمتابعة</p>
+            
+            <div class="space-y-4">
+                <button id="login-anonymous-btn" class="w-full bg-blue-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-blue-700 transition flex items-center justify-center gap-3 shadow-sm">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                    </svg>
+                    <span>الدخول مباشرة</span>
+                </button>
+                
+                <div class="relative my-4">
+                    <div class="absolute inset-0 flex items-center">
+                        <div class="w-full border-t border-gray-300"></div>
+                    </div>
+                    <div class="relative flex justify-center text-sm">
+                        <span class="px-2 bg-white text-gray-500">أو</span>
+                    </div>
+                </div>
+                
+                <button id="login-google-btn" class="w-full bg-white text-slate-700 border border-slate-300 font-bold py-3 px-8 rounded-lg hover:bg-slate-50 transition flex items-center justify-center gap-3 shadow-sm">
+                    <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
+                        <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"></path>
+                        <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"></path>
+                        <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"></path>
+                        <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.574l6.19-5.238C42.022,35.244,44,30.036,44,24C44,22.659,43.862,21.35,43.611,20.083z"></path>
+                    </svg>
+                    <span>تسجيل الدخول باستخدام Google</span>
+                </button>
+            </div>
+            
+            <p class="text-xs text-slate-400 mt-6">
+                ملاحظة: الدخول مباشرة لا يتطلب حساب جيميل، بينما تسجيل الدخول بـ Google يمكنك من حفظ واستعادة بياناتك من Google Drive.
+            </p>
         </div>
     </div>
 
@@ -101,12 +171,12 @@
                     <div id="welcome-message" class="text-sm font-bold text-sky-800 bg-sky-50 px-4 py-2 rounded-lg border border-sky-100"></div>
                     
                     <div class="flex flex-wrap items-center justify-center gap-3">
-                        <button id="sync-to-drive-btn" class="action-btn bg-emerald-600 text-white hover:bg-emerald-700">
+                        <button id="sync-to-drive-btn" class="action-btn bg-emerald-600 text-white hover:bg-emerald-700 hidden">
                             <svg class="btn-icon" viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/></svg>
                             حفظ في Drive
                         </button>
                         
-                        <button id="load-from-drive-btn" class="action-btn bg-indigo-600 text-white hover:bg-indigo-700">
+                        <button id="load-from-drive-btn" class="action-btn bg-indigo-600 text-white hover:bg-indigo-700 hidden">
                             <svg class="btn-icon" viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg>
                             تحميل من Drive
                         </button>
@@ -381,48 +451,89 @@
             // --- Firebase Authentication ---
             const loginScreen = document.getElementById('login-screen');
             const appContainer = document.getElementById('app-container');
-            const loginBtn = document.getElementById('login-btn');
+            const loginAnonymousBtn = document.getElementById('login-anonymous-btn');
+            const loginGoogleBtn = document.getElementById('login-google-btn');
             const logoutBtn = document.getElementById('logout-btn');
 
-            firebase.initializeApp(firebaseConfig);
-            const auth = firebase.auth();
-            const provider = new firebase.auth.GoogleAuthProvider();
-
+            let firebaseInitialized = false;
+            
+            try {
+                firebase.initializeApp(firebaseConfig);
+                firebaseInitialized = true;
+            } catch (e) {
+                console.log("Firebase already initialized or failed to initialize");
+            }
+            
             let appInitialized = false;
             let gapiInited = false;
             let tokenClient;
+            let currentUser = null;
+            let isAnonymousUser = false;
 
-            loginBtn.addEventListener('click', () => {
-                auth.signInWithPopup(provider).catch((error) => {
-                    console.error("Authentication failed:", error);
-                    showAlert("فشل تسجيل الدخول. الرجاء المحاولة مرة أخرى.");
+            // دالة الدخول بدون تسجيل دخول
+            loginAnonymousBtn.addEventListener('click', () => {
+                isAnonymousUser = true;
+                currentUser = {
+                    uid: 'anonymous_' + Date.now(),
+                    displayName: 'مستخدم مباشر'
+                };
+                
+                loginScreen.classList.add('hidden');
+                appContainer.classList.remove('hidden');
+                
+                const welcomeMsg = document.getElementById('welcome-message');
+                welcomeMsg.textContent = `مرحباً، ${currentUser.displayName} (دخول مباشر)`;
+                
+                document.getElementById('sync-to-drive-btn').classList.add('hidden');
+                document.getElementById('load-from-drive-btn').classList.add('hidden');
+                
+                initializeAppLogic(currentUser);
+            });
+
+            // دالة الدخول باستخدام جوجل
+            if (firebaseInitialized) {
+                const auth = firebase.auth();
+                const provider = new firebase.auth.GoogleAuthProvider();
+
+                loginGoogleBtn.addEventListener('click', () => {
+                    auth.signInWithPopup(provider).catch((error) => {
+                        console.error("Authentication failed:", error);
+                        showAlert("فشل تسجيل الدخول. الرجاء المحاولة مرة أخرى.");
+                    });
                 });
-            });
 
-            logoutBtn.addEventListener('click', () => {
-                auth.signOut();
-            });
+                logoutBtn.addEventListener('click', () => {
+                    auth.signOut();
+                    isAnonymousUser = false;
+                    currentUser = null;
+                });
 
-            auth.onAuthStateChanged(user => {
-                if (user) {
-                    if (!appInitialized) {
-                        appInitialized = true;
-                        loginScreen.classList.add('hidden');
-                        appContainer.classList.remove('hidden');
-                        
-                        const welcomeMsg = document.getElementById('welcome-message');
-                        welcomeMsg.textContent = `مرحباً، ${user.displayName}`;
-                        
-                        initializeAppLogic(user);
-                        gapi.load('client', initializeGapiClient);
+                auth.onAuthStateChanged(user => {
+                    if (user && !isAnonymousUser) {
+                        currentUser = user;
+                        if (!appInitialized) {
+                            appInitialized = true;
+                            loginScreen.classList.add('hidden');
+                            appContainer.classList.remove('hidden');
+                            
+                            const welcomeMsg = document.getElementById('welcome-message');
+                            welcomeMsg.textContent = `مرحباً، ${user.displayName}`;
+                            
+                            document.getElementById('sync-to-drive-btn').classList.remove('hidden');
+                            document.getElementById('load-from-drive-btn').classList.remove('hidden');
+                            
+                            initializeAppLogic(user);
+                            gapi.load('client', initializeGapiClient);
+                        }
+                    } else if (!isAnonymousUser) {
+                        appInitialized = false;
+                        gapiInited = false;
+                        isAnonymousUser = false;
+                        loginScreen.classList.remove('hidden');
+                        appContainer.classList.add('hidden');
                     }
-                } else {
-                    appInitialized = false;
-                    gapiInited = false;
-                    loginScreen.classList.remove('hidden');
-                    appContainer.classList.add('hidden');
-                }
-            });
+                });
+            }
 
             async function initializeGapiClient() {
                 try {
@@ -1074,6 +1185,7 @@
                         container.appendChild(select);
                     }
                 };
+                
                 const renderSectorGrid = (gridContainer, hall, sector) => {
                     gridContainer.innerHTML = '';
                     const cols = sector === 1 ? hall.sector1Cols : hall.sector2Cols;
@@ -1096,7 +1208,7 @@
                                         <p class="font-bold text-xs leading-tight">${student.name}</p>
                                         <p class="text-slate-600 text-[10px]">${student.id}</p>
                                         <p class="text-sky-700 font-semibold text-[10px] mt-1">${student.class} / ${student.section}</p>
-                                        <div class="flex justify-center mt-1" id="qrcode-${seatId.replace(/:/g, '-')}"></div>
+                                        <div class="qr-code-container" id="qrcode-${seatId.replace(/:/g, '-')}"></div>
                                      </div>`;
                                 if(hasConflict(seatId)) seat.classList.add('conflict');
                             }
@@ -1104,14 +1216,24 @@
                             gridContainer.appendChild(seat);
                             if (studentUid) {
                                 const student = state.students.find(s => s.uid === studentUid);
-                                new QRCode(document.getElementById(`qrcode-${seatId.replace(/:/g, '-')}`), {
-                                    text: student.id.toString(), width: 40, height: 40,
-                                    colorDark : "#000000", colorLight : "#ffffff", correctLevel : QRCode.CorrectLevel.H
-                                });
+                                // إنشاء QR Code بحجم ثابت
+                                const qrContainer = document.getElementById(`qrcode-${seatId.replace(/:/g, '-')}`);
+                                if (qrContainer) {
+                                    qrContainer.innerHTML = ''; // تنظيف المحتوى القديم
+                                    new QRCode(qrContainer, {
+                                        text: student.id.toString(),
+                                        width: 60,
+                                        height: 60,
+                                        colorDark: "#000000",
+                                        colorLight: "#ffffff",
+                                        correctLevel: QRCode.CorrectLevel.H
+                                    });
+                                }
                             }
                         }
                     }
                 };
+                
                 const toggleSeatDisabled = (seatId) => {
                     const [hallIdStr] = seatId.split(':');
                     const hallId = parseInt(hallIdStr);
@@ -1350,7 +1472,7 @@
                                                      <p class="font-bold text-slate-800 text-sm">${student.id}</p>
                                                      <p class="font-bold text-slate-800 text-xs mt-1">${student.class} (${student.section})</p>
                                                     </div>
-                                                    <div style="width: 64px; height: 64px;" id="pdf-qrcode-${safeSeatId}"></div>`;
+                                                    <div class="pdf-qr-code" id="pdf-qrcode-${safeSeatId}"></div>`;
                                 }
                             }
                             sectorGrid.appendChild(seat);
@@ -1368,9 +1490,14 @@
                                 const safeSeatId = seatId.replace(/:/g, '-');
                                 const qrElement = pageContainer.querySelector(`#pdf-qrcode-${safeSeatId}`);
                                 if(qrElement && student) {
+                                    qrElement.innerHTML = '';
                                      new QRCode(qrElement, {
-                                        text: student.id.toString(), width: 64, height: 64,
-                                        colorDark : "#000000", colorLight : "#ffffff", correctLevel : QRCode.CorrectLevel.M
+                                        text: student.id.toString(),
+                                        width: 80,
+                                        height: 80,
+                                        colorDark: "#000000",
+                                        colorLight: "#ffffff",
+                                        correctLevel: QRCode.CorrectLevel.M
                                     });
                                 }
                             }
@@ -1480,7 +1607,7 @@
                     await new Promise(resolve => setTimeout(resolve, 50));
 
                     try {
-                        const amiriFont = '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ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAAAAIAAgAAAAAFAAEAAAAAAAAAAQIDBAEFAAcACgAAAAAAAAABAAEAAgABAAEAAQAAAAEAAAAAAAAAAQAAAAAAAQAAAAIAAQAAAAAAAAAAAAMAAAAAAAAAAQAAAAACAAEAAgABAAEAAwAAAAAABAACAAAAAQAJ//8ABwABAAAAAAAAAAEAAAABAAAAAAAAAAEAAAAAAAAAAgAAAAEAAAAAAAAAAQAAAAQAAQAFAAAABQAGAAcACAADAAQABQAHAAMABAAFAAcAAwAEAAsADgAPABAABQAIAAkACgALAAgACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAk.m';
+                        const amiriFont = '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ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAAAAIAAgAAAAAFAAEAAAAAAAAAAQIDBAEFAAcACgAAAAAAAAABAAEAAgABAAEAAQAAAAEAAAAAAAAAAQAAAAAAAQAAAAIAAQAAAAAAAAAAAAMAAAAAAAAAAQAAAAACAAEAAgABAAEAAwAAAAAABAACAAAAAQAJ//8ABwABAAAAAAAAAAEAAAABAAAAAAAAAAEAAAAAAAAAAgAAAAEAAAAAAAAAAQAAAAQAAQAFAAAABQAGAAcACAADAAQABQAHAAMABAAFAAcAAwAEAAsADgAPABAABQAIAAkACgALAAgACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAk.m';
                         const { jsPDF } = window.jspdf;
                         const doc = new jsPDF();
 
@@ -1781,7 +1908,7 @@
 
                 // 3. Export PDF
                 exportAbsentPdfBtn.addEventListener('click', async () => {
-                     const amiriFont = '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ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAAAAIAAgAAAAAFAAEAAAAAAAAAAQIDBAEFAAcACgAAAAAAAAABAAEAAgABAAEAAQAAAAEAAAAAAAAAAQAAAAAAAQAAAAIAAQAAAAAAAAAAAAMAAAAAAAAAAQAAAAACAAEAAgABAAEAAwAAAAAABAACAAAAAQAJ//8ABwABAAAAAAAAAAEAAAABAAAAAAAAAAEAAAAAAAAAAgAAAAEAAAAAAAAAAQAAAAQAAQAFAAAABQAGAAcACAADAAQABQAHAAMABAAFAAcAAwAEAAsADgAPABAABQAIAAkACgALAAgACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAk.m';
+                     const amiriFont = 'AAEAAAARAQAABAAQR0RFRgQsAgsAADhkAAAAHkdQT1Mrk8MkAAA4YAAABJBHU1VCA8+JjwAAEnsAAAMyT1MvMg8SDbEAAAEgAAAAYGNtYXABDQDNAAABnAAAAFRnYXNw//8AAwAAOGAAAAAIZ2x5Zt5TAdwAAARAAAACFGhlYWQY2C8VAAAA4AAAADZoaGVhB7QDNAAAASAAAAAkaG10eCoAlgIAAAGoAAAAGmxvY2ED2AO0AAAEgAAAABhtYXhwARgAMQAAAUgAAAAgbmFtZXV0jHEAAAdMAAABMHBvc3QAAwAAAAAAOWAAAAABAAACAAMDAAABdyNQAAAAAFdyNQAAAAAAAQIAZgABAQAAAAAAAgAAAAEAAAAAAQAAAAEAAAACAAEAAgAAAAEAAQAABQADAAgAAQACAAsAAQAAAAEAAAAAACQAKgBOARQAAQAAAAAAAAAAAAIAAAAEAAEAAgAFAAYABwAIAAkACgALAAwADQAOAA8AEAARABIAEwAUABUAFwAXABgAGQAaABsAHAAdAB4AHwAgACEAIgAjACQBJgEnASgBKQEoAysBLgEvATABMQEyATMBNAE1AUEBTAFNAU4BTwFQAVIDVgNkA2gDbgNvA3ADdAN7A3wDfwOAA4MDiAOHA4sDjAOQA5EDmAOXA5gDmQOaA5sDnAOdA54DnwOgA6EDogOkA6UDpwOpA6oDqgOrA6wDrwOwA7EDsgOzA7QDswO1A7gDugO8A70DvgO/A8ADwQPCg8SDxQPGg8fDyYPJw8pDykPKw8yDzQPNw88DzwPPQ8/D0EPRQ9JD0sPTw9RD1MPVw9hD2MPZQ9oD2kPbQ9wD3MPhQ+MD5kPnw+hD6MPpA+qD7APtQ+2D7oPug/AD8kP0w/VD9sP3Q/fD+EP5g/pD+wP8Q/yD/YACQAAAAAAAAAAAAAAAAAIAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAUAAQIDBAEIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAJAAEAAAAAAAAAAAAABAAECAkHCwUKAwkJBwwGCAcGBAYCBwAAAAAGAAEBAgQCAwEFAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFAAICAgkCAwEIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAgABAgQCAgEABgAAAAAAAAAAAAAAAAAAAAAAAAACAAcAAAAAAAYAAQEEAgQCAgEABwAAAAAAAAAAAAAAAAAAAAAAAAADAAIAAggAAAEAAAAAAAIAAgIDAgIBAQkCAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAAAAIAAgAAAAAFAAEAAAAAAAAAAQIDBAEFAAcACgAAAAAAAAABAAEAAgABAAEAAQAAAAEAAAAAAAAAAQAAAAAAAQAAAAIAAQAAAAAAAAAAAAMAAAAAAAAAAQAAAAACAAEAAgABAAEAAwAAAAAABAACAAAAAQAJ//8ABwABAAAAAAAAAAEAAAABAAAAAAAAAAEAAAAAAAAAAgAAAAEAAAAAAAAAAQAAAAQAAQAFAAAABQAGAAcACAADAAQABQAHAAMABAAFAAcAAwAEAAsADgAPABAABQAIAAkACgALAAgACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAk.m';
                      const { jsPDF } = window.jspdf;
                      const doc = new jsPDF();
                      doc.addFileToVFS('Amiri-Regular.ttf', amiriFont);
@@ -1864,5 +1991,92 @@
             }
         });
     </script>
+
+<!-- ====== تعديلات تصدير الغيابات حسب النموذج الرسمي ====== -->
+<script>
+/* هذه الإضافات لا تغيّر أي كود سابق، فقط تضيف منطق التصدير المطلوب */
+
+function getTodayDateArabic() {
+    const d = new Date();
+    return d.toLocaleDateString('ar-IQ');
+}
+
+function buildAbsenceTableData(state) {
+    return state.absentStudents.map((s, i) => ([
+        i + 1,
+        s.name,
+        s.class,
+        s.section,
+        s.hall || '',
+        s.sector || '',
+        s.seat || '',
+        '',
+        ''
+    ]));
+}
+
+function exportAbsentPDF_File(state) {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF('p','mm','a4');
+
+    doc.setFont('Helvetica','');
+    doc.text('قائمة غيابات الطلبة', 105, 15, { align: 'center' });
+    doc.text('التاريخ: ' + getTodayDateArabic(), 15, 22);
+
+    doc.autoTable({
+        startY: 30,
+        head: [[
+            'تسلسل','اسم الطالب الغائب','الصف','الشعبة','القاعة','القطاع','رقمه','المراقب','التوقيع'
+        ]],
+        body: buildAbsenceTableData(state),
+        styles: { fontSize: 9, halign: 'center' },
+        headStyles: { fillColor: [220,220,220] }
+    });
+
+    doc.addPage();
+    doc.text('خلاصة الغيابات',105,20,{align:'center'});
+
+    doc.autoTable({
+        startY: 30,
+        head: [['المرحلة','عدد الطلاب','عدد الغياب','الدفاتر المستلمة']],
+        body: calculateSummary(state),
+        styles:{fontSize:10,halign:'center'}
+    });
+
+    doc.save('قائمة_الغيابات.pdf');
+}
+
+function exportAbsentWord_File(state) {
+    const doc = new docx.Document({
+        sections: [{
+            children: [
+                new docx.Paragraph({ text: 'قائمة غيابات الطلبة', alignment: 'center' }),
+                new docx.Paragraph('التاريخ: ' + getTodayDateArabic()),
+            ]
+        }]
+    });
+    docx.Packer.toBlob(doc).then(blob => {
+        saveAs(blob, 'قائمة_الغيابات.docx');
+    });
+}
+
+function calculateSummary(state){
+    const map = {};
+    state.students.forEach(s=>{
+        if(!map[s.class]) map[s.class]={total:0,absent:0};
+        map[s.class].total++;
+    });
+    state.absentStudents.forEach(s=>{
+        if(map[s.class]) map[s.class].absent++;
+    });
+    return Object.keys(map).map(k=>[
+        k,
+        map[k].total,
+        map[k].absent,
+        map[k].total - map[k].absent
+    ]);
+}
+</script>
+
 </body>
 </html>
