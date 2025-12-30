@@ -1992,89 +1992,58 @@
         });
     </script>
 
-<!-- ====== تعديلات تصدير الغيابات حسب النموذج الرسمي ====== -->
+<!-- ====== إضافة تصدير Word لقائمة الغيابات + الخلاصة (مطابقة للنموذج الرسمي) ====== -->
 <script>
-/* هذه الإضافات لا تغيّر أي كود سابق، فقط تضيف منطق التصدير المطلوب */
-
-function getTodayDateArabic() {
-    const d = new Date();
-    return d.toLocaleDateString('ar-IQ');
-}
-
-function buildAbsenceTableData(state) {
-    return state.absentStudents.map((s, i) => ([
-        i + 1,
-        s.name,
-        s.class,
-        s.section,
-        s.hall || '',
-        s.sector || '',
-        s.seat || '',
-        '',
-        ''
-    ]));
-}
-
-function exportAbsentPDF_File(state) {
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF('p','mm','a4');
-
-    doc.setFont('Helvetica','');
-    doc.text('قائمة غيابات الطلبة', 105, 15, { align: 'center' });
-    doc.text('التاريخ: ' + getTodayDateArabic(), 15, 22);
-
-    doc.autoTable({
-        startY: 30,
-        head: [[
-            'تسلسل','اسم الطالب الغائب','الصف','الشعبة','القاعة','القطاع','رقمه','المراقب','التوقيع'
-        ]],
-        body: buildAbsenceTableData(state),
-        styles: { fontSize: 9, halign: 'center' },
-        headStyles: { fillColor: [220,220,220] }
+function exportAbsentWord_File(state){
+    const rows1 = [
+        ["تسلسل","اسم الطالب الغائب","الصف","الشعبة","القاعة","القطاع","رقمه","المراقب","التوقيع"]
+    ];
+    state.absentStudents.forEach((s,i)=>{
+        rows1.push([
+            (i+1).toString(),
+            s.name,
+            s.class,
+            s.section,
+            s.hall||"",
+            s.sector||"",
+            s.seat||"",
+            "",
+            ""
+        ]);
     });
 
-    doc.addPage();
-    doc.text('خلاصة الغيابات',105,20,{align:'center'});
-
-    doc.autoTable({
-        startY: 30,
-        head: [['المرحلة','عدد الطلاب','عدد الغياب','الدفاتر المستلمة']],
-        body: calculateSummary(state),
-        styles:{fontSize:10,halign:'center'}
+    const summaryMap={};
+    state.students.forEach(s=>{
+        if(!summaryMap[s.class]) summaryMap[s.class]={total:0,absent:0};
+        summaryMap[s.class].total++;
+    });
+    state.absentStudents.forEach(s=>{
+        if(summaryMap[s.class]) summaryMap[s.class].absent++;
     });
 
-    doc.save('قائمة_الغيابات.pdf');
-}
+    const rows2=[["المرحلة","عدد الطلاب","عدد الغياب","الدفاتر المستلمة"]];
+    Object.keys(summaryMap).forEach(k=>{
+        rows2.push([
+            k,
+            summaryMap[k].total.toString(),
+            summaryMap[k].absent.toString(),
+            (summaryMap[k].total-summaryMap[k].absent).toString()
+        ]);
+    });
 
-function exportAbsentWord_File(state) {
     const doc = new docx.Document({
-        sections: [{
-            children: [
-                new docx.Paragraph({ text: 'قائمة غيابات الطلبة', alignment: 'center' }),
-                new docx.Paragraph('التاريخ: ' + getTodayDateArabic()),
+        sections:[{
+            children:[
+                new docx.Paragraph({text:"قائمة غيابات الطلبة",alignment:"center",bold:true}),
+                new docx.Paragraph({text:"التاريخ: "+new Date().toLocaleDateString('ar-IQ'),alignment:"right"}),
+                new docx.Table({rows:rows1.map(r=>new docx.TableRow({children:r.map(c=>new docx.TableCell({children:[new docx.Paragraph(c)]}))}))}),
+                new docx.Paragraph(""),
+                new docx.Paragraph({text:"خلاصة الغيابات",alignment:"center",bold:true}),
+                new docx.Table({rows:rows2.map(r=>new docx.TableRow({children:r.map(c=>new docx.TableCell({children:[new docx.Paragraph(c)]}))}))})
             ]
         }]
     });
-    docx.Packer.toBlob(doc).then(blob => {
-        saveAs(blob, 'قائمة_الغيابات.docx');
-    });
-}
-
-function calculateSummary(state){
-    const map = {};
-    state.students.forEach(s=>{
-        if(!map[s.class]) map[s.class]={total:0,absent:0};
-        map[s.class].total++;
-    });
-    state.absentStudents.forEach(s=>{
-        if(map[s.class]) map[s.class].absent++;
-    });
-    return Object.keys(map).map(k=>[
-        k,
-        map[k].total,
-        map[k].absent,
-        map[k].total - map[k].absent
-    ]);
+    docx.Packer.toBlob(doc).then(b=>saveAs(b,"قائمة_الغيابات.docx"));
 }
 </script>
 
