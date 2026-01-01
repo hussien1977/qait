@@ -1359,6 +1359,8 @@
                             } else if (studentUid) {
                                 const student = state.students.find(s => s.uid === studentUid);
                                 seat.classList.add('occupied');
+                                // إنشاء رمز QR فريد باستخدام معرف مركب
+                                const qrData = generateUniqueQRData(student);
                                 seat.innerHTML = `<div class="student-card w-full h-full flex flex-col justify-center items-center text-center" draggable="true" data-uid="${student.uid}" data-from-seat-id="${seatId}">
                                         <p class="font-bold text-xs leading-tight">${student.name}</p>
                                         <p class="text-slate-600 text-[10px]">${student.id}</p>
@@ -1371,12 +1373,12 @@
                             gridContainer.appendChild(seat);
                             if (studentUid) {
                                 const student = state.students.find(s => s.uid === studentUid);
-                                // إنشاء QR Code بحجم ثابت
+                                // إنشاء QR Code بحجم ثابت مع بيانات فريدة
                                 const qrContainer = document.getElementById(`qrcode-${seatId.replace(/:/g, '-')}`);
                                 if (qrContainer) {
                                     qrContainer.innerHTML = ''; // تنظيف المحتوى القديم
                                     new QRCode(qrContainer, {
-                                        text: student.id.toString(),
+                                        text: generateUniqueQRData(student),
                                         width: 60,
                                         height: 60,
                                         colorDark: "#000000",
@@ -1387,6 +1389,25 @@
                             }
                         }
                     }
+                };
+                
+                // دالة لإنشاء بيانات QR فريدة لكل طالب
+                const generateUniqueQRData = (student) => {
+                    // إنشاء معرف مركب: رقم امتحاني + صف + شعبة
+                    return `${student.id}|${student.class}|${student.section}`;
+                };
+                
+                // دالة لتحليل بيانات QR المركبة
+                const parseQRData = (qrData) => {
+                    const parts = qrData.split('|');
+                    if (parts.length === 3) {
+                        return {
+                            id: parts[0],
+                            class: parts[1],
+                            section: parts[2]
+                        };
+                    }
+                    return null;
                 };
                 
                 const toggleSeatDisabled = (seatId) => {
@@ -1671,8 +1692,9 @@
                                 const qrElement = pageContainer.querySelector(`#pdf-qrcode-${safeSeatId}`);
                                 if(qrElement && student) {
                                     qrElement.innerHTML = '';
-                                     new QRCode(qrElement, {
-                                        text: student.id.toString(),
+                                    // استخدام البيانات الفريدة لإنشاء QR Code
+                                    new QRCode(qrElement, {
+                                        text: generateUniqueQRData(student),
                                         width: 80,
                                         height: 80,
                                         colorDark: "#000000",
@@ -1787,7 +1809,7 @@
                     await new Promise(resolve => setTimeout(resolve, 50));
 
                     try {
-                        const amiriFont = 'AAEAAAARAQAABAAQR0RFRgQsAgsAADhkAAAAHkdQT1Mrk8MkAAA4YAAABJBHU1VCA8+JjwAAEnsAAAMyT1MvMg8SDbEAAAEgAAAAYGNtYXABDQDNAAABnAAAAFRnYXNw//8AAwAAOGAAAAAIZ2x5Zt5TAdwAAARAAAACFGhlYWQY2C8VAAAA4AAAADZoaGVhB7QDNAAAASAAAAAkaG10eCoAlgIAAAGoAAAAGmxvY2ED2AO0AAAEgAAAABhtYXhwARgAMQAAAUgAAAAgbmFtZXV0jHEAAAdMAAABMHBvc3QAAwAAAAAAOWAAAAABAAACAAMDAAABdyNQAAAAAFdyNQAAAAAAAQIAZgABAQAAAAAAAgAAAAEAAAAAAQAAAAEAAAACAAEAAgAAAAEAAQAABUADAAgAAQACAAsAAQAAAAEAAAAAACQAKgBOARQAAQAAAAAAAAAAAAIAAAAEAAEAAgAFAAYABwAIAAkACgALAAwADQAOAA8AEAARABIAEwAUABUAFwAXABgAGQAaABsAHAAdAB4AHwAgACEAIgAjACQBJgEnASgBKQEoAysBLgEvATABMQEyATMBNAE1AUEBTAFNAU4BTwFQAVIDVgNkA2gDbgNvA3ADdAN7A3wDfwOAA4MDiAOHA4sDjAOQA5EDmAOXA5gDmQOaA5sDnAOdA56CgICA';
+                        const amiriFont = 'AAEAAAARAQAABAAQR0RFRgQsAgsAADhkAAAAHkdQT1Mrk8MkAAA4YAAABJBHU1VCA8+JjwAAEnsAAAMyT1MvMg8SDbEAAAEgAAAAYGNtYXABDQDNAAABnAAAAFRnYXNw//8AAwAAOGAAAAAIZ2x5Zt5TAdwAAARAAAACFGhlYWQY2C8VAAAA4AAAADZoaGVhB7QDNAAAASAAAAAkaG10eCoAlgIAAAGoAAAAGmxvY2ED2AO0AAAEgAAAABhtYXhwARgAMQAAAUgAAAAgbmFtZXV0jHEAAAdMAAABMHBvc3QAAwAAAAAAOWAAAAABAAACAAMDAAABdyNQAAAAAFdyNQAAAAAAAQIAZgABAQAAAAAAAgAAAAEAAAAAAQAAAAEAAAACAAEAAgAAAAEAAQAABUADAAgAAQACAAsAAQAAAAEAAAAAACQAKgBOARQAAQAAAAAAAAAAAAIAAAAEAAEAAgAFAAYABwAIAAkACgALAAwADQAOAA8AEAARABIAEwAUABUAFwAFwAXABgAGQAaABsAHAAdAB4AHwAgACEAIgAjACQBJgEnASgBKQEoAysBLgEvATABMQEyATMBNAE1AUEBTAFNAU4BTwFQAVIDVgNkA2gDbgNvA3ADdAN7A3wDfwOAA4MDiAOHA4sDjAOQA5EDmAOXA5gDmQOaA5sDnAOdA56CgICA';
                         const { jsPDF } = window.jspdf;
                         const doc = new jsPDF();
 
@@ -1906,20 +1928,50 @@
                 };
 
                 const onScanSuccess = (decodedText, decodedResult) => {
-                    const examNumber = decodedText;
-                    if (state.absentStudents.some(s => s.id === examNumber)) {
-                        showScanFeedback(`الطالب بالرقم ${examNumber} مسجل كغائب بالفعل.`, 'fail');
-                        return;
-                    }
-                    const student = state.students.find(s => s.id === examNumber);
-                    if (student) {
-                        state.absentStudents.push(student);
-                        renderAbsenceView();
-                        showScanFeedback(`تم تسجيل غياب: ${student.name} (${student.id})`, 'success');
+                    // تحليل بيانات QR المركبة
+                    const qrData = parseQRData(decodedText);
+                    
+                    if (!qrData) {
+                        // محاولة التعامل مع التنسيق القديم (الرقم فقط)
+                        const examNumber = decodedText;
+                        
+                        if (state.absentStudents.some(s => s.id === examNumber)) {
+                            showScanFeedback(`الطالب بالرقم ${examNumber} مسجل كغائب بالفعل.`, 'fail');
+                            return;
+                        }
+                        
+                        const student = state.students.find(s => s.id === examNumber);
+                        if (student) {
+                            state.absentStudents.push(student);
+                            renderAbsenceView();
+                            showScanFeedback(`تم تسجيل غياب: ${student.name} (${student.id})`, 'success');
+                        } else {
+                            showScanFeedback(`الرقم الامتحاني ${examNumber} غير موجود في قوائم الطلاب.`, 'fail');
+                        }
                     } else {
-                        showScanFeedback(`الرقم الامتحاني ${examNumber} غير موجود في قوائم الطلاب.`, 'fail');
+                        // البحث باستخدام البيانات المركبة (رقم + صف + شعبة)
+                        const student = state.students.find(s => 
+                            s.id === qrData.id && 
+                            s.class === qrData.class && 
+                            s.section === qrData.section
+                        );
+                        
+                        if (student) {
+                            // التحقق مما إذا كان الطالب مسجل كغائب بالفعل
+                            if (state.absentStudents.some(s => s.uid === student.uid)) {
+                                showScanFeedback(`الطالب ${student.name} (${student.id}) مسجل كغائب بالفعل.`, 'fail');
+                                return;
+                            }
+                            
+                            state.absentStudents.push(student);
+                            renderAbsenceView();
+                            showScanFeedback(`تم تسجيل غياب: ${student.name} (${student.id}) - ${student.class}`, 'success');
+                        } else {
+                            showScanFeedback(`الطالب بالبيانات ${qrData.id}|${qrData.class}|${qrData.section} غير موجود.`, 'fail');
+                        }
                     }
                 };
+                
                 const onScanFailure = (error) => { /* Ignore */ };
                 const showScanFeedback = (message, type) => {
                     scanFeedbackDiv.innerHTML = `<span class="${type}">${message}</span>`;
@@ -2100,12 +2152,13 @@
                          saveAs(blob, "قائمة_الغيابات.docx");
                      });
                 });
+                
                 // 3. Export PDF
                 exportAbsentPdfBtn.addEventListener('click', async () => {
                     updateProgress(0, 100, 'جاري تحضير ملف PDF...');
                     
                     try {
-                        const amiriFont = 'AAEAAAARAQAABAAQR0RFRgQsAgsAADhkAAAAHkdQT1Mrk8MkAAA4YAAABJBHU1VCA8+JjwAAEnsAAAMyT1MvMg8SDbEAAAEgAAAAYGNtYXABDQDNAAABnAAAAFRnYXNw//8AAwAAOGAAAAAIZ2x5Zt5TAdwAAARAAAACFGhlYWQY2C8VAAAA4AAAADZoaGVhB7QDNAAAASAAAAAkaG10eCoAlgIAAAGoAAAAGmxvY2ED2AO0AAAEgAAAABhtYXhwARgAMQAAAUgAAAAgbmFtZXV0jHEAAAdMAAABMHBvc3QAAwAAAAAAOWAAAAABAAACAAMDAAABdyNQAAAAAFdyNQAAAAAAAQIAZgABAQAAAAAAAgAAAAEAAAAAAQAAAAEAAAACAAEAAgAAAAEAAQAABUADAAgAAQACAAsAAQAAAAEAAAAAACQAKgBOARQAAQAAAAAAAAAAAAIAAAAEAAEAAgAFAAYABwAIAAkACgALAAwADQAOAA8AEAARABIAEwAUABUAFwAXABgAGQAaABsAHAAdAB4AHwAgACEAIgAjACQBJgEnASgBKQEoAysBLgEvATABMQEyATMBNAE1AUEBTAFNAU4BTwFQAVIDVgNkA2gDbgNvA3ADdAN7A3wDfwOAA4MDiAOHA4sDjAOQA5EDmAOXA5gDmQOaA5sDnAOdA56CgICA';
+                        const amiriFont = 'AAEAAAARAQAABAAQR0RFRgQsAgsAADhkAAAAHkdQT1Mrk8MkAAA4YAAABJBHU1VCA8+JjwAAEnsAAAMyT1MvMg8SDbEAAAEgAAAAYGNtYXABDQDNAAABnAAAAFRnYXNw//8AAwAAOGAAAAAIZ2x5Zt5TAdwAAARAAAACFGhlYWQY2C8VAAAA4AAAADZoaGVhB7QDNAAAASAAAAAkaG10eCoAlgIAAAGoAAAAGmxvY2ED2AO0AAAEgAAAABhtYXhwARgAMQAAAUgAAAAgbmFtZXV0jHEAAAdMAAABMHBvc3QAAwAAAAAAOWAAAAABAAACAAMDAAABdyNQAAAAAFdyNQAAAAAAAQIAZgABAQAAAAAAAgAAAAEAAAAAAQAAAAEAAAACAAEAAgAAAAEAAQAABUADAAgAAQACAAsAAQAAAAEAAAAAACQAKgBOARQAAQAAAAAAAAAAAAIAAAAEAAEAAgAFAAYABwAIAAkACgALAAwADQAOAA8AEAARABIAEwAUABUAFwAFwAXABgAGQAaABsAHAAdAB4AHwAgACEAIgAjACQBJgEnASgBKQEoAysBLgEvATABMQEyATMBNAE1AUEBTAFNAU4BTwFQAVIDVgNkA2gDbgNvA3ADdAN7A3wDfwOAA4MDiAOHA4sDjAOQA5EDmAOXA5gDmQOaA5sDnAOdA56CgICA';
                         
                         const { jsPDF } = window.jspdf;
                         const doc = new jsPDF();
@@ -2559,4 +2612,3 @@ document.addEventListener('DOMContentLoaded', function() {
 
 </body>
 </html>
-               
