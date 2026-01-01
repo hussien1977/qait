@@ -8,8 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=PT+Sans:ital,wght@0,700&display=swap" rel="stylesheet">
-
+    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -26,24 +25,7 @@
     <script src="https://apis.google.com/js/api.js"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
 
-   
- <style>
-/* خط أسماء الطلاب داخل المقاعد */
-.seat,
-.seat span,
-.seat div {
-    font-family: 'Cairo', sans-serif !important;
-    font-weight: 900 !important;
-}
-
-/* خط عناوين القطاعات */
-.sector-title,
-.hall-sector-title,
-h3[class*="sector"] {
-    font-family: 'PT Sans', sans-serif !important;
-    font-weight: 700 !important;
-}
-
+    <style>
         body { font-family: 'Cairo', sans-serif; }
         .step-section { display: none; }
         .step-section.active { display: block; animation: fadeIn 0.5s; }
@@ -137,6 +119,25 @@ h3[class*="sector"] {
             max-width: 80px !important;
             max-height: 80px !important;
             object-fit: contain !important;
+        }
+
+        /* Font Preview */
+        .font-preview {
+            padding: 8px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .font-preview:hover {
+            border-color: #3b82f6;
+            background-color: #f0f9ff;
+        }
+        .font-preview.selected {
+            border-color: #2563eb;
+            background-color: #dbeafe;
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.3);
         }
     </style>
 </head>
@@ -296,6 +297,62 @@ h3[class*="sector"] {
                         <p class="text-slate-500 mt-1">اختر إعدادات التصدير ثم قم بمعاينة أو تصدير الملفات.</p>
                     </div>
                     <div class="max-w-4xl mx-auto">
+                        <!-- إعدادات الخط المضاف -->
+                        <div class="bg-gray-50 p-6 rounded-lg border mb-6 space-y-4">
+                            <h3 class="font-bold text-lg border-b pb-2">إعدادات الخطوط</h3>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block font-semibold mb-2">نوع الخط:</label>
+                                    <div class="grid grid-cols-3 gap-2" id="font-family-selector">
+                                        <div class="font-preview selected" data-font="Cairo" style="font-family: 'Cairo', sans-serif;">
+                                            <span>Cairo</span>
+                                            <div class="text-xs mt-1">كايرو</div>
+                                        </div>
+                                        <div class="font-preview" data-font="Amiri" style="font-family: 'Amiri', serif;">
+                                            <span>Amiri</span>
+                                            <div class="text-xs mt-1">أميري</div>
+                                        </div>
+                                        <div class="font-preview" data-font="Lateef" style="font-family: 'Lateef', serif;">
+                                            <span>Lateef</span>
+                                            <div class="text-xs mt-1">لطيف</div>
+                                        </div>
+                                        <div class="font-preview" data-font="Scheherazade" style="font-family: 'Scheherazade', serif;">
+                                            <span>Scheherazade</span>
+                                            <div class="text-xs mt-1">شهرزاد</div>
+                                        </div>
+                                        <div class="font-preview" data-font="Noto Naskh Arabic" style="font-family: 'Noto Naskh Arabic', serif;">
+                                            <span>Noto Naskh</span>
+                                            <div class="text-xs mt-1">نقوش</div>
+                                        </div>
+                                        <div class="font-preview" data-font="Tajawal" style="font-family: 'Tajawal', sans-serif;">
+                                            <span>Tajawal</span>
+                                            <div class="text-xs mt-1">تجوال</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <label for="font-size-slider" class="block font-semibold mb-2">حجم الخط: <span id="font-size-value">18</span>px</label>
+                                    <input type="range" id="font-size-slider" min="12" max="36" step="1" value="18" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                                    <div class="flex justify-between text-xs text-gray-500 mt-1">
+                                        <span>صغير</span>
+                                        <span>متوسط</span>
+                                        <span>كبير</span>
+                                        <span>كبير جداً</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-4 p-3 bg-white border rounded">
+                                <label class="block font-semibold mb-2">معاينة الخط:</label>
+                                <div id="font-preview-text" class="text-center p-3 border rounded" style="font-family: 'Cairo', sans-serif; font-size: 18px;">
+                                    أحمد محمد علي - ١٢٣٤ - الصف العاشر - شعبة أ
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- إعدادات الخلفيات -->
                         <div class="bg-gray-50 p-6 rounded-lg border mb-6 space-y-4">
                             <label class="flex items-center justify-center cursor-pointer">
                                 <span class="font-semibold ml-4">استخدام خلفيات مخصصة:</span>
@@ -326,6 +383,8 @@ h3[class*="sector"] {
                                 </div>
                             </div>
                         </div>
+                        
+                        <!-- أزرار التصدير -->
                         <div class="flex flex-col md:flex-row justify-center gap-4">
                             <button id="preview-pdf-btn" class="bg-indigo-600 text-white font-bold py-3 px-6 rounded-md hover:bg-indigo-700 transition flex items-center justify-center gap-2">
                                 <span>👁️</span> معاينة المخطط
@@ -389,6 +448,7 @@ h3[class*="sector"] {
         </div>
     </div>
 
+    <!-- Modal إنشاء القاعة -->
     <div id="hall-modal-backdrop" class="fixed inset-0 z-40 hidden">
         <div id="hall-modal" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 bg-white p-8 rounded-xl shadow-2xl w-full max-w-lg">
             <h2 id="hall-modal-title" class="text-2xl font-bold mb-6">إنشاء قاعة جديدة</h2>
@@ -424,6 +484,7 @@ h3[class*="sector"] {
         </div>
     </div>
 
+    <!-- Modal المعاينة -->
     <div id="preview-modal-backdrop" class="fixed inset-0 z-40 hidden items-center justify-center">
         <div id="preview-modal" class="bg-white p-4 rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center border-b pb-2 mb-4">
@@ -434,10 +495,12 @@ h3[class*="sector"] {
         </div>
      </div>
     
+    <!-- Alert -->
     <div id="custom-alert" class="hidden fixed top-5 right-5 bg-red-500 text-white py-3 px-5 rounded-lg shadow-xl z-50 animate-bounce">
         <p id="alert-message"></p>
     </div>
 
+    <!-- Progress Modal -->
     <div id="progress-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
         <div class="bg-white p-8 rounded-lg shadow-xl text-center w-11/12 md:w-1/3">
             <h3 id="progress-title" class="text-lg font-bold mb-4">جاري تحضير الملف...</h3>
@@ -579,7 +642,6 @@ h3[class*="sector"] {
                 });
             }
 
-
             function initializeAppLogic(user) {
                 // --- State Management ---
                 let state = {
@@ -591,6 +653,11 @@ h3[class*="sector"] {
                     columnClassAssignments: new Map(),
                     backgrounds: { header: null, body: null, use: false, headerOpacity: 1, bodyOpacity: 1 },
                     absentStudents: [],
+                    // إضافة إعدادات الخطوط الجديدة
+                    fontSettings: {
+                        fontFamily: 'Cairo',
+                        fontSize: 18
+                    }
                 };
                 let html5QrCode;
                 let fileId = null; 
@@ -650,6 +717,12 @@ h3[class*="sector"] {
                 const absentListContainer = document.getElementById('absent-list');
                 const absentCountSpan = document.getElementById('absent-count');
                 
+                // عناصر التحكم بالخطوط الجديدة
+                const fontFamilySelector = document.getElementById('font-family-selector');
+                const fontSizeSlider = document.getElementById('font-size-slider');
+                const fontSizeValue = document.getElementById('font-size-value');
+                const fontPreviewText = document.getElementById('font-preview-text');
+                
                 // New Buttons
                 const exportAbsentImgBtn = document.getElementById('export-absent-pdf-img-btn');
                 const exportAbsentPdfBtn = document.getElementById('export-absent-file-pdf-btn');
@@ -665,6 +738,66 @@ h3[class*="sector"] {
                     { id: 4, name: 'التصدير' }, { id: 5, name: 'تسجيل الغياب' }
                 ];
 
+                // --- إضافة الخطوط العربية ---
+                const arabicFonts = {
+                    'Cairo': "'Cairo', sans-serif",
+                    'Amiri': "'Amiri', serif",
+                    'Lateef': "'Lateef', serif",
+                    'Scheherazade': "'Scheherazade', serif",
+                    'Noto Naskh Arabic': "'Noto Naskh Arabic', serif",
+                    'Tajawal': "'Tajawal', sans-serif"
+                };
+
+                // تحميل الخطوط العربية الإضافية
+                const loadAdditionalFonts = () => {
+                    const link = document.createElement('link');
+                    link.rel = 'stylesheet';
+                    link.href = 'https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Lateef&family=Scheherazade&family=Noto+Naskh+Arabic:wght@400;700&family=Tajawal:wght@400;700&display=swap';
+                    document.head.appendChild(link);
+                };
+                loadAdditionalFonts();
+
+                // --- إدارة الخطوط ---
+                const initializeFontControls = () => {
+                    // اختيار نوع الخط
+                    fontFamilySelector.addEventListener('click', (e) => {
+                        const fontPreview = e.target.closest('.font-preview');
+                        if (fontPreview) {
+                            // إزالة التحديد من جميع العناصر
+                            document.querySelectorAll('.font-preview').forEach(fp => {
+                                fp.classList.remove('selected');
+                            });
+                            
+                            // إضافة التحديد للعنصر المختار
+                            fontPreview.classList.add('selected');
+                            
+                            // تحديث الخط في الحالة
+                            const selectedFont = fontPreview.dataset.font;
+                            state.fontSettings.fontFamily = selectedFont;
+                            
+                            // تحديث معاينة الخط
+                            updateFontPreview();
+                        }
+                    });
+
+                    // تحكم بحجم الخط
+                    fontSizeSlider.addEventListener('input', (e) => {
+                        const size = e.target.value;
+                        fontSizeValue.textContent = size;
+                        state.fontSettings.fontSize = parseInt(size);
+                        updateFontPreview();
+                    });
+
+                    // تحديث معاينة الخط
+                    const updateFontPreview = () => {
+                        fontPreviewText.style.fontFamily = arabicFonts[state.fontSettings.fontFamily];
+                        fontPreviewText.style.fontSize = state.fontSettings.fontSize + 'px';
+                    };
+
+                    // تحديث المعاينة عند التحميل
+                    updateFontPreview();
+                };
+
                 // --- Persistence Logic ---
                 const saveStateToLocalStorage = () => {
                     try {
@@ -674,7 +807,8 @@ h3[class*="sector"] {
                             seatingChart: [...state.seatingChart],
                             columnClassAssignments: [...state.columnClassAssignments],
                             halls: state.halls.map(h => ({ ...h, disabledSeats: [...h.disabledSeats] })),
-                            backgrounds: { ...state.backgrounds, header: null, body: null }
+                            backgrounds: { ...state.backgrounds, header: null, body: null },
+                            fontSettings: state.fontSettings // حفظ إعدادات الخطوط
                         };
                         localStorage.setItem(`seatingChartState_${user.uid}`, JSON.stringify(stateToSave));
                     } catch (e) {
@@ -695,6 +829,7 @@ h3[class*="sector"] {
                                 seatingChart: new Map(savedState.seatingChart || []),
                                 columnClassAssignments: new Map(savedState.columnClassAssignments || []),
                                 halls: savedState.halls.map(h => ({ ...h, disabledSeats: new Set(h.disabledSeats || []) })),
+                                fontSettings: savedState.fontSettings || { fontFamily: 'Cairo', fontSize: 18 } // تحميل إعدادات الخطوط
                             };
                         } catch (e) {
                             console.error("Failed to load state:", e);
@@ -757,6 +892,7 @@ h3[class*="sector"] {
                         seatingChart: [...state.seatingChart],
                         columnClassAssignments: [...state.columnClassAssignments],
                         halls: state.halls.map(h => ({ ...h, disabledSeats: [...h.disabledSeats] })),
+                        fontSettings: state.fontSettings
                     };
                     const content = JSON.stringify(stateToSave);
                     
@@ -836,6 +972,7 @@ h3[class*="sector"] {
                                 seatingChart: new Map(savedState.seatingChart || []),
                                 columnClassAssignments: new Map(savedState.columnClassAssignments || []),
                                 halls: savedState.halls.map(h => ({ ...h, disabledSeats: new Set(h.disabledSeats || []) })),
+                                fontSettings: savedState.fontSettings || { fontFamily: 'Cairo', fontSize: 18 }
                             };
                             saveStateToLocalStorage();
                             updateUI(); 
@@ -1404,12 +1541,33 @@ h3[class*="sector"] {
 
                 const renderExportView = () => {
                     exportHeader.querySelector('h2').textContent = `الخطوة 4: تصدير (${state.selectedHallIds.size} قاعات محددة)`;
+                    // تحديث عناصر التحكم بالخط عند عرض خطوة التصدير
+                    updateFontControlsFromState();
                 };
 
+                // دالة لتحديث عناصر التحكم بالخط بناءً على الحالة المحفوظة
+                const updateFontControlsFromState = () => {
+                    // تحديث حجم الخط
+                    fontSizeSlider.value = state.fontSettings.fontSize;
+                    fontSizeValue.textContent = state.fontSettings.fontSize;
+                    
+                    // تحديث نوع الخط
+                    document.querySelectorAll('.font-preview').forEach(fp => {
+                        fp.classList.remove('selected');
+                        if (fp.dataset.font === state.fontSettings.fontFamily) {
+                            fp.classList.add('selected');
+                        }
+                    });
+                    
+                    // تحديث معاينة الخط
+                    updateFontPreview();
+                };
+
+                // تحديث دالة createPageForPdf لتطبيق إعدادات الخط
                 const createPageForPdf = (hall, sector) => {
                     const pageContainer = document.createElement('div');
                     pageContainer.className = 'pdf-page-container';
-                    pageContainer.style.fontFamily = "'Cairo', sans-serif";
+                    pageContainer.style.fontFamily = arabicFonts[state.fontSettings.fontFamily] || "'Cairo', sans-serif";
                     const colOffset = sector === 1 ? 0 : hall.sector1Cols;
                     const cols = sector === 1 ? hall.sector1Cols : hall.sector2Cols;
                     const sectorStudents = [];
@@ -1485,10 +1643,14 @@ h3[class*="sector"] {
                                 if (studentUid) {
                                     const student = state.students.find(s => s.uid === studentUid);
                                     const safeSeatId = seatId.replace(/:/g, '-');
+                                    // تطبيق حجم الخط من الإعدادات
+                                    const studentNameSize = Math.max(14, Math.min(state.fontSettings.fontSize, 24));
+                                    const studentInfoSize = Math.max(10, Math.min(state.fontSettings.fontSize - 4, 16));
+                                    
                                     seat.innerHTML = `<div class="w-full flex-grow flex flex-col justify-start items-center">
-                                                     <p class="font-black text-lg leading-tight">${student.name}</p>
-                                                     <p class="font-bold text-slate-800 text-sm">${student.id}</p>
-                                                     <p class="font-bold text-slate-800 text-xs mt-1">${student.class} (${student.section})</p>
+                                                     <p class="font-black leading-tight" style="font-size: ${studentNameSize}px">${student.name}</p>
+                                                     <p class="font-bold text-slate-800" style="font-size: ${studentInfoSize}px">${student.id}</p>
+                                                     <p class="font-bold text-slate-800 mt-1" style="font-size: ${studentInfoSize}px">${student.class} (${student.section})</p>
                                                     </div>
                                                     <div class="pdf-qr-code" id="pdf-qrcode-${safeSeatId}"></div>`;
                                 }
@@ -1625,13 +1787,27 @@ h3[class*="sector"] {
                     await new Promise(resolve => setTimeout(resolve, 50));
 
                     try {
-                        const amiriFont = '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ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAAAAIAAgAAAAAFAAEAAAAAAAAAAQIDBAEFAAcACgAAAAAAAAABAAEAAgABAAEAAQAAAAEAAAAAAAAAAQAAAAAAAQAAAAIAAQAAAAAAAAAAAAMAAAAAAAAAAQAAAAACAAEAAgABAAEAAwAAAAAABAACAAAAAQAJ//8ABwABAAAAAAAAAAEAAAABAAAAAAAAAAEAAAAAAAAAAgAAAAEAAAAAAAAAAQAAAAQAAQAFAAAABQAGAAcACAADAAQABQAHAAMABAAFAAcAAwAEAAsADgAPABAABQAIAAkACgALAAgACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAk.m';
+                        const amiriFont = 'AAEAAAARAQAABAAQR0RFRgQsAgsAADhkAAAAHkdQT1Mrk8MkAAA4YAAABJBHU1VCA8+JjwAAEnsAAAMyT1MvMg8SDbEAAAEgAAAAYGNtYXABDQDNAAABnAAAAFRnYXNw//8AAwAAOGAAAAAIZ2x5Zt5TAdwAAARAAAACFGhlYWQY2C8VAAAA4AAAADZoaGVhB7QDNAAAASAAAAAkaG10eCoAlgIAAAGoAAAAGmxvY2ED2AO0AAAEgAAAABhtYXhwARgAMQAAAUgAAAAgbmFtZXV0jHEAAAdMAAABMHBvc3QAAwAAAAAAOWAAAAABAAACAAMDAAABdyNQAAAAAFdyNQAAAAAAAQIAZgABAQAAAAAAAgAAAAEAAAAAAQAAAAEAAAACAAEAAgAAAAEAAQAABUADAAgAAQACAAsAAQAAAAEAAAAAACQAKgBOARQAAQAAAAAAAAAAAAIAAAAEAAEAAgAFAAYABwAIAAkACgALAAwADQAOAA8AEAARABIAEwAUABUAFwAXABgAGQAaABsAHAAdAB4AHwAgACEAIgAjACQBJgEnASgBKQEoAysBLgEvATABMQEyATMBNAE1AUEBTAFNAU4BTwFQAVIDVgNkA2gDbgNvA3ADdAN7A3wDfwOAA4MDiAOHA4sDjAOQA5EDmAOXA5gDmQOaA5sDnAOdA56CgICA';
                         const { jsPDF } = window.jspdf;
                         const doc = new jsPDF();
 
-                        doc.addFileToVFS('Amiri-Regular.ttf', amiriFont);
-                        doc.addFont('Amiri-Regular.ttf', 'Amiri', 'normal');
-                        doc.setFont('Amiri');
+                        // استخدام الخط المختار من الإعدادات
+                        let fontData;
+                        switch(state.fontSettings.fontFamily) {
+                            case 'Amiri':
+                                fontData = amiriFont;
+                                break;
+                            case 'Cairo':
+                            default:
+                                // هنا يجب إضافة بيانات خط Cairo إذا كانت متوفرة
+                                // للتبسيط، سنستخدم Amiri كافتراضي للخطوط العربية
+                                fontData = amiriFont;
+                                break;
+                        }
+
+                        doc.addFileToVFS('ArabicFont.ttf', fontData);
+                        doc.addFont('ArabicFont.ttf', 'ArabicFont', 'normal');
+                        doc.setFont('ArabicFont');
                         doc.setR2L(true);
                         updateProgress(20, 100, 'جاري تجميع البيانات...');
                         await new Promise(resolve => setTimeout(resolve, 50));
@@ -1671,10 +1847,10 @@ h3[class*="sector"] {
                             body: body,
                             startY: 25,
                             styles: {
-                                font: 'Amiri',
+                                font: 'ArabicFont',
                                 halign: 'right',
                                 cellPadding: 2,
-                                fontSize: 10,
+                                fontSize: state.fontSettings.fontSize - 4, // تعديل حجم الخط بناءً على الإعدادات
                             },
                             headStyles: {
                                 halign: 'center',
@@ -1812,7 +1988,8 @@ h3[class*="sector"] {
 
                     const reportContainer = document.createElement('div');
                     reportContainer.className = 'p-10 bg-white';
-                    reportContainer.style.fontFamily = "'Cairo', sans-serif";
+                    reportContainer.style.fontFamily = arabicFonts[state.fontSettings.fontFamily] || "'Cairo', sans-serif";
+                    reportContainer.style.fontSize = state.fontSettings.fontSize + 'px';
                     reportContainer.style.width = '800px';
                     reportContainer.style.position = 'absolute';
                     reportContainer.style.left = '-9999px';
@@ -1923,60 +2100,203 @@ h3[class*="sector"] {
                          saveAs(blob, "قائمة_الغيابات.docx");
                      });
                 });
-
                 // 3. Export PDF
                 exportAbsentPdfBtn.addEventListener('click', async () => {
-                     const amiriFont = 'AAEAAAARAQAABAAQR0RFRgQsAgsAADhkAAAAHkdQT1Mrk8MkAAA4YAAABJBHU1VCA8+JjwAAEnsAAAMyT1MvMg8SDbEAAAEgAAAAYGNtYXABDQDNAAABnAAAAFRnYXNw//8AAwAAOGAAAAAIZ2x5Zt5TAdwAAARAAAACFGhlYWQY2C8VAAAA4AAAADZoaGVhB7QDNAAAASAAAAAkaG10eCoAlgIAAAGoAAAAGmxvY2ED2AO0AAAEgAAAABhtYXhwARgAMQAAAUgAAAAgbmFtZXV0jHEAAAdMAAABMHBvc3QAAwAAAAAAOWAAAAABAAACAAMDAAABdyNQAAAAAFdyNQAAAAAAAQIAZgABAQAAAAAAAgAAAAEAAAAAAQAAAAEAAAACAAEAAgAAAAEAAQAABQADAAgAAQACAAsAAQAAAAEAAAAAACQAKgBOARQAAQAAAAAAAAAAAAIAAAAEAAEAAgAFAAYABwAIAAkACgALAAwADQAOAA8AEAARABIAEwAUABUAFwAXABgAGQAaABsAHAAdAB4AHwAgACEAIgAjACQBJgEnASgBKQEoAysBLgEvATABMQEyATMBNAE1AUEBTAFNAU4BTwFQAVIDVgNkA2gDbgNvA3ADdAN7A3wDfwOAA4MDiAOHA4sDjAOQA5EDmAOXA5gDmQOaA5sDnAOdA54DnwOgA6EDogOkA6UDpwOpA6oDqgOrA6wDrwOwA7EDsgOzA7QDswO1A7gDugO8A70DvgO/A8ADwQPCg8SDxQPGg8fDyYPJw8pDykPKw8yDzQPNw88DzwPPQ8/D0EPRQ9JD0sPTw9RD1MPVw9hD2MPZQ9oD2kPbQ9wD3MPhQ+MD5kPnw+hD6MPpA+qD7APtQ+2D7oPug/AD8kP0w/VD9sP3Q/fD+EP5g/pD+wP8Q/yD/YACQAAAAAAAAAAAAAAAAAIAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAUAAQIDBAEIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAJAAEAAAAAAAAAAAAABAAECAkHCwUKAwkJBwwGCAcGBAYCBwAAAAAGAAEBAgQCAwEFAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFAAICAgkCAwEIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAgABAgQCAgEABgAAAAAAAAAAAAAAAAAAAAAAAAACAAcAAAAAAAYAAQEEAgQCAgEABwAAAAAAAAAAAAAAAAAAAAAAAAADAAIAAggAAAEAAAAAAAIAAgIDAgIBAQkCAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAAAAIAAgAAAAAFAAEAAAAAAAAAAQIDBAEFAAcACgAAAAAAAAABAAEAAgABAAEAAQAAAAEAAAAAAAAAAQAAAAAAAQAAAAIAAQAAAAAAAAAAAAMAAAAAAAAAAQAAAAACAAEAAgABAAEAAwAAAAAABAACAAAAAQAJ//8ABwABAAAAAAAAAAEAAAABAAAAAAAAAAEAAAAAAAAAAgAAAAEAAAAAAAAAAQAAAAQAAQAFAAAABQAGAAcACAADAAQABQAHAAMABAAFAAcAAwAEAAsADgAPABAABQAIAAkACgALAAgACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAAkACQAIAk.m';
-                     const { jsPDF } = window.jspdf;
-                     const doc = new jsPDF();
-                     doc.addFileToVFS('Amiri-Regular.ttf', amiriFont);
-                     doc.addFont('Amiri-Regular.ttf', 'Amiri', 'normal');
-                     doc.setFont('Amiri');
-                     doc.setR2L(true);
-                     const absenceData = getAbsenceDataForExport();
-                     
-                     // Use Separated Data for PDF as well? The request was specifically for Word, but let's keep PDF clean or similar
-                     // Currently PDF uses classDate string.
-                     const head = [['التوقيع', 'المراقب', 'رقمه', 'الشعبة', 'اسم الطالب الغائب', 'الصف واليوم والتاريخ']];
-                     const body = absenceData.map(d => [
-                         '', // Signature
-                         '', // Monitor
-                         d.id,
-                         d.section,
-                         d.name,
-                         `${d.className} - ${d.dateFull}` // Combined for PDF as per previous logic unless requested otherwise, but let's keep it consistent
-                     ]);
-                     
-                     // Title handling for PDF
-                     const firstRecord = absenceData[0];
-                     const hallTitle = firstRecord ? (firstRecord.hallName || "") : "";
-                     
-                     doc.text(`قائمة غيابات الطلبة // قطاع رقم (${hallTitle})`, doc.internal.pageSize.getWidth() / 2, 20, { align: 'center' });
-                     doc.autoTable({
-                        head: head,
-                        body: body,
-                        startY: 30,
-                        theme: 'grid',
-                        styles: {
-                            font: 'Amiri',
-                            halign: 'center',
-                            valign: 'middle',
-                            lineWidth: 0.1,
-                            lineColor: [0, 0, 0]
-                        },
-                        headStyles: {
-                            fillColor: [240, 240, 240],
-                            textColor: [0, 0, 0],
-                            fontStyle: 'bold',
-                            lineWidth: 0.1
-                        },
-                        columnStyles: {
-                            5: { cellWidth: 50 }, // Class/Date
-                            4: { cellWidth: 60 }, // Name
+                    updateProgress(0, 100, 'جاري تحضير ملف PDF...');
+                    
+                    try {
+                        const amiriFont = 'AAEAAAARAQAABAAQR0RFRgQsAgsAADhkAAAAHkdQT1Mrk8MkAAA4YAAABJBHU1VCA8+JjwAAEnsAAAMyT1MvMg8SDbEAAAEgAAAAYGNtYXABDQDNAAABnAAAAFRnYXNw//8AAwAAOGAAAAAIZ2x5Zt5TAdwAAARAAAACFGhlYWQY2C8VAAAA4AAAADZoaGVhB7QDNAAAASAAAAAkaG10eCoAlgIAAAGoAAAAGmxvY2ED2AO0AAAEgAAAABhtYXhwARgAMQAAAUgAAAAgbmFtZXV0jHEAAAdMAAABMHBvc3QAAwAAAAAAOWAAAAABAAACAAMDAAABdyNQAAAAAFdyNQAAAAAAAQIAZgABAQAAAAAAAgAAAAEAAAAAAQAAAAEAAAACAAEAAgAAAAEAAQAABUADAAgAAQACAAsAAQAAAAEAAAAAACQAKgBOARQAAQAAAAAAAAAAAAIAAAAEAAEAAgAFAAYABwAIAAkACgALAAwADQAOAA8AEAARABIAEwAUABUAFwAXABgAGQAaABsAHAAdAB4AHwAgACEAIgAjACQBJgEnASgBKQEoAysBLgEvATABMQEyATMBNAE1AUEBTAFNAU4BTwFQAVIDVgNkA2gDbgNvA3ADdAN7A3wDfwOAA4MDiAOHA4sDjAOQA5EDmAOXA5gDmQOaA5sDnAOdA56CgICA';
+                        
+                        const { jsPDF } = window.jspdf;
+                        const doc = new jsPDF();
+                        
+                        // استخدام الخط المختار من الإعدادات
+                        let fontName = 'ArabicFont';
+                        switch(state.fontSettings.fontFamily) {
+                            case 'Amiri':
+                                doc.addFileToVFS('Amiri-Regular.ttf', amiriFont);
+                                doc.addFont('Amiri-Regular.ttf', 'ArabicFont', 'normal');
+                                break;
+                            case 'Cairo':
+                            default:
+                                // استخدام Amiri كافتراضي للخطوط العربية في PDF
+                                doc.addFileToVFS('ArabicFont.ttf', amiriFont);
+                                doc.addFont('ArabicFont.ttf', 'ArabicFont', 'normal');
+                                break;
                         }
-                    });
-
-                     doc.save("قائمة_الغيابات.pdf");
+                        
+                        doc.setFont('ArabicFont');
+                        doc.setR2L(true);
+                        
+                        updateProgress(20, 100, 'جاري تجميع بيانات الغياب...');
+                        await new Promise(resolve => setTimeout(resolve, 100));
+                        
+                        const absenceData = getAbsenceDataForExport();
+                        
+                        // إنشاء عنوان المستند مع إعدادات الخط المختارة
+                        const title = "قائمة الغيابات - التقرير اليومي";
+                        const hallTitle = absenceData.length > 0 ? (absenceData[0].hallName || "قاعة غير محددة") : "لا توجد بيانات";
+                        
+                        // إضافة عنوان رئيسي
+                        doc.setFontSize(state.fontSettings.fontSize + 4);
+                        doc.text(title, doc.internal.pageSize.getWidth() / 2, 20, { align: 'center' });
+                        
+                        // إضافة معلومات إضافية
+                        doc.setFontSize(state.fontSettings.fontSize - 2);
+                        const today = new Date();
+                        const dateStr = today.toLocaleDateString('ar-EG', {
+                            weekday: 'long',
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
+                        });
+                        doc.text(`التاريخ: ${dateStr}`, 20, 35);
+                        doc.text(`القاعة: ${hallTitle}`, doc.internal.pageSize.getWidth() - 20, 35, { align: 'right' });
+                        
+                        // إنشاء جدول الغياب
+                        const head = [
+                            ['م', 'اسم الطالب', 'الرقم الامتحاني', 'الصف', 'الشعبة', 'القطاع', 'الحالة']
+                        ];
+                        
+                        const body = absenceData.map((student, index) => [
+                            (index + 1).toString(),
+                            student.name,
+                            student.id,
+                            student.className,
+                            student.section,
+                            student.sector || 'غير محدد',
+                            'غائب'
+                        ]);
+                        
+                        updateProgress(50, 100, 'جاري إنشاء الجدول...');
+                        
+                        // إعدادات الجدول مع تطبيق حجم الخط المختار
+                        doc.autoTable({
+                            head: head,
+                            body: body,
+                            startY: 45,
+                            theme: 'grid',
+                            styles: {
+                                font: 'ArabicFont',
+                                fontStyle: 'normal',
+                                fontSize: Math.max(10, state.fontSettings.fontSize - 4), // حجم الخط المعدل
+                                halign: 'center',
+                                cellPadding: 3,
+                                lineColor: [0, 0, 0],
+                                lineWidth: 0.1
+                            },
+                            headStyles: {
+                                fillColor: [59, 130, 246], // أزرق
+                                textColor: [255, 255, 255],
+                                fontStyle: 'bold',
+                                fontSize: Math.max(11, state.fontSettings.fontSize - 3)
+                            },
+                            bodyStyles: {
+                                fillColor: [255, 255, 255],
+                                textColor: [0, 0, 0],
+                                fontSize: Math.max(10, state.fontSettings.fontSize - 4)
+                            },
+                            alternateRowStyles: {
+                                fillColor: [248, 250, 252]
+                            },
+                            columnStyles: {
+                                0: { cellWidth: 15, halign: 'center' }, // الرقم التسلسلي
+                                1: { cellWidth: 60, halign: 'right' },  // الاسم
+                                2: { cellWidth: 30, halign: 'center' }, // الرقم
+                                3: { cellWidth: 25, halign: 'center' }, // الصف
+                                4: { cellWidth: 25, halign: 'center' }, // الشعبة
+                                5: { cellWidth: 30, halign: 'center' }, // القطاع
+                                6: { cellWidth: 25, halign: 'center' }  // الحالة
+                            },
+                            margin: { top: 45 }
+                        });
+                        
+                        // إضافة ملخص الغياب في الصفحة التالية إذا لزم الأمر
+                        const finalY = doc.lastAutoTable.finalY || 100;
+                        
+                        if (finalY > 250 && absenceData.length > 0) {
+                            doc.addPage();
+                            
+                            // إنشاء جدول الملخص
+                            const summaryHead = [['الصف', 'عدد الطلاب الكلي', 'عدد الغائبين', 'النسبة المئوية']];
+                            
+                            // حساب الإحصائيات
+                            const classStats = {};
+                            state.students.forEach(student => {
+                                if (!classStats[student.class]) {
+                                    classStats[student.class] = {
+                                        total: 0,
+                                        absent: 0
+                                    };
+                                }
+                                classStats[student.class].total++;
+                            });
+                            
+                            state.absentStudents.forEach(student => {
+                                if (classStats[student.class]) {
+                                    classStats[student.class].absent++;
+                                }
+                            });
+                            
+                            const summaryBody = Object.entries(classStats).map(([className, stats]) => {
+                                const percentage = stats.total > 0 ? ((stats.absent / stats.total) * 100).toFixed(1) : '0.0';
+                                return [
+                                    className,
+                                    stats.total.toString(),
+                                    stats.absent.toString(),
+                                    `${percentage}%`
+                                ];
+                            });
+                            
+                            // إضافة عنوان الملخص
+                            doc.setFontSize(state.fontSettings.fontSize + 2);
+                            doc.text('ملخص الغياب حسب الصفوف', doc.internal.pageSize.getWidth() / 2, 20, { align: 'center' });
+                            
+                            // إنشاء جدول الملخص
+                            doc.autoTable({
+                                head: summaryHead,
+                                body: summaryBody,
+                                startY: 30,
+                                theme: 'grid',
+                                styles: {
+                                    font: 'ArabicFont',
+                                    fontSize: Math.max(10, state.fontSettings.fontSize - 4),
+                                    halign: 'center'
+                                },
+                                headStyles: {
+                                    fillColor: [16, 185, 129], // أخضر
+                                    textColor: [255, 255, 255],
+                                    fontStyle: 'bold'
+                                },
+                                columnStyles: {
+                                    0: { cellWidth: 40 },
+                                    1: { cellWidth: 40 },
+                                    2: { cellWidth: 40 },
+                                    3: { cellWidth: 40 }
+                                }
+                            });
+                            
+                            // إضافة تذييل الصفحة
+                            const summaryY = doc.lastAutoTable.finalY || 60;
+                            doc.setFontSize(state.fontSettings.fontSize - 4);
+                            doc.text('تم إنشاء هذا التقرير تلقائياً بواسطة نظام إدارة مخططات الجلوس', 
+                                   doc.internal.pageSize.getWidth() / 2, summaryY + 20, { align: 'center' });
+                        }
+                        
+                        updateProgress(90, 100, 'جاري حفظ الملف...');
+                        await new Promise(resolve => setTimeout(resolve, 100));
+                        
+                        // حفظ الملف
+                        doc.save(`تقرير_الغياب_${today.getFullYear()}${(today.getMonth()+1).toString().padStart(2, '0')}${today.getDate().toString().padStart(2, '0')}.pdf`);
+                        
+                        updateProgress(100, 100);
+                        showAlert('تم تصدير ملف PDF بنجاح!');
+                        
+                    } catch (error) {
+                        console.error('خطأ في تصدير PDF:', error);
+                        showAlert('حدث خطأ أثناء تصدير ملف PDF. الرجاء المحاولة مرة أخرى.');
+                        updateProgress(100, 100);
+                    }
                 });
 
                 const navigate = (direction) => {
@@ -1993,21 +2313,250 @@ h3[class*="sector"] {
                         updateUI();
                     }
                 };
+                
                 const showAlert = (message) => {
                     const alertBox = document.getElementById('custom-alert');
                     const alertMessage = document.getElementById('alert-message');
                     alertMessage.textContent = message;
                     alertBox.classList.remove('hidden');
-                    setTimeout(() => alertBox.classList.add('hidden'), 3000);
+                    setTimeout(() => {
+                        alertBox.classList.add('hidden');
+                    }, 3000);
                 };
 
                 nextBtn.addEventListener('click', () => navigate('next'));
                 prevBtn.addEventListener('click', () => navigate('prev'));
 
+                // تهيئة عناصر التحكم بالخطوط
+                initializeFontControls();
+                
+                // تحميل الحالة المحفوظة وتحديث الواجهة
                 loadStateFromLocalStorage();
                 updateUI();
             }
         });
     </script>
+
+<script>
+// دالة مساعدة لتحويل الأرقام إلى عربية
+function toArabicNumerals(num) {
+    const arabicNumerals = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+    return num.toString().replace(/\d/g, digit => arabicNumerals[digit]);
+}
+
+// دالة مساعدة لتنسيق التاريخ العربي
+function formatArabicDate(date) {
+    const options = {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    };
+    return date.toLocaleDateString('ar-EG', options);
+}
+
+// دالة لتصدير Word مع الخلاصة (مطابقة للنموذج الرسمي)
+function exportAbsentWordWithSummary(state) {
+    const { Document, Packer, Paragraph, Table, TableRow, TableCell, WidthType, AlignmentType } = docx;
+    
+    // بيانات الغياب
+    const absenceData = [];
+    state.absentStudents.forEach((student, index) => {
+        const studentSeat = [...state.seatingChart.entries()].find(([key, val]) => val === student.uid);
+        let hallName = '';
+        let sectorName = '';
+        
+        if (studentSeat) {
+            const [hallId] = studentSeat[0].split(':');
+            const hall = state.halls.find(h => h.id === parseInt(hallId));
+            if (hall) {
+                hallName = hall.name;
+                sectorName = hall.sector1Name; // يمكن تعديل هذا حسب القطاع الفعلي
+            }
+        }
+        
+        absenceData.push({
+            serial: (index + 1).toString(),
+            name: student.name,
+            class: student.class,
+            section: student.section,
+            hall: hallName,
+            sector: sectorName,
+            id: student.id,
+            monitor: '',
+            signature: ''
+        });
+    });
+    
+    // حساب الإحصائيات
+    const classStats = {};
+    state.students.forEach(student => {
+        if (!classStats[student.class]) {
+            classStats[student.class] = { total: 0, absent: 0 };
+        }
+        classStats[student.class].total++;
+    });
+    
+    state.absentStudents.forEach(student => {
+        if (classStats[student.class]) {
+            classStats[student.class].absent++;
+        }
+    });
+    
+    // إنشاء المستند
+    const doc = new Document({
+        sections: [{
+            properties: {
+                title: 'قائمة غيابات الطلبة',
+                author: 'نظام إدارة مخططات الجلوس',
+                description: 'تقرير غياب رسمي'
+            },
+            children: [
+                // العنوان الرئيسي
+                new Paragraph({
+                    text: 'قائمة غيابات الطلبة',
+                    heading: 'Title',
+                    alignment: AlignmentType.CENTER,
+                    spacing: { after: 200 }
+                }),
+                
+                // معلومات التقرير
+                new Paragraph({
+                    text: `التاريخ: ${formatArabicDate(new Date())}`,
+                    alignment: AlignmentType.RIGHT,
+                    spacing: { after: 100 }
+                }),
+                
+                new Paragraph({
+                    text: `عدد الغائبين: ${toArabicNumerals(state.absentStudents.length)} طالب`,
+                    alignment: AlignmentType.RIGHT,
+                    spacing: { after: 200 }
+                }),
+                
+                // جدول الغياب الرئيسي
+                new Paragraph({
+                    text: 'جدول الغياب التفصيلي',
+                    heading: 'Heading1',
+                    alignment: AlignmentType.CENTER,
+                    spacing: { after: 100 }
+                }),
+                
+                // إنشاء جدول الغياب
+                new Table({
+                    columnWidths: [1000, 2500, 1000, 1000, 1500, 1500, 1000, 1500, 1500],
+                    rows: [
+                        // رأس الجدول
+                        new TableRow({
+                            children: [
+                                new TableCell({ children: [new Paragraph('م', { alignment: AlignmentType.CENTER })] }),
+                                new TableCell({ children: [new Paragraph('اسم الطالب الغائب', { alignment: AlignmentType.CENTER })] }),
+                                new TableCell({ children: [new Paragraph('الصف', { alignment: AlignmentType.CENTER })] }),
+                                new TableCell({ children: [new Paragraph('الشعبة', { alignment: AlignmentType.CENTER })] }),
+                                new TableCell({ children: [new Paragraph('القاعة', { alignment: AlignmentType.CENTER })] }),
+                                new TableCell({ children: [new Paragraph('القطاع', { alignment: AlignmentType.CENTER })] }),
+                                new TableCell({ children: [new Paragraph('رقمه', { alignment: AlignmentType.CENTER })] }),
+                                new TableCell({ children: [new Paragraph('المراقب', { alignment: AlignmentType.CENTER })] }),
+                                new TableCell({ children: [new Paragraph('التوقيع', { alignment: AlignmentType.CENTER })] })
+                            ]
+                        }),
+                        // بيانات الغياب
+                        ...absenceData.map(item => new TableRow({
+                            children: [
+                                new TableCell({ children: [new Paragraph(item.serial, { alignment: AlignmentType.CENTER })] }),
+                                new TableCell({ children: [new Paragraph(item.name, { alignment: AlignmentType.RIGHT })] }),
+                                new TableCell({ children: [new Paragraph(item.class, { alignment: AlignmentType.CENTER })] }),
+                                new TableCell({ children: [new Paragraph(item.section, { alignment: AlignmentType.CENTER })] }),
+                                new TableCell({ children: [new Paragraph(item.hall, { alignment: AlignmentType.CENTER })] }),
+                                new TableCell({ children: [new Paragraph(item.sector, { alignment: AlignmentType.CENTER })] }),
+                                new TableCell({ children: [new Paragraph(item.id, { alignment: AlignmentType.CENTER })] }),
+                                new TableCell({ children: [new Paragraph(item.monitor, { alignment: AlignmentType.CENTER })] }),
+                                new TableCell({ children: [new Paragraph(item.signature, { alignment: AlignmentType.CENTER })] })
+                            ]
+                        }))
+                    ],
+                    width: { size: 100, type: WidthType.PERCENTAGE }
+                }),
+                
+                // مسافة بين الجدولين
+                new Paragraph({ text: '', spacing: { after: 300 } }),
+                
+                // عنوان الخلاصة
+                new Paragraph({
+                    text: 'خلاصة الغيابات',
+                    heading: 'Heading1',
+                    alignment: AlignmentType.CENTER,
+                    spacing: { after: 100 }
+                }),
+                
+                // جدول الخلاصة
+                new Table({
+                    columnWidths: [2000, 2000, 2000, 2000],
+                    rows: [
+                        // رأس جدول الخلاصة
+                        new TableRow({
+                            children: [
+                                new TableCell({ children: [new Paragraph('المرحلة', { alignment: AlignmentType.CENTER })] }),
+                                new TableCell({ children: [new Paragraph('عدد الطلاب', { alignment: AlignmentType.CENTER })] }),
+                                new TableCell({ children: [new Paragraph('عدد الغياب', { alignment: AlignmentType.CENTER })] }),
+                                new TableCell({ children: [new Paragraph('الدفاتر المستلمة', { alignment: AlignmentType.CENTER })] })
+                            ]
+                        }),
+                        // بيانات الخلاصة
+                        ...Object.entries(classStats).map(([className, stats]) => new TableRow({
+                            children: [
+                                new TableCell({ children: [new Paragraph(className, { alignment: AlignmentType.CENTER })] }),
+                                new TableCell({ children: [new Paragraph(toArabicNumerals(stats.total), { alignment: AlignmentType.CENTER })] }),
+                                new TableCell({ children: [new Paragraph(toArabicNumerals(stats.absent), { alignment: AlignmentType.CENTER })] }),
+                                new TableCell({ children: [new Paragraph(toArabicNumerals(stats.total - stats.absent), { alignment: AlignmentType.CENTER })] })
+                            ]
+                        }))
+                    ],
+                    width: { size: 100, type: WidthType.PERCENTAGE }
+                }),
+                
+                // تذييل المستند
+                new Paragraph({ text: '', spacing: { after: 300 } }),
+                new Paragraph({
+                    text: '________________________________',
+                    alignment: AlignmentType.CENTER,
+                    spacing: { after: 50 }
+                }),
+                new Paragraph({
+                    text: 'توقيع مدير المدرسة / المسؤول',
+                    alignment: AlignmentType.CENTER,
+                    spacing: { after: 50 }
+                }),
+                new Paragraph({
+                    text: 'تم الإنشاء بواسطة: نظام إدارة مخططات الجلوس الامتحانية',
+                    alignment: AlignmentType.CENTER,
+                    spacing: { after: 50 }),
+                    size: 20,
+                    color: '666666'
+                })
+            ]
+        }]
+    });
+    
+    // حفظ الملف
+    Packer.toBlob(doc).then(blob => {
+        const today = new Date();
+        const filename = `قائمة_الغيابات_${today.getFullYear()}${(today.getMonth()+1).toString().padStart(2, '0')}${today.getDate().toString().padStart(2, '0')}.docx`;
+        saveAs(blob, filename);
+    });
+}
+
+// ربط دالة تصدير Word الجديدة بالزر الموجود
+document.addEventListener('DOMContentLoaded', function() {
+    const exportAbsentWordBtn = document.getElementById('export-absent-word-btn');
+    if (exportAbsentWordBtn) {
+        exportAbsentWordBtn.addEventListener('click', function() {
+            // هنا يجب تمرير حالة التطبيق (state) للدالة
+            // exportAbsentWordWithSummary(state);
+        });
+    }
+});
+</script>
+
 </body>
 </html>
+               
