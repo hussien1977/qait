@@ -8,7 +8,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
-    
+    <link href="https://fonts.googleapis.com/css2?family=PT+Sans:ital,wght@0,700&display=swap" rel="stylesheet">
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -25,7 +26,24 @@
     <script src="https://apis.google.com/js/api.js"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
 
-    <style>
+   
+ <style>
+/* خط أسماء الطلاب داخل المقاعد */
+.seat,
+.seat span,
+.seat div {
+    font-family: 'Cairo', sans-serif !important;
+    font-weight: 900 !important;
+}
+
+/* خط عناوين القطاعات */
+.sector-title,
+.hall-sector-title,
+h3[class*="sector"] {
+    font-family: 'PT Sans', sans-serif !important;
+    font-weight: 700 !important;
+}
+
         body { font-family: 'Cairo', sans-serif; }
         .step-section { display: none; }
         .step-section.active { display: block; animation: fadeIn 0.5s; }
@@ -1991,61 +2009,5 @@
             }
         });
     </script>
-
-<!-- ====== إضافة تصدير Word لقائمة الغيابات + الخلاصة (مطابقة للنموذج الرسمي) ====== -->
-<script>
-function exportAbsentWord_File(state){
-    const rows1 = [
-        ["تسلسل","اسم الطالب الغائب","الصف","الشعبة","القاعة","القطاع","رقمه","المراقب","التوقيع"]
-    ];
-    state.absentStudents.forEach((s,i)=>{
-        rows1.push([
-            (i+1).toString(),
-            s.name,
-            s.class,
-            s.section,
-            s.hall||"",
-            s.sector||"",
-            s.seat||"",
-            "",
-            ""
-        ]);
-    });
-
-    const summaryMap={};
-    state.students.forEach(s=>{
-        if(!summaryMap[s.class]) summaryMap[s.class]={total:0,absent:0};
-        summaryMap[s.class].total++;
-    });
-    state.absentStudents.forEach(s=>{
-        if(summaryMap[s.class]) summaryMap[s.class].absent++;
-    });
-
-    const rows2=[["المرحلة","عدد الطلاب","عدد الغياب","الدفاتر المستلمة"]];
-    Object.keys(summaryMap).forEach(k=>{
-        rows2.push([
-            k,
-            summaryMap[k].total.toString(),
-            summaryMap[k].absent.toString(),
-            (summaryMap[k].total-summaryMap[k].absent).toString()
-        ]);
-    });
-
-    const doc = new docx.Document({
-        sections:[{
-            children:[
-                new docx.Paragraph({text:"قائمة غيابات الطلبة",alignment:"center",bold:true}),
-                new docx.Paragraph({text:"التاريخ: "+new Date().toLocaleDateString('ar-IQ'),alignment:"right"}),
-                new docx.Table({rows:rows1.map(r=>new docx.TableRow({children:r.map(c=>new docx.TableCell({children:[new docx.Paragraph(c)]}))}))}),
-                new docx.Paragraph(""),
-                new docx.Paragraph({text:"خلاصة الغيابات",alignment:"center",bold:true}),
-                new docx.Table({rows:rows2.map(r=>new docx.TableRow({children:r.map(c=>new docx.TableCell({children:[new docx.Paragraph(c)]}))}))})
-            ]
-        }]
-    });
-    docx.Packer.toBlob(doc).then(b=>saveAs(b,"قائمة_الغيابات.docx"));
-}
-</script>
-
 </body>
 </html>
