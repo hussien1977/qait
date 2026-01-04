@@ -299,7 +299,7 @@
                     <div class="max-w-4xl mx-auto">
                         <!-- إعدادات الخط المضاف -->
                         <div class="bg-gray-50 p-6 rounded-lg border mb-6 space-y-4">
-                            <h3 class="font-bold text-lg border-b pb-2">إعدادات الخطوط</h3>
+                            <h3 class="font-bold text-lg border-b pb-2">إعدادات الخطوط الأساسية</h3>
                             
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
@@ -333,13 +333,75 @@
                                 </div>
                                 
                                 <div>
-                                    <label for="font-size-slider" class="block font-semibold mb-2">حجم الخط: <span id="font-size-value">18</span>px</label>
+                                    <label for="font-size-slider" class="block font-semibold mb-2">حجم الخط الأساسي: <span id="font-size-value">18</span>px</label>
                                     <input type="range" id="font-size-slider" min="12" max="36" step="1" value="18" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
                                     <div class="flex justify-between text-xs text-gray-500 mt-1">
                                         <span>صغير</span>
                                         <span>متوسط</span>
                                         <span>كبير</span>
                                         <span>كبير جداً</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- إعدادات الخطوط المتقدمة -->
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4 pt-4 border-t">
+                                <div>
+                                    <label for="student-name-bold" class="block font-semibold mb-2">سمك خط أسماء الطلاب:</label>
+                                    <select id="student-name-bold" class="w-full p-2 border rounded-md">
+                                        <option value="normal">عادي</option>
+                                        <option value="bold" selected>سميك (Bold)</option>
+                                        <option value="bolder">أكثر سمكاً</option>
+                                    </select>
+                                </div>
+                                
+                                <div>
+                                    <label for="student-id-size" class="block font-semibold mb-2">حجم الأرقام الامتحانية: <span id="student-id-size-value">16</span>px</label>
+                                    <input type="range" id="student-id-size" min="10" max="30" step="1" value="16" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                                </div>
+                                
+                                <div>
+                                    <label for="student-id-weight" class="block font-semibold mb-2">سمك الأرقام الامتحانية:</label>
+                                    <select id="student-id-weight" class="w-full p-2 border rounded-md">
+                                        <option value="normal">عادي</option>
+                                        <option value="bold" selected>سميك</option>
+                                        <option value="900">ثقيل جداً</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <!-- إعدادات العناوين -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 pt-4 border-t">
+                                <div>
+                                    <label for="title-size" class="block font-semibold mb-2">حجم عناوين القاعات: <span id="title-size-value">24</span>px</label>
+                                    <input type="range" id="title-size" min="16" max="40" step="1" value="24" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                                </div>
+                                
+                                <div>
+                                    <label for="title-weight" class="block font-semibold mb-2">سمك عناوين القاعات:</label>
+                                    <select id="title-weight" class="w-full p-2 border rounded-md">
+                                        <option value="bold">سميك</option>
+                                        <option value="900" selected>ثقيل جداً</option>
+                                        <option value="1000">أقصى سمك</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <!-- تخصيص ألوان QR Codes -->
+                            <div class="mt-4 pt-4 border-t">
+                                <h4 class="font-bold mb-3">تخصيص ألوان رموز QR حسب المرحلة</h4>
+                                <div id="qr-color-settings" class="space-y-3">
+                                    <div class="flex items-center justify-between">
+                                        <span class="font-medium">تفعيل التلوين حسب المرحلة:</span>
+                                        <label class="flex items-center cursor-pointer">
+                                            <input type="checkbox" id="qr-colors-enabled" class="sr-only peer" checked>
+                                            <div class="relative w-12 h-6 bg-gray-300 rounded-full peer peer-checked:bg-sky-600"></div>
+                                            <div class="absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform transform peer-checked:translate-x-6"></div>
+                                        </label>
+                                    </div>
+                                    
+                                    <div id="qr-class-colors" class="grid grid-cols-2 md:grid-cols-3 gap-2">
+                                        <!-- سيتم ملؤها ديناميكياً -->
                                     </div>
                                 </div>
                             </div>
@@ -656,7 +718,14 @@
                     // إضافة إعدادات الخطوط الجديدة
                     fontSettings: {
                         fontFamily: 'Cairo',
-                        fontSize: 18
+                        fontSize: 18,
+                        studentNameWeight: 'bold',
+                        studentIdSize: 16,
+                        studentIdWeight: 'bold',
+                        titleSize: 24,
+                        titleWeight: '900',
+                        qrColorsEnabled: true,
+                        classQrColors: {}
                     }
                 };
                 let html5QrCode;
@@ -723,6 +792,17 @@
                 const fontSizeValue = document.getElementById('font-size-value');
                 const fontPreviewText = document.getElementById('font-preview-text');
                 
+                // عناصر التحكم بالخطوط المتقدمة
+                const studentNameBold = document.getElementById('student-name-bold');
+                const studentIdSize = document.getElementById('student-id-size');
+                const studentIdSizeValue = document.getElementById('student-id-size-value');
+                const studentIdWeight = document.getElementById('student-id-weight');
+                const titleSize = document.getElementById('title-size');
+                const titleSizeValue = document.getElementById('title-size-value');
+                const titleWeight = document.getElementById('title-weight');
+                const qrColorsEnabled = document.getElementById('qr-colors-enabled');
+                const qrClassColorsContainer = document.getElementById('qr-class-colors');
+                
                 // New Buttons
                 const exportAbsentImgBtn = document.getElementById('export-absent-pdf-img-btn');
                 const exportAbsentPdfBtn = document.getElementById('export-absent-file-pdf-btn');
@@ -737,6 +817,19 @@
                     { id: 1, name: 'إدارة القاعات' }, { id: 2, name: 'بيانات الطلاب' }, { id: 3, name: 'التوزيع' },
                     { id: 4, name: 'التصدير' }, { id: 5, name: 'تسجيل الغياب' }
                 ];
+
+                // ألوان افتراضية لرموز QR حسب المرحلة
+                const defaultQrColors = {
+                    'الأول': '#3b82f6',    // أزرق
+                    'الثاني': '#10b981',   // أخضر
+                    'الثالث': '#f59e0b',   // برتقالي
+                    'الرابع': '#8b5cf6',   // بنفسجي
+                    'الخامس': '#ef4444',   // أحمر
+                    'السادس': '#06b6d4',   // سماوي
+                    'العاشر': '#ec4899',   // وردي
+                    'الحادي عشر': '#84cc16',// أخضر فاتح
+                    'الثاني عشر': '#f97316'// برتقالي داكن
+                };
 
                 // --- إضافة الخطوط العربية ---
                 const arabicFonts = {
@@ -780,7 +873,7 @@
                         }
                     });
 
-                    // تحكم بحجم الخط
+                    // تحكم بحجم الخط الأساسي
                     fontSizeSlider.addEventListener('input', (e) => {
                         const size = e.target.value;
                         fontSizeValue.textContent = size;
@@ -788,14 +881,128 @@
                         updateFontPreview();
                     });
 
+                    // سمك خط أسماء الطلاب
+                    studentNameBold.addEventListener('change', (e) => {
+                        state.fontSettings.studentNameWeight = e.target.value;
+                    });
+
+                    // حجم الأرقام الامتحانية
+                    studentIdSize.addEventListener('input', (e) => {
+                        const size = e.target.value;
+                        studentIdSizeValue.textContent = size;
+                        state.fontSettings.studentIdSize = parseInt(size);
+                    });
+
+                    // سمك الأرقام الامتحانية
+                    studentIdWeight.addEventListener('change', (e) => {
+                        state.fontSettings.studentIdWeight = e.target.value;
+                    });
+
+                    // حجم عناوين القاعات
+                    titleSize.addEventListener('input', (e) => {
+                        const size = e.target.value;
+                        titleSizeValue.textContent = size;
+                        state.fontSettings.titleSize = parseInt(size);
+                    });
+
+                    // سمك عناوين القاعات
+                    titleWeight.addEventListener('change', (e) => {
+                        state.fontSettings.titleWeight = e.target.value;
+                    });
+
+                    // تخصيص ألوان QR Codes
+                    qrColorsEnabled.addEventListener('change', (e) => {
+                        state.fontSettings.qrColorsEnabled = e.target.checked;
+                        updateQrColorControls();
+                    });
+
                     // تحديث معاينة الخط
                     const updateFontPreview = () => {
                         fontPreviewText.style.fontFamily = arabicFonts[state.fontSettings.fontFamily];
                         fontPreviewText.style.fontSize = state.fontSettings.fontSize + 'px';
+                        fontPreviewText.style.fontWeight = state.fontSettings.studentNameWeight;
+                    };
+
+                    // إنشاء عناصر التحكم بألوان QR لكل مرحلة
+                    const updateQrColorControls = () => {
+                        if (!state.fontSettings.qrColorsEnabled) {
+                            qrClassColorsContainer.innerHTML = `
+                                <div class="col-span-full text-center text-gray-500">
+                                    تم تعطيل التلوين حسب المرحلة
+                                </div>`;
+                            return;
+                        }
+
+                        // الحصول على جميع المراحل من الطلاب
+                        const allClasses = [...new Set(state.students.map(s => s.class))];
+                        
+                        if (allClasses.length === 0) {
+                            qrClassColorsContainer.innerHTML = `
+                                <div class="col-span-full text-center text-gray-500">
+                                    لا توجد مراحل/صفوف في بيانات الطلاب
+                                </div>`;
+                            return;
+                        }
+
+                        let html = '';
+                        allClasses.forEach(className => {
+                            // استخدام اللون الافتراضي أو المحفوظ
+                            const currentColor = state.fontSettings.classQrColors[className] || 
+                                               defaultQrColors[className] || '#3b82f6';
+                            
+                            html += `
+                            <div class="flex items-center justify-between p-2 border rounded bg-white">
+                                <span class="text-sm font-medium">${className}</span>
+                                <div class="flex items-center gap-2">
+                                    <input type="color" 
+                                           value="${currentColor}" 
+                                           data-class="${className}"
+                                           class="w-8 h-8 cursor-pointer border rounded">
+                                    <button type="button" 
+                                            data-class="${className}"
+                                            class="reset-qr-color text-xs px-2 py-1 bg-gray-100 rounded hover:bg-gray-200">
+                                        إعادة تعيين
+                                    </button>
+                                </div>
+                            </div>`;
+                        });
+
+                        qrClassColorsContainer.innerHTML = html;
+
+                        // إضافة مستمعات الأحداث
+                        qrClassColorsContainer.querySelectorAll('input[type="color"]').forEach(input => {
+                            input.addEventListener('change', (e) => {
+                                const className = e.target.dataset.class;
+                                const color = e.target.value;
+                                state.fontSettings.classQrColors[className] = color;
+                                saveStateToLocalStorage();
+                            });
+                        });
+
+                        qrClassColorsContainer.querySelectorAll('.reset-qr-color').forEach(button => {
+                            button.addEventListener('click', (e) => {
+                                const className = e.target.dataset.class;
+                                const defaultColor = defaultQrColors[className] || '#3b82f6';
+                                
+                                // تحديث الحالة
+                                state.fontSettings.classQrColors[className] = defaultColor;
+                                
+                                // تحديث واجهة المستخدم
+                                const colorInput = document.querySelector(`input[data-class="${className}"]`);
+                                if (colorInput) {
+                                    colorInput.value = defaultColor;
+                                }
+                                
+                                saveStateToLocalStorage();
+                            });
+                        });
                     };
 
                     // تحديث المعاينة عند التحميل
                     updateFontPreview();
+                    
+                    // تهيئة ألوان QR
+                    updateQrColorControls();
                 };
 
                 // --- Persistence Logic ---
@@ -829,7 +1036,17 @@
                                 seatingChart: new Map(savedState.seatingChart || []),
                                 columnClassAssignments: new Map(savedState.columnClassAssignments || []),
                                 halls: savedState.halls.map(h => ({ ...h, disabledSeats: new Set(h.disabledSeats || []) })),
-                                fontSettings: savedState.fontSettings || { fontFamily: 'Cairo', fontSize: 18 } // تحميل إعدادات الخطوط
+                                fontSettings: savedState.fontSettings || { 
+                                    fontFamily: 'Cairo', 
+                                    fontSize: 18,
+                                    studentNameWeight: 'bold',
+                                    studentIdSize: 16,
+                                    studentIdWeight: 'bold',
+                                    titleSize: 24,
+                                    titleWeight: '900',
+                                    qrColorsEnabled: true,
+                                    classQrColors: {}
+                                }
                             };
                         } catch (e) {
                             console.error("Failed to load state:", e);
@@ -972,7 +1189,17 @@
                                 seatingChart: new Map(savedState.seatingChart || []),
                                 columnClassAssignments: new Map(savedState.columnClassAssignments || []),
                                 halls: savedState.halls.map(h => ({ ...h, disabledSeats: new Set(h.disabledSeats || []) })),
-                                fontSettings: savedState.fontSettings || { fontFamily: 'Cairo', fontSize: 18 }
+                                fontSettings: savedState.fontSettings || { 
+                                    fontFamily: 'Cairo', 
+                                    fontSize: 18,
+                                    studentNameWeight: 'bold',
+                                    studentIdSize: 16,
+                                    studentIdWeight: 'bold',
+                                    titleSize: 24,
+                                    titleWeight: '900',
+                                    qrColorsEnabled: true,
+                                    classQrColors: {}
+                                }
                             };
                             saveStateToLocalStorage();
                             updateUI(); 
@@ -1245,6 +1472,8 @@
                     state.students.sort((a,b) => a.name.localeCompare(b.name));
                     saveStateToLocalStorage();
                     renderStudentList();
+                    // تحديث عناصر التحكم بألوان QR
+                    updateQrColorControls();
                 };
                 importTextBtn.addEventListener('click', () => {
                     const lines = studentsTextInput.value.trim().split('\n');
@@ -1375,11 +1604,20 @@
                                 const qrContainer = document.getElementById(`qrcode-${seatId.replace(/:/g, '-')}`);
                                 if (qrContainer) {
                                     qrContainer.innerHTML = ''; // تنظيف المحتوى القديم
+                                    
+                                    // تحديد لون QR بناءً على المرحلة إذا كان التفعيل مفعل
+                                    let qrColor = '#000000';
+                                    if (state.fontSettings.qrColorsEnabled && state.fontSettings.classQrColors[student.class]) {
+                                        qrColor = state.fontSettings.classQrColors[student.class];
+                                    } else if (state.fontSettings.qrColorsEnabled && defaultQrColors[student.class]) {
+                                        qrColor = defaultQrColors[student.class];
+                                    }
+                                    
                                     new QRCode(qrContainer, {
                                         text: student.id.toString(),
                                         width: 60,
                                         height: 60,
-                                        colorDark: "#000000",
+                                        colorDark: qrColor,
                                         colorLight: "#ffffff",
                                         correctLevel: QRCode.CorrectLevel.H
                                     });
@@ -1547,7 +1785,7 @@
 
                 // دالة لتحديث عناصر التحكم بالخط بناءً على الحالة المحفوظة
                 const updateFontControlsFromState = () => {
-                    // تحديث حجم الخط
+                    // تحديث حجم الخط الأساسي
                     fontSizeSlider.value = state.fontSettings.fontSize;
                     fontSizeValue.textContent = state.fontSettings.fontSize;
                     
@@ -1559,8 +1797,21 @@
                         }
                     });
                     
+                    // تحديث إعدادات الخطوط المتقدمة
+                    studentNameBold.value = state.fontSettings.studentNameWeight;
+                    studentIdSize.value = state.fontSettings.studentIdSize;
+                    studentIdSizeValue.textContent = state.fontSettings.studentIdSize;
+                    studentIdWeight.value = state.fontSettings.studentIdWeight;
+                    titleSize.value = state.fontSettings.titleSize;
+                    titleSizeValue.textContent = state.fontSettings.titleSize;
+                    titleWeight.value = state.fontSettings.titleWeight;
+                    qrColorsEnabled.checked = state.fontSettings.qrColorsEnabled;
+                    
                     // تحديث معاينة الخط
                     updateFontPreview();
+                    
+                    // تحديث ألوان QR
+                    updateQrColorControls();
                 };
 
                 // تحديث دالة createPageForPdf لتطبيق إعدادات الخط
@@ -1611,7 +1862,9 @@
                     leftDiv.className = 'w-1/4';
                     const centerDiv = document.createElement('div');
                     centerDiv.className = 'w-1/2 text-center';
-                    centerDiv.innerHTML = `<h1 class="text-2xl font-bold">قاعة (${hall.name}) - ${hall.location || ''}</h1><h2 class="text-xl font-bold mt-2">${sector === 1 ? hall.sector1Name : hall.sector2Name}</h2>`;
+                    // تطبيق إعدادات العنوان
+                    centerDiv.innerHTML = `<h1 class="font-bold" style="font-size: ${state.fontSettings.titleSize}px; font-weight: ${state.fontSettings.titleWeight}">قاعة (${hall.name}) - ${hall.location || ''}</h1>
+                                          <h2 class="font-bold mt-2" style="font-size: ${state.fontSettings.titleSize - 4}px; font-weight: ${state.fontSettings.titleWeight}">${sector === 1 ? hall.sector1Name : hall.sector2Name}</h2>`;
                     const rightDiv = document.createElement('div');
                     rightDiv.className = 'w-1/4 text-right space-y-1';
                     Object.entries(classCounts).forEach(([className, count]) => {
@@ -1643,14 +1896,15 @@
                                 if (studentUid) {
                                     const student = state.students.find(s => s.uid === studentUid);
                                     const safeSeatId = seatId.replace(/:/g, '-');
-                                    // تطبيق حجم الخط من الإعدادات
+                                    // تطبيق إعدادات الخط للطالب
                                     const studentNameSize = Math.max(14, Math.min(state.fontSettings.fontSize, 24));
                                     const studentInfoSize = Math.max(10, Math.min(state.fontSettings.fontSize - 4, 16));
+                                    const studentIdSize = Math.max(12, Math.min(state.fontSettings.studentIdSize, 20));
                                     
                                     seat.innerHTML = `<div class="w-full flex-grow flex flex-col justify-start items-center">
-                                                     <p class="font-black leading-tight" style="font-size: ${studentNameSize}px">${student.name}</p>
-                                                     <p class="font-bold text-slate-800" style="font-size: ${studentInfoSize}px">${student.id}</p>
-                                                     <p class="font-bold text-slate-800 mt-1" style="font-size: ${studentInfoSize}px">${student.class} (${student.section})</p>
+                                                     <p class="leading-tight" style="font-size: ${studentNameSize}px; font-weight: ${state.fontSettings.studentNameWeight}">${student.name}</p>
+                                                     <p class="text-slate-800" style="font-size: ${studentIdSize}px; font-weight: ${state.fontSettings.studentIdWeight}">${student.id}</p>
+                                                     <p class="text-slate-800 mt-1" style="font-size: ${studentInfoSize}px; font-weight: bold">${student.class} (${student.section})</p>
                                                     </div>
                                                     <div class="pdf-qr-code" id="pdf-qrcode-${safeSeatId}"></div>`;
                                 }
@@ -1671,11 +1925,20 @@
                                 const qrElement = pageContainer.querySelector(`#pdf-qrcode-${safeSeatId}`);
                                 if(qrElement && student) {
                                     qrElement.innerHTML = '';
-                                     new QRCode(qrElement, {
+                                    
+                                    // تحديد لون QR بناءً على المرحلة
+                                    let qrColor = '#000000';
+                                    if (state.fontSettings.qrColorsEnabled && state.fontSettings.classQrColors[student.class]) {
+                                        qrColor = state.fontSettings.classQrColors[student.class];
+                                    } else if (state.fontSettings.qrColorsEnabled && defaultQrColors[student.class]) {
+                                        qrColor = defaultQrColors[student.class];
+                                    }
+                                    
+                                    new QRCode(qrElement, {
                                         text: student.id.toString(),
                                         width: 80,
                                         height: 80,
-                                        colorDark: "#000000",
+                                        colorDark: qrColor,
                                         colorLight: "#ffffff",
                                         correctLevel: QRCode.CorrectLevel.M
                                     });
@@ -1787,7 +2050,7 @@
                     await new Promise(resolve => setTimeout(resolve, 50));
 
                     try {
-                        const amiriFont = 'AAEAAAARAQAABAAQR0RFRgQsAgsAADhkAAAAHkdQT1Mrk8MkAAA4YAAABJBHU1VCA8+JjwAAEnsAAAMyT1MvMg8SDbEAAAEgAAAAYGNtYXABDQDNAAABnAAAAFRnYXNw//8AAwAAOGAAAAAIZ2x5Zt5TAdwAAARAAAACFGhlYWQY2C8VAAAA4AAAADZoaGVhB7QDNAAAASAAAAAkaG10eCoAlgIAAAGoAAAAGmxvY2ED2AO0AAAEgAAAABhtYXhwARgAMQAAAUgAAAAgbmFtZXV0jHEAAAdMAAABMHBvc3QAAwAAAAAAOWAAAAABAAACAAMDAAABdyNQAAAAAFdyNQAAAAAAAQIAZgABAQAAAAAAAgAAAAEAAAAAAQAAAAEAAAACAAEAAgAAAAEAAQAABUADAAgAAQACAAsAAQAAAAEAAAAAACQAKgBOARQAAQAAAAAAAAAAAAIAAAAEAAEAAgAFAAYABwAIAAkACgALAAwADQAOAA8AEAARABIAEwAUABUAFwAXABgAGQAaABsAHAAdAB4AHwAgACEAIgAjACQBJgEnASgBKQEoAysBLgEvATABMQEyATMBNAE1AUEBTAFNAU4BTwFQAVIDVgNkA2gDbgNvA3ADdAN7A3wDfwOAA4MDiAOHA4sDjAOQA5EDmAOXA5gDmQOaA5sDnAOdA56CgICA';
+                        const amiriFont = 'AAEAAAARAQAABAAQR0RFRgQsAgsAADhkAAAAHkdQT1Mrk8MkAAA4YAAABJBHU1VCA8+JjwAAEnsAAAMyT1MvMg8SDbEAAAEgAAAAYGNtYXABDQDNAAABnAAAAFRnYXNw//8AAwAAOGAAAAAIZ2x5Zt5TAdwAAARAAAACFGhlYWQY2C8VAAAA4AAAADZoaGVhB7QDNAAAASAAAAAkaG10eCoAlgIAAAGoAAAAGmxvY2ED2AO0AAAEgAAAABhtYXhwARgAMQAAAUgAAAAgbmFtZXV0jHEAAAdMAAABMHBvc3QAAwAAAAAAOWAAAAABAAACAAMDAAABdyNQAAAAAFdyNQAAAAAAAQIAZgABAQAAAAAAAgAAAAEAAAAAAQAAAAEAAAACAAEAAgAAAAEAAQAABUADAAgAAQACAAsAAQAAAAEAAAAAACQAKgBOARQAAQAAAAAAAAAAAAIAAAAEAAEAAgAFAAYABwAIAAkACgALAAwADQAOAA8AEAARABIAEwAUABUAFwAXABgAGQAaABsAHAAdAB4AHwAgACEAIgAjACQBJgEnASgBKQEoA+sBLgEvATABMQEyATMBNAE1AUEBTAFNAU4BTwFQAVIDVgNkA2gDbgNvA3ADdAN7A3wDfwOAA4MDiAOHA4sDjAOQA5EDmAOXA5gDmQOaA5sDnAOdA56CgICA';
                         const { jsPDF } = window.jspdf;
                         const doc = new jsPDF();
 
@@ -1841,11 +2104,16 @@
                         ]);
                         updateProgress(60, 100, 'جاري إنشاء الجدول...');
                         await new Promise(resolve => setTimeout(resolve, 50));
+                        
+                        // تطبيق إعدادات العنوان
+                        doc.setFontSize(state.fontSettings.titleSize);
+                        doc.setFont(undefined, 'bold');
                         doc.text("قائمة الحضور المجمعة", doc.internal.pageSize.getWidth() / 2, 15, { align: 'center' });
+                        
                         doc.autoTable({
                             head: head,
                             body: body,
-                            startY: 25,
+                            startY: 30,
                             styles: {
                                 font: 'ArabicFont',
                                 halign: 'right',
@@ -1856,7 +2124,8 @@
                                 halign: 'center',
                                 fillColor: [41, 128, 185],
                                 textColor: 255,
-                                fontStyle: 'bold'
+                                fontStyle: 'bold',
+                                fontSize: state.fontSettings.fontSize - 2
                             },
                             columnStyles: {
                                 0: {cellWidth: 40}, 
@@ -2105,7 +2374,7 @@
                     updateProgress(0, 100, 'جاري تحضير ملف PDF...');
                     
                     try {
-                        const amiriFont = 'AAEAAAARAQAABAAQR0RFRgQsAgsAADhkAAAAHkdQT1Mrk8MkAAA4YAAABJBHU1VCA8+JjwAAEnsAAAMyT1MvMg8SDbEAAAEgAAAAYGNtYXABDQDNAAABnAAAAFRnYXNw//8AAwAAOGAAAAAIZ2x5Zt5TAdwAAARAAAACFGhlYWQY2C8VAAAA4AAAADZoaGVhB7QDNAAAASAAAAAkaG10eCoAlgIAAAGoAAAAGmxvY2ED2AO0AAAEgAAAABhtYXhwARgAMQAAAUgAAAAgbmFtZXV0jHEAAAdMAAABMHBvc3QAAwAAAAAAOWAAAAABAAACAAMDAAABdyNQAAAAAFdyNQAAAAAAAQIAZgABAQAAAAAAAgAAAAEAAAAAAQAAAAEAAAACAAEAAgAAAAEAAQAABUADAAgAAQACAAsAAQAAAAEAAAAAACQAKgBOARQAAQAAAAAAAAAAAAIAAAAEAAEAAgAFAAYABwAIAAkACgALAAwADQAOAA8AEAARABIAEwAUABUAFwAXABgAGQAaABsAHAAdAB4AHwAgACEAIgAjACQBJgEnASgBKQEoAysBLgEvATABMQEyATMBNAE1AUEBTAFNAU4BTwFQAVIDVgNkA2gDbgNvA3ADdAN7A3wDfwOAA4MDiAOHA4sDjAOQA5EDmAOXA5gDmQOaA5sDnAOdA56CgICA';
+                        const amiriFont = 'AAEAAAARAQAABAAQR0RFRgQsAgsAADhkAAAAHkdQT1Mrk8MkAAA4YAAABJBHU1VCA8+JjwAAEnsAAAMyT1MvMg8SDbEAAAEgAAAAYGNtYXABDQDNAAABnAAAAFRnYXNw//8AAwAAOGAAAAAIZ2x5Zt5TAdwAAARAAAACFGhlYWQY2C8VAAAA4AAAADZoaGVhB7QDNAAAASAAAAAkaG10eCoAlgIAAAGoAAAAGmxvY2ED2AO0AAAEgAAAABhtYXhwARgAMQAAAUgAAAAgbmFtZXV0jHEAAAdMAAABMHBvc3QAAwAAAAAAOWAAAAABAAACAAMDAAABdyNQAAAAAFdyNQAAAAAAAQIAZgABAQAAAAAAAgAAAAEAAAAAAQAAAAEAAAACAAEAAgAAAAEAAQAABUADAAgAAQACAAsAAQAAAAEAAAAAACQAKgBOARQAAQAAAAAAAAAAAAIAAAAEAAEAAgAFAAYABwAIAAkACgALAAwADQAOAA8AEAARABIAEwAUABUAFwAXABgAGQAaABsAHAAdAB4AHwAgACEAIgAjACQBJgEnASgBKQEoA+sBLgEvATABMQEyATMBNAE1AUEBTAFNAU4BTwFQAVIDVgNkA2gDbgNvA3ADdAN7A3wDfwOAA4MDiAOHA4sDjAOQA5EDmAOXA5gDmQOaA5sDnAOdA56CgICA';
                         
                         const { jsPDF } = window.jspdf;
                         const doc = new jsPDF();
@@ -2138,7 +2407,8 @@
                         const hallTitle = absenceData.length > 0 ? (absenceData[0].hallName || "قاعة غير محددة") : "لا توجد بيانات";
                         
                         // إضافة عنوان رئيسي
-                        doc.setFontSize(state.fontSettings.fontSize + 4);
+                        doc.setFontSize(state.fontSettings.titleSize);
+                        doc.setFont(undefined, 'bold');
                         doc.text(title, doc.internal.pageSize.getWidth() / 2, 20, { align: 'center' });
                         
                         // إضافة معلومات إضافية
@@ -2249,7 +2519,8 @@
                             });
                             
                             // إضافة عنوان الملخص
-                            doc.setFontSize(state.fontSettings.fontSize + 2);
+                            doc.setFontSize(state.fontSettings.titleSize - 2);
+                            doc.setFont(undefined, 'bold');
                             doc.text('ملخص الغياب حسب الصفوف', doc.internal.pageSize.getWidth() / 2, 20, { align: 'center' });
                             
                             // إنشاء جدول الملخص
@@ -2559,4 +2830,3 @@ document.addEventListener('DOMContentLoaded', function() {
 
 </body>
 </html>
-               
