@@ -304,7 +304,7 @@
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
                                     <label class="block font-semibold mb-2">نوع الخط:</label>
-                                    <div class="grid grid-cols-3 gap-2" id="font-family-selector">
+                                    <div class="grid grid-cols-4 gap-2" id="font-family-selector">
                                         <div class="font-preview selected" data-font="Cairo" style="font-family: 'Cairo', sans-serif;">
                                             <span>Cairo</span>
                                             <div class="text-xs mt-1">كايرو</div>
@@ -329,6 +329,30 @@
                                             <span>Tajawal</span>
                                             <div class="text-xs mt-1">تجوال</div>
                                         </div>
+                                        <div class="font-preview" data-font="El Messiri" style="font-family: 'El Messiri', sans-serif;">
+                                            <span>El Messiri</span>
+                                            <div class="text-xs mt-1">المسيري</div>
+                                        </div>
+                                        <div class="font-preview" data-font="Almarai" style="font-family: 'Almarai', sans-serif;">
+                                            <span>Almarai</span>
+                                            <div class="text-xs mt-1">المراعي</div>
+                                        </div>
+                                        <div class="font-preview" data-font="Changa" style="font-family: 'Changa', sans-serif;">
+                                            <span>Changa</span>
+                                            <div class="text-xs mt-1">تشانغا</div>
+                                        </div>
+                                        <div class="font-preview" data-font="Rakkas" style="font-family: 'Rakkas', cursive;">
+                                            <span>Rakkas</span>
+                                            <div class="text-xs mt-1">رَكَّاس</div>
+                                        </div>
+                                        <div class="font-preview" data-font="Mirza" style="font-family: 'Mirza', serif;">
+                                            <span>Mirza</span>
+                                            <div class="text-xs mt-1">ميرزا</div>
+                                        </div>
+                                        <div class="font-preview" data-font="Mada" style="font-family: 'Mada', sans-serif;">
+                                            <span>Mada</span>
+                                            <div class="text-xs mt-1">مَدا</div>
+                                        </div>
                                     </div>
                                 </div>
                                 
@@ -350,8 +374,9 @@
                                     <label for="student-name-bold" class="block font-semibold mb-2">سمك خط أسماء الطلاب:</label>
                                     <select id="student-name-bold" class="w-full p-2 border rounded-md">
                                         <option value="normal">عادي</option>
-                                        <option value="bold" selected>سميك (Bold)</option>
-                                        <option value="bolder">أكثر سمكاً</option>
+                                        <option value="bold" selected>سميك</option>
+                                        <option value="800">سميك جداً</option>
+                                        <option value="900">أقصى سمك</option>
                                     </select>
                                 </div>
                                 
@@ -365,7 +390,8 @@
                                     <select id="student-id-weight" class="w-full p-2 border rounded-md">
                                         <option value="normal">عادي</option>
                                         <option value="bold" selected>سميك</option>
-                                        <option value="900">ثقيل جداً</option>
+                                        <option value="800">سميك جداً</option>
+                                        <option value="900">أقصى سمك</option>
                                     </select>
                                 </div>
                             </div>
@@ -381,8 +407,8 @@
                                     <label for="title-weight" class="block font-semibold mb-2">سمك عناوين القاعات:</label>
                                     <select id="title-weight" class="w-full p-2 border rounded-md">
                                         <option value="bold">سميك</option>
-                                        <option value="900" selected>ثقيل جداً</option>
-                                        <option value="1000">أقصى سمك</option>
+                                        <option value="800" selected>سميك جداً</option>
+                                        <option value="900">أقصى سمك</option>
                                     </select>
                                 </div>
                             </div>
@@ -723,7 +749,7 @@
                         studentIdSize: 16,
                         studentIdWeight: 'bold',
                         titleSize: 24,
-                        titleWeight: '900',
+                        titleWeight: '800',
                         qrColorsEnabled: true,
                         classQrColors: {}
                     }
@@ -831,21 +857,27 @@
                     'الثاني عشر': '#f97316'// برتقالي داكن
                 };
 
-                // --- إضافة الخطوط العربية ---
+                // --- إضافة الخطوط العربية السميكة والسميكة جداً ---
                 const arabicFonts = {
                     'Cairo': "'Cairo', sans-serif",
                     'Amiri': "'Amiri', serif",
                     'Lateef': "'Lateef', serif",
                     'Scheherazade': "'Scheherazade', serif",
                     'Noto Naskh Arabic': "'Noto Naskh Arabic', serif",
-                    'Tajawal': "'Tajawal', sans-serif"
+                    'Tajawal': "'Tajawal', sans-serif",
+                    'El Messiri': "'El Messiri', sans-serif",
+                    'Almarai': "'Almarai', sans-serif",
+                    'Changa': "'Changa', sans-serif",
+                    'Rakkas': "'Rakkas', cursive",
+                    'Mirza': "'Mirza', serif",
+                    'Mada': "'Mada', sans-serif"
                 };
 
-                // تحميل الخطوط العربية الإضافية
+                // تحميل الخطوط العربية الإضافية مع أوزان سميكة وسميكة جداً
                 const loadAdditionalFonts = () => {
                     const link = document.createElement('link');
                     link.rel = 'stylesheet';
-                    link.href = 'https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Lateef&family=Scheherazade&family=Noto+Naskh+Arabic:wght@400;700&family=Tajawal:wght@400;700&display=swap';
+                    link.href = 'https://fonts.googleapis.com/css2?family=Amiri:wght@400;700;800&family=Lateef&family=Scheherazade&family=Noto+Naskh+Arabic:wght@400;700&family=Tajawal:wght@400;700;800&family=El+Messiri:wght@400;600;700&family=Almarai:wght@400;700;800&family=Changa:wght@400;600;700&family=Rakkas&family=Mirza:wght@400;600&family=Mada:wght@400;600&display=swap';
                     document.head.appendChild(link);
                 };
                 loadAdditionalFonts();
@@ -881,7 +913,7 @@
                         updateFontPreview();
                     });
 
-                    // سمك خط أسماء الطلاب
+                    // سمك خط أسماء الطلاب - تم تحديثه لإضافة خيارات سميك جداً وأقصى سمك
                     studentNameBold.addEventListener('change', (e) => {
                         state.fontSettings.studentNameWeight = e.target.value;
                     });
@@ -893,7 +925,7 @@
                         state.fontSettings.studentIdSize = parseInt(size);
                     });
 
-                    // سمك الأرقام الامتحانية
+                    // سمك الأرقام الامتحانية - تم تحديثه لإضافة خيارات سميك جداً وأقصى سمك
                     studentIdWeight.addEventListener('change', (e) => {
                         state.fontSettings.studentIdWeight = e.target.value;
                     });
@@ -905,7 +937,7 @@
                         state.fontSettings.titleSize = parseInt(size);
                     });
 
-                    // سمك عناوين القاعات
+                    // سمك عناوين القاعات - تم تحديثه لإضافة خيارات سميك جداً وأقصى سمك
                     titleWeight.addEventListener('change', (e) => {
                         state.fontSettings.titleWeight = e.target.value;
                     });
@@ -916,7 +948,7 @@
                         updateQrColorControls();
                     });
 
-                    // تحديث معاينة الخط
+                    // تحديث معاينة الخط مع تطبيق أوزان الخطوط
                     const updateFontPreview = () => {
                         fontPreviewText.style.fontFamily = arabicFonts[state.fontSettings.fontFamily];
                         fontPreviewText.style.fontSize = state.fontSettings.fontSize + 'px';
@@ -1043,7 +1075,7 @@
                                     studentIdSize: 16,
                                     studentIdWeight: 'bold',
                                     titleSize: 24,
-                                    titleWeight: '900',
+                                    titleWeight: '800',
                                     qrColorsEnabled: true,
                                     classQrColors: {}
                                 }
@@ -1196,7 +1228,7 @@
                                     studentIdSize: 16,
                                     studentIdWeight: 'bold',
                                     titleSize: 24,
-                                    titleWeight: '900',
+                                    titleWeight: '800',
                                     qrColorsEnabled: true,
                                     classQrColors: {}
                                 }
@@ -2107,7 +2139,7 @@
                         
                         // تطبيق إعدادات العنوان
                         doc.setFontSize(state.fontSettings.titleSize);
-                        doc.setFont(undefined, 'bold');
+                        doc.setFont(undefined, state.fontSettings.titleWeight);
                         doc.text("قائمة الحضور المجمعة", doc.internal.pageSize.getWidth() / 2, 15, { align: 'center' });
                         
                         doc.autoTable({
@@ -2408,7 +2440,7 @@
                         
                         // إضافة عنوان رئيسي
                         doc.setFontSize(state.fontSettings.titleSize);
-                        doc.setFont(undefined, 'bold');
+                        doc.setFont(undefined, state.fontSettings.titleWeight);
                         doc.text(title, doc.internal.pageSize.getWidth() / 2, 20, { align: 'center' });
                         
                         // إضافة معلومات إضافية
@@ -2520,7 +2552,7 @@
                             
                             // إضافة عنوان الملخص
                             doc.setFontSize(state.fontSettings.titleSize - 2);
-                            doc.setFont(undefined, 'bold');
+                            doc.setFont(undefined, state.fontSettings.titleWeight);
                             doc.text('ملخص الغياب حسب الصفوف', doc.internal.pageSize.getWidth() / 2, 20, { align: 'center' });
                             
                             // إنشاء جدول الملخص
